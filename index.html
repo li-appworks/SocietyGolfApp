@@ -761,10 +761,26 @@
   .rule-chip.active b{color:var(--brass-light);}
   .rule-card{
     background:var(--paper); border:1px solid var(--line); border-radius:8px;
-    padding:1.1rem 1.1rem 1.2rem; transition:border-color .3s, box-shadow .3s;
+    padding:.9rem 1.1rem; transition:border-color .3s, box-shadow .3s;
   }
+  .rule-card.open{border-color:var(--brass);}
   .rule-card.flash{border-color:var(--brass); box-shadow:0 0 0 3px color-mix(in srgb, var(--brass) 30%, transparent);}
-  .rule-head{display:grid; grid-template-columns:auto 1fr auto; gap:.8rem; align-items:start;}
+  /* Collapsed by default: the whole header row is the tap target; the body
+     and edit form live in .rule-panel, shown only when the card is .open. */
+  .rule-head{display:flex; gap:.8rem; align-items:flex-start; cursor:pointer; user-select:none;}
+  .rule-head:focus-visible{outline:2px solid var(--brass); outline-offset:4px; border-radius:6px;}
+  .rule-head h3{flex:1; min-width:0;}
+  .rule-head .rule-badge, .rule-head .committee-edit-btn{flex-shrink:0;}
+  .rule-chev{
+    flex-shrink:0; width:.6rem; height:.6rem; margin:.7rem .25rem 0 0;
+    border-right:2px solid var(--muted); border-bottom:2px solid var(--muted);
+    transform:rotate(45deg); transition:transform .15s;
+  }
+  .rule-card.open .rule-chev{transform:rotate(-135deg); margin-top:.9rem;}
+  .rule-panel{display:none; padding-top:.1rem;}
+  .rule-card.open .rule-panel{display:block;}
+  .rule-tools{display:flex; justify-content:flex-end; max-width:720px; margin:-.3rem 0 .6rem;}
+  .rule-tools-btn{font-family:var(--body); font-size:.78rem; font-weight:600; color:var(--claret); background:none; border:none; padding:.2rem 0; cursor:pointer;}
   .rule-badge{
     width:2rem; height:2rem; border-radius:50%; background:var(--ink); color:var(--brass-light);
     font-family:var(--body); font-weight:800; font-size:.9rem;
@@ -1889,6 +1905,7 @@
     <h2 class="section-title">Rules &amp; Regulations</h2>
     <div id="add-rule-slot"></div>
     <div class="rule-chips" id="rules-chips"></div>
+    <div class="rule-tools" id="rules-tools"></div>
     <div class="rules-list" id="rules-list"></div>
   </section>
 
@@ -7346,13 +7363,43 @@ async function finaliseEventOverall(eventId){
 const editingRuleIds = new Set();
 
 let activeRuleChipId = null;
+const openRuleIds = new Set(); // rules start collapsed; this is what the reader has opened
 
-/* Scrolls to a rule's card, clearing the sticky site header (it stays pinned,
-   so a plain scrollIntoView would tuck the card's title underneath it), and
-   briefly glows the card so it's obvious where you landed. */
+/* Opens/closes a card by flipping its class directly rather than re-rendering,
+   so anything an admin has half-typed into another card's edit form survives. */
+function setRuleOpen(id, open){
+  const card = document.getElementById('rule-card-' + id);
+  if (open) openRuleIds.add(id); else openRuleIds.delete(id);
+  if (!card) return;
+  card.classList.toggle('open', open);
+  card.querySelector('.rule-head')?.setAttribute('aria-expanded', open);
+}
+
+function updateRulesToolsLabel(){
+  const btn = document.getElementById('rules-tools-btn');
+  if (btn) btn.textContent = rules.every(r => openRuleIds.has(r.id)) ? 'Collapse all' : 'Expand all';
+}
+
+function toggleRule(id){
+  if (editingRuleIds.has(id)) return; // a rule being edited stays open
+  setRuleOpen(id, !openRuleIds.has(id));
+  updateRulesToolsLabel();
+}
+
+function toggleAllRules(){
+  const open = !rules.every(r => openRuleIds.has(r.id));
+  rules.forEach(r => setRuleOpen(r.id, open));
+  updateRulesToolsLabel();
+}
+
+/* Opens a rule and scrolls to its card, clearing the sticky site header (it
+   stays pinned, so a plain scrollIntoView would tuck the card's title
+   underneath it), and briefly glows the card so it's obvious where you landed. */
 function jumpToRule(id){
   const card = document.getElementById('rule-card-' + id);
   if (!card) return;
+  setRuleOpen(id, true);
+  updateRulesToolsLabel();
   activeRuleChipId = id;
   document.querySelectorAll('#rules-chips .rule-chip').forEach(c => c.classList.toggle('active', Number(c.dataset.id) === id));
   const headerH = document.querySelector('.site-head-wrap')?.offsetHeight || 0;
@@ -7375,13 +7422,20 @@ function renderRules(){
     ).join('');
   }
 
+  const toolsEl = document.getElementById('rules-tools');
+  if (toolsEl){
+    toolsEl.innerHTML = rules.length < 2 ? ''
+      : `<button type="button" class="rule-tools-btn" id="rules-tools-btn" onclick="toggleAllRules()">${rules.every(r => openRuleIds.has(r.id)) ? 'Collapse all' : 'Expand all'}</button>`;
+  }
+
   if (!rules.length){
     listEl.innerHTML = `<p class="muted">No rules published yet${isLoggedIn ? ' — use the button above to add the first one.' : '.'}</p>`;
   } else {
     listEl.innerHTML = rules.map((r, i) => {
       const isEditing = editingRuleIds.has(r.id);
+      const isOpen = isEditing || openRuleIds.has(r.id);
       const editToggle = isLoggedIn
-        ? `<button class="committee-edit-btn" onclick="toggleRuleEdit(${r.id})">${isEditing ? 'Cancel' : 'Edit'}</button>`
+        ? `<button class="committee-edit-btn" onclick="event.stopPropagation(); toggleRuleEdit(${r.id})">${isEditing ? 'Cancel' : 'Edit'}</button>`
         : '';
       const editForm = (isLoggedIn && isEditing) ? `
         <div class="edit-form" style="margin-top:.9rem;">
@@ -7409,14 +7463,19 @@ function renderRules(){
         </div>` : '';
 
       return `
-        <div class="rule-card" id="rule-card-${r.id}">
-          <div class="rule-head">
+        <div class="rule-card${isOpen ? ' open' : ''}" id="rule-card-${r.id}">
+          <div class="rule-head" role="button" tabindex="0" aria-expanded="${isOpen}"
+            onclick="toggleRule(${r.id})"
+            onkeydown="if(event.target===event.currentTarget && (event.key==='Enter'||event.key===' ')){event.preventDefault(); toggleRule(${r.id});}">
             <span class="rule-badge">${i+1}</span>
             <h3>${escapeHtml(r.title)}</h3>
             ${editToggle}
+            <span class="rule-chev"></span>
           </div>
-          ${r.body ? `<p class="rule-body">${escapeHtml(r.body)}</p>` : ''}
-          ${editForm}
+          <div class="rule-panel">
+            ${r.body ? `<p class="rule-body">${escapeHtml(r.body)}</p>` : ''}
+            ${editForm}
+          </div>
         </div>`;
     }).join('');
   }
@@ -7428,7 +7487,7 @@ function renderRules(){
 
 function toggleRuleEdit(id){
   if (editingRuleIds.has(id)) editingRuleIds.delete(id);
-  else editingRuleIds.add(id);
+  else { editingRuleIds.add(id); openRuleIds.add(id); } // stays open after saving/cancelling
   renderRules();
 }
 
@@ -7461,6 +7520,7 @@ async function deleteRule(id){
   if (error){ console.error(error); alert('Delete failed. Please try again.'); return; }
   rules = rules.filter(r => r.id !== id);
   editingRuleIds.delete(id);
+  openRuleIds.delete(id);
   renderRules();
 }
 
