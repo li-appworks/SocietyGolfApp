@@ -1005,6 +1005,8 @@
   .leaderboard-table td{padding:.8rem .7rem; border-bottom:1px solid var(--line);}
   .leaderboard-table tr:hover td{background:var(--paper);}
   .pos-medal{font-size:1.2rem;}
+  .prize-tag{display:inline-block; margin:.25rem 0 0; padding:.12rem .5rem; border-radius:999px; font-family:var(--body); font-size:.66rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; background:rgba(184,134,47,.14); color:var(--ink); border:1px solid var(--brass);}
+  .leaderboard-table tr:has(.prize-tag) td{background:rgba(184,134,47,.07);}
   .pos-num{font-family:var(--body); font-weight:600; color:var(--text-muted);}
   .lb-player{font-weight:600; color:var(--ink);}
   .lb-total{font-family:var(--body); font-size:1.1rem; font-weight:600; color:var(--ink); text-align:right;}
@@ -1686,7 +1688,9 @@
   .lb-row.frozen .lb-pts{filter:blur(3px); user-select:none;}
   .lb-pos{font-size:1rem; width:1.7rem; text-align:center; flex-shrink:0;}
   .lb-pos.num{font-size:.82rem; color:rgba(250,248,242,.55); font-weight:700;}
-  .lb-name{flex:1; font-size:.86rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lb-name{flex:1; min-width:0; font-size:.86rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lb-name .prize-tag{display:block; width:fit-content; margin-top:.2rem; background:rgba(227,193,115,.18); color:var(--brass-light); border:1px solid rgba(227,193,115,.45);}
+  .lb-row:has(.prize-tag){border:1px solid rgba(227,193,115,.35);}
   .lb-pts{font-size:.88rem; font-weight:800; color:var(--brass-light); font-variant-numeric:tabular-nums;}
   .lb-thru{font-size:.68rem; color:rgba(250,248,242,.5); width:3.2rem; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums;}
 
@@ -6521,6 +6525,21 @@ function pickLabel(labels, seed){
   return labels[seed % labels.length];
 }
 
+/* Prize positions on the live leaderboard: 1st, 2nd, the middle of the table
+   and 3rd from last. Counted among players who have started (they sort first),
+   by row position; lb is whatever list is actually being displayed, so a
+   frozen board shows prizes for the frozen standings. Overlaps are dropped
+   (1st/2nd win), and the lower two need a field of 6+. */
+function prizeSlots(lb){
+  const n = lb.filter(e => e.started).length;
+  const slots = new Map();
+  const add = (idx, label) => { if (idx >= 0 && idx < n && !slots.has(idx)) slots.set(idx, label); };
+  if (n >= 2){ add(0, '1st prize'); add(1, '2nd prize'); }
+  if (n >= 6){ add(Math.ceil(n / 2) - 1, 'Middle prize'); add(n - 3, '3rd from last prize'); }
+  return slots;
+}
+function prizeTagHtml(label){ return label ? `<span class="prize-tag">🏅 ${label}</span>` : ''; }
+
 function committeeLeaderboardHtml(lb, showFinalise, holes = 18, roundId = null){
   const medals = ['🥇','🥈','🥉'];
   const startedCount = lb.filter(e => e.started).length;
@@ -6539,6 +6558,7 @@ function committeeLeaderboardHtml(lb, showFinalise, holes = 18, roundId = null){
     matchGroupPlayers.filter(gp => gp.group_id === g.id).forEach(gp => groupLabelForPlayer.set(gp.player_id, `Group ${idx+1}`));
   });
 
+  const prizes = prizeSlots(lb);
   const rows = lb.map((entry, i) => {
     const isFirst = startedCount >= 2 && entry.started && i === 0;
     const isLast = startedCount >= 2 && entry.started && i === lastStartedIndex && i !== 0;
@@ -6555,7 +6575,7 @@ function committeeLeaderboardHtml(lb, showFinalise, holes = 18, roundId = null){
       ? `<div class="lb-group-label">${groupLabelForPlayer.get(entry.player.id)}</div>` : '';
     return `<tr>
       <td>${pos}</td>
-      <td class="lb-player">${entry.player ? entry.player.first_name + ' ' + entry.player.last_name : 'Unknown'}${groupLabel}${funLabel}</td>
+      <td class="lb-player">${entry.player ? entry.player.first_name + ' ' + entry.player.last_name : 'Unknown'}${prizeTagHtml(prizes.get(i))}${groupLabel}${funLabel}</td>
       <td class="lb-total">${entry.started ? entry.total : '—'}</td>
       <td class="lb-thru">${thruLabel}</td>
     </tr>`;
@@ -6941,14 +6961,14 @@ function renderFocusEntry(){
     </div>`;
 }
 
-function focusLbRowHtml(entry, i, frozen){
+function focusLbRowHtml(entry, i, frozen, prizes){
   const mine = entry.player && scoringPlayerIds.includes(entry.player.id);
   const pos = !entry.started ? `<span class="lb-pos">—</span>`
     : i < 3 ? `<span class="lb-pos">${['🥇','🥈','🥉'][i]}</span>` : `<span class="lb-pos num">${i+1}</span>`;
   const thruLabel = !entry.started ? 'Not started' : `Thru ${entry.thru}`;
   return `<div class="lb-row ${mine?'me':''} ${frozen?'frozen':''}">
     ${pos}
-    <span class="lb-name">${entry.player ? escapeHtml(entry.player.first_name + ' ' + entry.player.last_name) : 'Unknown'}</span>
+    <span class="lb-name">${entry.player ? escapeHtml(entry.player.first_name + ' ' + entry.player.last_name) : 'Unknown'}${prizes ? prizeTagHtml(prizes.get(i)) : ''}</span>
     <span class="lb-pts">${entry.started ? entry.total : '—'}</span>
     <span class="lb-thru">${thruLabel}</span>
   </div>`;
@@ -6990,7 +7010,8 @@ function renderFocusLeaderboard(){
 
   // Admin: bypasses the blackout entirely, same as the normal chrome view
   if (isLoggedIn){
-    const rows = fullLb.map((e,i) => focusLbRowHtml(e,i,false)).join('');
+    const pz = prizeSlots(fullLb);
+    const rows = fullLb.map((e,i) => focusLbRowHtml(e,i,false,pz)).join('');
     const doneBanner = allFinished ? `<div class="done-banner">✓ Every player's finished — full standings, admin view</div>` : '';
     const cta = allFinished
       ? (evRounds.length
@@ -7028,7 +7049,8 @@ function renderFocusLeaderboard(){
   // Non-admin, past the blackout hole → frozen
   if (pastBlackout){
     const frozenLb = getLeaderboard(liveEventId, blackoutHole, liveRoundId);
-    const rows = frozenLb.map((e,i) => focusLbRowHtml(e,i,true)).join('');
+    const pz = prizeSlots(frozenLb);
+    const rows = frozenLb.map((e,i) => focusLbRowHtml(e,i,true,pz)).join('');
     return topBar + title + `
       <div class="frozen-banner">
         <span class="lock">🔒</span>
@@ -7044,7 +7066,8 @@ function renderFocusLeaderboard(){
   // Normal live view: full board for a non-trophy event, or before the
   // blackout hole on a trophy one.
   const lb = isTrophyEvent ? getLeaderboard(liveEventId, blackoutHole, liveRoundId) : fullLb;
-  const rows = lb.map((e,i) => focusLbRowHtml(e,i,false)).join('');
+  const pz = prizeSlots(lb);
+  const rows = lb.map((e,i) => focusLbRowHtml(e,i,false,pz)).join('');
   return topBar + title + `<div class="focus-lb-list">${rows}</div>` + focusLbFootHtml();
 }
 

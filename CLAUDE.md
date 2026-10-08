@@ -264,6 +264,10 @@ The header was a single flowing line (number, title and Edit together) before, w
 
 `addRule()` numbers a new rule `max(sort_order)+1` rather than `rules.length+1` (the old way produced two rules both numbered 3 once an order gap existed), and Gytte Lane's rules were renumbered 1–5 on 2026-10-04. Rule text is rendered by `ruleBodyHtml()`: a line starting `- ` (or `•`) becomes a bullet (brass dot, `.rule-bullets`), consecutive plain lines form one paragraph with `<br>`, a blank line starts a new paragraph, and everything is escaped. The edit form has a hint saying so. Lesson: the accordion chevron once used an undefined CSS variable (`--muted`; the site only has `--text-muted`) and was invisible — verify computed colour, not just geometry.
 
+### Prize positions on the leaderboard (2026-10-08)
+
+The society awards extra prizes for 1st, 2nd, the middle of the table and 3rd from last. `prizeSlots(lb)` returns row index → label for the list actually being displayed (so a trophy event's frozen board marks the frozen standings), counting only players who have started; `prizeTagHtml()` renders a brass "🏅 … prize" pill on both the normal table (`committeeLeaderboardHtml`) and Focus Mode rows (`focusLbRowHtml`, 4th arg). Middle = row `ceil(n/2)` (the 9th of 18; the upper of the two middles for even fields), 3rd from last = row `n-2`; both need 6+ started players, and 1st/2nd win any overlap. Ties are by row order, not shared. Not applied to the multi-round Overall table.
+
 ## Known follow-up work (not yet done)
 
 - **Match Play scoring** — schema/dropdown-only (see GPS distances + proper scoring above): `events.scoring_format` accepts `'match_play'` and it's selectable in the admin UI, but there's no actual head-to-head pairing or hole-by-hole up/down leaderboard built yet. Needs a pairing concept (which two players/teams face off) added to the groupings UI before this is real.
