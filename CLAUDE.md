@@ -262,7 +262,7 @@ Chips above the cards (one per rule: number + title, trimmed with "…" on the c
 
 The header was a single flowing line (number, title and Edit together) before, which wrapped messily and moved Edit around; it's now a flex row with a flexible title column, so Edit and the arrow sit in the same place on every card. Chosen with the user from a mockup page of options A–G: G (A's card header + D's chips) won, then "collapsed by default" turned it into the combined accordion. Colour/shape follow the rest of the site (paper card, burgundy badge with brass number, brass outline when open).
 
-`addRule()` numbers a new rule `max(sort_order)+1` rather than `rules.length+1` (the old way produced two rules both numbered 3 once an order gap existed), and Gytte Lane's rules were renumbered 1–5 on 2026-10-04. Rule text keeps `white-space:pre-wrap`, so line breaks typed in the edit box show as line breaks.
+`addRule()` numbers a new rule `max(sort_order)+1` rather than `rules.length+1` (the old way produced two rules both numbered 3 once an order gap existed), and Gytte Lane's rules were renumbered 1–5 on 2026-10-04. Rule text is rendered by `ruleBodyHtml()`: a line starting `- ` (or `•`) becomes a bullet (brass dot, `.rule-bullets`), consecutive plain lines form one paragraph with `<br>`, a blank line starts a new paragraph, and everything is escaped. The edit form has a hint saying so. Lesson: the accordion chevron once used an undefined CSS variable (`--muted`; the site only has `--text-muted`) and was invisible — verify computed colour, not just geometry.
 
 ## Known follow-up work (not yet done)
 
