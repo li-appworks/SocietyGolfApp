@@ -6209,6 +6209,47 @@ function renderLiveScores(){
   syncScoringFocusClass();
 }
 
+/* Admin-only: wipe every scorecard and hole score for the selected event (or
+   round), e.g. after a practice run before the real day. Honours (Hall of
+   Fame) rows are left alone. Clears this device's unsent queue for it too;
+   other devices that scored offline and haven't synced could still push old
+   scores back, so tell markers to reload/clear data if that matters. */
+async function resetScores(){
+  if (!isLoggedIn || !db) return;
+  const evRounds = roundsForEvent(liveEventId);
+  if (evRounds.length && liveRoundId === null){ alert('Select a specific round above first, then reset it.'); return; }
+  const ev = eventById(liveEventId);
+  const roundLabel = liveRoundId ? (rounds.find(r => r.id === liveRoundId) || {}).label : '';
+  const mine = scorecards.filter(sc => sc.event_id === liveEventId && (liveRoundId ? sc.round_id === liveRoundId : !sc.round_id));
+  const realIds = mine.map(sc => sc.id).filter(id => !isPendingScorecardId(id));
+  const nScores = holeScores.filter(h => mine.some(sc => sc.id === h.scorecard_id)).length;
+  if (!mine.length && !scoreQueue.length && !scorecardQueue.length){ alert('There are no scores to reset.'); return; }
+  const what = `${ev ? ev.name : 'this event'}${roundLabel ? ' — ' + roundLabel : ''}`;
+  if (!confirm(`Reset ALL scores for ${what}?\n\nThis permanently deletes ${mine.length} scorecard${mine.length===1?'':'s'} and ${nScores} hole score${nScores===1?'':'s'}. Groups and sign-ups are kept. This can't be undone.`)) return;
+  if (!confirm('Are you sure? Everyone will start the round from a blank scorecard.')) return;
+  try {
+    if (realIds.length){
+      const a = await db.from('hole_scores').delete().in('scorecard_id', realIds);
+      if (a.error) throw a.error;
+      const b = await db.from('scorecards').delete().in('id', realIds);
+      if (b.error) throw b.error;
+    }
+  } catch(err){
+    console.error('Reset scores failed', err);
+    alert('Could not reset the scores: ' + (err.message || err));
+    return;
+  }
+  const mineIds = new Set(mine.map(sc => sc.id));
+  scoreQueue = scoreQueue.filter(q => !mineIds.has(q.scorecard_id));
+  scorecardQueue = scorecardQueue.filter(q => !(q.event_id === liveEventId && (q.round_id || null) === (liveRoundId || null)));
+  persistScoreQueue(); persistScorecardQueue();
+  scoringPlayerIds = [];
+  currentHole = 1;
+  await loadLiveScoresData(liveEventId);
+  renderLiveScores();
+  alert('Scores reset.');
+}
+
 /* Live Scores landing — the first thing you see on opening the page:
    which event you're synced against, plus one tap into each of the
    three real screens (scoring, leaderboard, groupings). Replaces what
@@ -6264,7 +6305,8 @@ function renderLiveLandingView(){
       ${row('featured', '⛳', scoreTitle, scoreSub, "setLiveSubView('setup')")}
       ${row('', '🏆', 'Leaderboard', lbSub, "setLiveSubView('leaderboard')")}
       ${row('', '👥', 'Groupings', groupingsSub, "setLiveSubView('groupings')")}
-    </div>`;
+    </div>
+    ${isLoggedIn ? `<p style="text-align:center; margin:1.4rem 0 0;"><button class="committee-edit-btn" style="color:var(--claret);" onclick="resetScores()">Reset scores (admin)</button></p>` : ''}`;
 }
 
 /* Keeps body.scoring-focus in sync with actual state — separated from
