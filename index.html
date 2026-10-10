@@ -4724,7 +4724,7 @@ function renderGallery(filterId){
     const statusBadge = item.status === 'done'
       ? `<span style="color:var(--bracken); font-family:var(--body); font-size:.72rem;">✓ Uploaded</span>`
       : item.status === 'error'
-      ? `<span style="color:var(--claret); font-family:var(--body); font-size:.72rem;">✗ Failed</span>`
+      ? `<span style="color:var(--claret); font-family:var(--body); font-size:.72rem;">✗ ${escapeHtml(item.error || 'Failed')}</span>`
       : item.status === 'uploading'
       ? `<span style="color:var(--brass); font-family:var(--body); font-size:.72rem;">Uploading…</span>`
       : '';
@@ -4797,6 +4797,29 @@ function removeBulkItem(i){
   renderGallery();
 }
 
+/* Phone photos are often 5-12MB (and the old 5MB cap silently rejected them as
+   "Failed"). Shrink every photo to a web-sized JPEG (max 2400px, quality .85 —
+   typically 0.5-1.5MB) before upload; createImageBitmap applies the EXIF
+   rotation so portrait shots stay upright. Falls back to the original file if
+   the browser can't decode it. GIFs and videos are left alone. */
+async function prepareImageForUpload(file){
+  if (!file.type.startsWith('image/') || /gif|svg/.test(file.type)) return file;
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+    return blob && blob.size ? blob : file;
+  } catch(e){
+    console.warn('Could not shrink photo, uploading original:', e);
+    return file;
+  }
+}
+
 async function submitBulkGallery(){
   const statusEl = document.getElementById('ga-status');
   const setStatus = (msg, kind) => { if(statusEl){ statusEl.textContent = msg; statusEl.className = 'edit-status '+(kind||''); } };
@@ -4811,17 +4834,26 @@ async function submitBulkGallery(){
     const item = galleryBulkQueue[i];
     if (item.status === 'done') continue;
 
-    const maxSize = item.file.type.startsWith('video/') ? 50*1024*1024 : 5*1024*1024;
-    if (item.file.size > maxSize){ item.status = 'error'; renderGallery(); continue; }
-
     item.status = 'uploading';
+    item.error = '';
     renderGallery();
 
+    const isVideo = item.file.type.startsWith('video/');
+    const toUpload = isVideo ? item.file : await prepareImageForUpload(item.file);
+    const maxSize = isVideo ? 50*1024*1024 : 10*1024*1024;
+    if (toUpload.size > maxSize){ item.status = 'error'; item.error = 'Too large (' + Math.round(toUpload.size/1048576) + 'MB)'; renderGallery(); continue; }
+
     const id = 'g-' + Date.now() + '-' + i;
-    const ext = (item.file.name.split('.').pop() || 'jpg').toLowerCase();
+    const compressed = toUpload !== item.file;
+    const ext = compressed ? 'jpg' : ((item.file.name.split('.').pop() || 'jpg').toLowerCase());
     const path = `gallery/${id}.${ext}`;
-    const { error: upError } = await db.storage.from('photos').upload(path, item.file, { cacheControl: '3600' });
-    if (upError){ console.error(upError); item.status = 'error'; renderGallery(); continue; }
+    const { error: upError } = await db.storage.from('photos').upload(path, toUpload, { cacheControl: '3600', contentType: compressed ? 'image/jpeg' : (item.file.type || undefined) });
+    if (upError){
+      console.error(upError);
+      const m = String(upError.message || '');
+      item.error = /row-level|policy|jwt|auth/i.test(m) ? 'Not signed in — sign in again' : (m.slice(0, 60) || 'Upload failed');
+      item.status = 'error'; renderGallery(); continue;
+    }
 
     const { data: urlData } = db.storage.from('photos').getPublicUrl(path);
     const payload = {
@@ -4833,7 +4865,7 @@ async function submitBulkGallery(){
       society_id: societyId,
     };
     const { error: dbError } = await db.from('gallery').insert(payload);
-    if (dbError){ console.error(dbError); item.status = 'error'; renderGallery(); continue; }
+    if (dbError){ console.error(dbError); item.status = 'error'; item.error = /row-level|policy/i.test(dbError.message || '') ? 'Not signed in — sign in again' : 'Could not save'; renderGallery(); continue; }
 
     gallery.push({ ...payload, eventId: payload.event_id });
     item.status = 'done';
@@ -4842,7 +4874,9 @@ async function submitBulkGallery(){
     renderGallery();
   }
 
-  setStatus(`Done — ${uploaded} photo${uploaded===1?'':'s'} added.`, 'success');
+  const failed = galleryBulkQueue.filter(x => x.status === 'error').length;
+  if (failed) setStatus(`${uploaded} added, ${failed} failed — see the red message on each photo.`, 'error');
+  else setStatus(`Done — ${uploaded} photo${uploaded===1?'':'s'} added.`, 'success');
   renderGalleryFilters();
   renderHome();
 }

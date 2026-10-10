@@ -280,6 +280,10 @@ The normal Live Scores → Leaderboard tab used to be a light table (`committeeL
 
 A Home Screen icon saved from `login.html` reopens there after every phone lock, and the page used to sit on the sign-in screen for ~2s while the Supabase script/branding loaded before `onAuthStateChange` redirected. A tiny inline script at the top of `<head>` now checks `localStorage` for an `sb-*-auth-token` with a refresh token and calls `location.replace('/')` immediately (`index.html` refreshes an expired access token itself). It is skipped for magic/reset/setup links (`setup`, `code`, `token_hash`, `type` params; `access_token`/`type=`/`error` in the hash) and for `?signin=1` — every deliberate link from `index.html` to the sign-in page (`handleNavLock()`, the My Account "Sign in →" link) carries `?signin=1` so a stale stored session can't trap someone in a redirect loop. Any new link to `login.html` from the main site must add `?signin=1`.
 
+### Gallery uploads (2026-10-10)
+
+A member couldn't add photos from their phone. The bulk uploader (`submitBulkGallery()`) used to reject any photo over 5MB and just badge it "Failed" with no reason — phone photos are routinely 5–12MB. `prepareImageForUpload()` now shrinks each photo to a JPEG (max 2400px, quality .85, EXIF rotation applied via `createImageBitmap`) before upload; the cap after shrinking is 10MB (videos 50MB). Each failed item shows its reason ("Not signed in — sign in again" for RLS/auth errors, "Too large", etc.) and the final status reports `N added, M failed` instead of claiming success. The other upload spots (committee/news/logo/course photos) still upload the raw file.
+
 ## Known follow-up work (not yet done)
 
 - **Match Play scoring** — schema/dropdown-only (see GPS distances + proper scoring above): `events.scoring_format` accepts `'match_play'` and it's selectable in the admin UI, but there's no actual head-to-head pairing or hole-by-hole up/down leaderboard built yet. Needs a pairing concept (which two players/teams face off) added to the groupings UI before this is real.
