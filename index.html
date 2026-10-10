@@ -6452,9 +6452,9 @@ function switchLiveRound(roundId){
 
 /* --- leaderboard view --- */
 /* Scores are visible up to and including this hole for non-committee —
-   scaled to the round's own hole count (18-hole rounds freeze with 5 to
-   play, so a 9-hole round freezes with 4 to play). */
-function blackoutHoleFor(holes){ return Math.max(1, holes - 5); }
+   scaled to the round's own hole count (18-hole rounds freeze with 2 to
+   play, so a 9-hole round freezes with 2 to play too). */
+function blackoutHoleFor(holes){ return Math.max(1, holes - 2); }
 
 function getLeaderboard(eventId, maxHole = 18, roundId = null){
   const evScorecards = scorecards.filter(s => s.event_id === eventId
@@ -7149,7 +7149,7 @@ function renderFocusLeaderboard(chrome = true){
         <span class="lock">🔒</span>
         <div>
           <div class="t">Scores frozen at hole ${blackoutHole}</div>
-          <div class="d">Standings are held back for the last few holes so the finish stays a surprise. Full leaderboard returns once the captain announces the result.</div>
+          <div class="d">Standings are held back for the last two holes so the finish stays a surprise. Full leaderboard returns once the captain announces the result.</div>
         </div>
       </div>
       <div class="focus-lb-list">${rows}</div>

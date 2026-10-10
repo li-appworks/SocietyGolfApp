@@ -188,7 +188,7 @@ Found and fixed **nine separate call sites** across two sweeps (the first regex 
 
 ## Live scoring specifics
 
-Stableford scoring by hole, entered per group. The blackout hole (scores freeze for non-committee viewers to preserve the finish as a surprise; admin logins bypass it and see full live standings) is computed as `holes - 5` via `blackoutHoleFor()` rather than a fixed constant, so it scales for 9-hole rounds too (see "Multi-round events" below) — there is no more standalone `SCORE_BLACKOUT_HOLE` constant. "Finalise" (`finaliseScores()`) writes only the winner into `honours` via `syncHonourForEvent()`, keyed by event id (and round id, see below) so re-finalising updates rather than duplicates — there's no separate table recording the full top-3/score summary despite what the button copy implies.
+Stableford scoring by hole, entered per group. The blackout hole (scores freeze for non-committee viewers to preserve the finish as a surprise; admin logins bypass it and see full live standings) is computed as `holes - 2` (the last two holes are frozen; changed from `holes - 5` on 2026-10-10 after the first live event) via `blackoutHoleFor()` rather than a fixed constant, so it scales for 9-hole rounds too (see "Multi-round events" below) — there is no more standalone `SCORE_BLACKOUT_HOLE` constant. "Finalise" (`finaliseScores()`) writes only the winner into `honours` via `syncHonourForEvent()`, keyed by event id (and round id, see below) so re-finalising updates rather than duplicates — there's no separate table recording the full top-3/score summary despite what the button copy implies.
 
 ### login.html's visible branding was never actually per-society (2026-09-06)
 
