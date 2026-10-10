@@ -1413,6 +1413,7 @@
   }
   .focus-nav button.next{background:var(--brass); color:var(--ink); border-color:var(--brass);}
   .focus-nav button:disabled{opacity:.35; cursor:default;}
+  .focus-nav button.finish{background:#5CC17A; border-color:#5CC17A; color:#0F2A18;}
 
   .done-banner{
     margin:0 1rem .8rem; padding:.65rem .8rem; border-radius:.85rem;
@@ -6999,7 +7000,9 @@ function renderFocusEntry(){
     <div class="focus-players">${rows}</div>
     <div class="focus-nav">
       <button ${currentHole<=1?'disabled':''} onclick="changeHole(${currentHole-1})">← Hole ${currentHole-1}</button>
-      <button class="next" ${currentHole>=holes?'disabled':''} onclick="changeHole(${currentHole+1})">Hole ${currentHole+1} →</button>
+      ${currentHole>=holes
+        ? `<button class="next finish" onclick="finishRound()">Finish round ✓</button>`
+        : `<button class="next" onclick="changeHole(${currentHole+1})">Hole ${currentHole+1} →</button>`}
     </div>`;
 }
 
@@ -7185,6 +7188,32 @@ function renderEntryView(){
         <button class="btn ghost" onclick="setLiveSubView('setup')">Change group</button>
       </div>
     </div>`;
+}
+
+/* Last hole's "Finish round" button. Scores save as they're tapped, so this
+   doesn't submit anything new — it checks the group has every hole scored
+   (jumping to the first gap if not), pushes any queued scores, and takes the
+   marker to the leaderboard. Replaces a greyed-out "Hole 19" button that
+   people mistook for a broken Submit. */
+async function finishRound(){
+  const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  const holes = roundHoles(activeRound, eventById(liveEventId));
+  for (let h = 1; h <= holes; h++){
+    const missing = scoringPlayerIds.filter(pid => {
+      const sc = scorecardFor(liveEventId, liveRoundId, pid);
+      return !sc || getHoleScore(sc.id, h) === null;
+    });
+    if (missing.length){
+      const names = missing.map(pid => { const p = players.find(x => x.id === pid); return p ? p.first_name : 'player'; }).join(', ');
+      alert(`Hole ${h} has no score for ${names}. Add it (a blank hole can be scored 0), then tap Finish round again.`);
+      changeHole(h);
+      return;
+    }
+  }
+  await processScorecardQueue();
+  await processScoreQueue();
+  scoringFocusMode = true;
+  setLiveSubView('leaderboard');
 }
 
 function changeHole(hole){
