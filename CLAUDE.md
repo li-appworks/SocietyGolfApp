@@ -276,6 +276,10 @@ Found at the first real event: after a phone slept, unlocking could freeze Focus
 
 The normal Live Scores → Leaderboard tab used to be a light table (`committeeLeaderboardHtml`, now unused) while Focus Mode had its own dark rows, and the two drifted. `renderLeaderboardView()` now returns `<div class="lb-panel">` + `renderFocusLeaderboard(false)` (the `false` drops the ✕/banner chrome), so both views share rows, prize tags, frozen/sealed/reveal states and the admin Finalise button. The multi-round **Overall** tab still uses its own table (`renderOverallLeaderboardView`). Group labels and the "leader/last place" fun labels from the old table are gone.
 
+### Instant redirect for signed-in users on login.html (2026-10-10)
+
+A Home Screen icon saved from `login.html` reopens there after every phone lock, and the page used to sit on the sign-in screen for ~2s while the Supabase script/branding loaded before `onAuthStateChange` redirected. A tiny inline script at the top of `<head>` now checks `localStorage` for an `sb-*-auth-token` with a refresh token and calls `location.replace('/')` immediately (`index.html` refreshes an expired access token itself). It is skipped for magic/reset/setup links (`setup`, `code`, `token_hash`, `type` params; `access_token`/`type=`/`error` in the hash) and for `?signin=1` — every deliberate link from `index.html` to the sign-in page (`handleNavLock()`, the My Account "Sign in →" link) carries `?signin=1` so a stale stored session can't trap someone in a redirect loop. Any new link to `login.html` from the main site must add `?signin=1`.
+
 ## Known follow-up work (not yet done)
 
 - **Match Play scoring** — schema/dropdown-only (see GPS distances + proper scoring above): `events.scoring_format` accepts `'match_play'` and it's selectable in the admin UI, but there's no actual head-to-head pairing or hole-by-hole up/down leaderboard built yet. Needs a pairing concept (which two players/teams face off) added to the groupings UI before this is real.

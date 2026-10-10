@@ -3,6 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Instant bounce for someone who's already signed in: a Home Screen icon saved from this page reopens
+     here after every phone lock, and waiting for the Supabase script + branding to load before redirecting
+     showed this page for a couple of seconds. A stored session means go straight to the site. Skipped when
+     arriving from a magic/reset link or setup flow (hash/code/setup params) or when index.html sends someone
+     here deliberately to sign in (?signin=1). index.html refreshes an expired token itself. -->
+<script>
+(function(){
+  try {
+    var q = location.search, h = location.hash;
+    if (/[?&](signin|setup|code|token_hash|type)=?/.test(q) || /access_token|refresh_token|type=|error/.test(h)) return;
+    for (var i = 0; i < localStorage.length; i++){
+      var k = localStorage.key(i);
+      if (/^sb-.*-auth-token$/.test(k)){
+        var v = JSON.parse(localStorage.getItem(k) || 'null');
+        if (v && (v.refresh_token || (v.currentSession && v.currentSession.refresh_token))){ location.replace('/'); return; }
+      }
+    }
+  } catch(e){}
+})();
+</script>
 <title>Gytte Lane Golf Society — Sign in</title>
 <link rel="icon" id="site-favicon" href="">
 <link rel="apple-touch-icon" id="apple-touch-icon" sizes="180x180" href="">

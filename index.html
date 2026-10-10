@@ -4422,7 +4422,7 @@ function updateNavLock(){
 
 function handleNavLock(){
   if (isMember){ closeMoreDrawer(); goTo('myaccount'); setBottomNav('myaccount'); }
-  else window.location.href = 'login.html';
+  else window.location.href = 'login.html?signin=1';
 }
 
 async function memberSignOut(){
@@ -5512,7 +5512,7 @@ function renderMyAccount(){
   const el = document.getElementById('myaccount-content');
   if (!el) return;
   if (!isMember){
-    el.innerHTML = `<p class="muted">Sign in to see your account. <a href="login.html">Sign in →</a></p>`;
+    el.innerHTML = `<p class="muted">Sign in to see your account. <a href="login.html?signin=1">Sign in →</a></p>`;
     return;
   }
   const p = myAccountPlayer();
