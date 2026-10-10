@@ -1675,6 +1675,8 @@
   .frozen-banner .t{font-size:.8rem; font-weight:800; color:var(--brass-light);}
   .frozen-banner .d{font-size:.72rem; color:rgba(250,248,242,.65); margin-top:.15rem; line-height:1.45;}
 
+  .lb-panel{background:var(--ink); color:var(--paper); border-radius:1rem; padding:1.1rem 0 .4rem; margin-top:1rem; display:flex; flex-direction:column;}
+  .lb-panel .focus-lb-list{overflow:visible;}
   .focus-lb-title{text-align:center; padding:.3rem 1rem 1rem; flex-shrink:0;}
   .focus-lb-title .label{font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); font-weight:700;}
   .focus-lb-title .ev{font-family:var(--display); font-size:1.25rem; font-weight:800; margin-top:.2rem;}
@@ -6508,68 +6510,9 @@ function renderLeaderboardView(){
   const fullLb = getLeaderboard(liveEventId, holes, liveRoundId);
   if (!fullLb.length) return `<p class="muted" style="margin-top:.5rem;">No scores yet for this ${activeRound ? 'round' : 'event'}. Use "Enter scores" to start recording.</p>`;
 
-  const maxHoleAnyone = fullLb.reduce((max, e) => Math.max(max, e.actualThru), 0);
-  // "Finished" only looks at players who actually started — someone signed
-  // up but never showing a single hole (a no-show, or a stray scorecard
-  // that doesn't belong to this round at all) shouldn't be able to block
-  // Finalise forever just by sitting there at "Not started". Real bug found
-  // 2026-09-05: a multi-round event's Round 1 had several signed-up players
-  // who'd only played Round 2, plus leftover unrelated test scorecards from
-  // weeks earlier — under the old `.every()` (which required literally
-  // everyone, started or not, to have completed every hole) the Finalise
-  // button never appeared at all.
-  const started = fullLb.filter(e => e.started);
-  const allFinished = started.length > 0 && started.every(e => e.actualThru === holes);
-  // The reveal-suspense freeze only makes sense for a genuine trophy fixture
-  // (captain's-announcement style) — a casual round with no trophy assigned
-  // stays fully live/visible the whole way through, every format.
-  const isTrophyEvent = !!(ev && ev.trophy);
-  const pastBlackout = isTrophyEvent && maxHoleAnyone > blackoutHole;
-
-  // Non-committee: all holes done → sealed, no scores shown
-  if (!isLoggedIn && isTrophyEvent && allFinished){
-    return `
-      <div style="text-align:center; padding:2.5rem 1rem;">
-        <div style="font-size:2.5rem; margin-bottom:.8rem;">🏆</div>
-        <h3 style="font-family:var(--display); font-size:1.5rem; margin:0 0 .5rem; color:var(--ink);">Scores are sealed!</h3>
-        <p style="color:var(--text-muted); max-width:36ch; margin:0 auto;">The captain will announce the final results shortly. Well played everyone!</p>
-      </div>`;
-  }
-
-  // Committee: all done → show full leaderboard with finalise button.
-  // For a multi-round event, only the combined "Overall" view finalises to
-  // Hall of Fame (see renderOverallLeaderboardView) — a single round's own
-  // Finalise button is deliberately hidden here so a multi-round event
-  // never ends up with a per-round winner in the Hall of Fame alongside
-  // the combined one; showing both was confusing (which one's "the"
-  // result depended entirely on which tab you happened to have open).
-  if (isLoggedIn && allFinished){
-    return committeeLeaderboardHtml(fullLb, evRounds.length === 0, holes, liveRoundId)
-      + (evRounds.length ? `<p class="muted" style="margin-top:1rem;">This round is finished — select "🏆 Overall (combined)" above once every round is done to finalise the tour's overall winner.</p>` : '');
-  }
-
-  // Non-committee: past the blackout hole → freeze display there
-  if (!isLoggedIn && pastBlackout){
-    const frozenLb = getLeaderboard(liveEventId, blackoutHole, liveRoundId);
-    return `
-      <div class="card" style="border-color:var(--brass); margin-bottom:1.2rem; display:flex; align-items:center; gap:.8rem;">
-        <span style="font-size:1.4rem;">🔒</span>
-        <div>
-          <strong>Scores paused after hole ${blackoutHole}</strong>
-          <p style="margin:.2rem 0 0; font-size:.88rem; color:var(--text-muted);">The live leaderboard is frozen to keep the final result a surprise. Check back after the captain's announcement!</p>
-        </div>
-      </div>
-      ${committeeLeaderboardHtml(frozenLb, false, holes, liveRoundId)}`;
-  }
-
-  // Normal: show live leaderboard (committee, a non-trophy event, or before
-  // the blackout hole on a trophy event).
-  const lb = (isLoggedIn || !isTrophyEvent) ? fullLb : getLeaderboard(liveEventId, blackoutHole, liveRoundId);
-  return (isLoggedIn && pastBlackout
-    ? `<div class="card" style="border-color:var(--bracken); margin-bottom:1rem; font-size:.88rem;">
-        <strong>Admin view</strong> — public leaderboard is frozen at hole ${blackoutHole}. You can see all ${maxHoleAnyone} holes played.
-       </div>`
-    : '') + committeeLeaderboardHtml(lb, false, holes, liveRoundId);
+  // Same screen as Focus Mode's leaderboard (rows, prize tags, frozen/sealed/
+  // reveal states, admin Finalise) — one renderer so the two can't drift apart.
+  return `<div class="lb-panel">${renderFocusLeaderboard(false)}</div>`;
 }
 
 /* Combined leaderboard for a multi-round event — sums each player's points
@@ -7105,10 +7048,10 @@ function focusLbFootHtml(){
   return `<div class="focus-lb-foot"><button onclick="refreshLeaderboardNow(this)">🔄 Refresh</button> · updates automatically</div>`;
 }
 
-function renderFocusLeaderboard(){
+function renderFocusLeaderboard(chrome = true){
   const evRounds = roundsForEvent(liveEventId);
   const ev = eventById(liveEventId);
-  const topBar = focusTopBarHtml('leaderboard');
+  const topBar = chrome ? focusTopBarHtml('leaderboard') : '';
 
   if (evRounds.length && liveRoundId === null){
     // Not reachable via focus mode's own navigation today — Start/Resume
