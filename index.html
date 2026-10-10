@@ -2715,7 +2715,7 @@ function goTo(sectionName, opts){
   // Navigating away from Live Scores always leaves focus mode too — there's
   // no way to reach it from any other section, so resuming it later would
   // be surprising rather than helpful.
-  if (sectionName !== 'scores' && sectionName !== 'leaderboard') scoringFocusMode = false;
+  if (sectionName !== 'scores' && sectionName !== 'leaderboard'){ scoringFocusMode = false; clearFocusSession(); }
   syncScoringFocusClass();
   window.scrollTo({ top:0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   if (opts && opts.highlightEvent) highlightEvent(opts.highlightEvent);
@@ -5987,6 +5987,81 @@ let focusPlayerPos = null;
 let liveChannel = null;
 let liveScoresReady = false; // true once tables confirmed to exist
 
+/* ---- Focus mode survival: phone sleep / tab discard ----
+   iOS can freeze a backgrounded page (websocket dies, in-flight requests
+   hang) or throw it away entirely and reload it on unlock — which used to
+   drop everyone back to the start with no group selected ("resume round").
+   Three defences: (1) keep the screen awake while scoring (Wake Lock),
+   (2) remember where you were (event/round/group/hole/screen) in
+   localStorage and drop straight back in after a reload, (3) on wake,
+   restart anything that may have died: realtime channel, hung sync
+   flags, stale data. */
+const FOCUS_SESSION_KEY = 'glgs-focus-session';
+let pendingFocusRestore = null;
+let wakeLockSentinel = null;
+
+function saveFocusSession(){
+  try {
+    localStorage.setItem(FOCUS_SESSION_KEY, JSON.stringify({
+      societyId, eventId: liveEventId, roundId: liveRoundId, playerIds: scoringPlayerIds,
+      hole: currentHole, view: liveSubView, savedAt: Date.now()
+    }));
+  } catch(e){}
+}
+function clearFocusSession(){ try { localStorage.removeItem(FOCUS_SESSION_KEY); } catch(e){} }
+function readFocusSession(){
+  try {
+    const fr = JSON.parse(localStorage.getItem(FOCUS_SESSION_KEY) || 'null');
+    if (!fr || !fr.eventId || !Array.isArray(fr.playerIds) || !fr.playerIds.length) return null;
+    if (fr.societyId !== societyId) return null;
+    if (Date.now() - fr.savedAt > 18 * 3600 * 1000) return null; // a day's golf, not last week's
+    if (!events.some(e => e.id === fr.eventId)) return null;
+    return fr;
+  } catch(e){ return null; }
+}
+function applyFocusSession(fr){
+  scoringPlayerIds = fr.playerIds;
+  currentHole = fr.hole || 1;
+  liveSubView = (fr.view === 'leaderboard') ? 'leaderboard' : 'entry';
+  scoringFocusMode = true;
+  handicapConfirmQueue = []; // already confirmed before the reload
+  const ev = eventById(fr.eventId);
+  entryScoreMode = (ev && ev.scoring_format && ev.scoring_format !== 'stableford') ? 'strokes' : 'points';
+}
+
+async function manageWakeLock(){
+  const secActive = document.getElementById('sec-scores')?.classList.contains('active');
+  const want = scoringFocusMode && !!secActive && (liveSubView === 'entry' || liveSubView === 'leaderboard') && document.visibilityState === 'visible';
+  if (want && !wakeLockSentinel && 'wakeLock' in navigator){
+    try {
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+      wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
+    } catch(e){ wakeLockSentinel = null; }
+  } else if (!want && wakeLockSentinel){
+    try { await wakeLockSentinel.release(); } catch(e){}
+    wakeLockSentinel = null;
+  }
+}
+
+async function resumeLiveAfterWake(){
+  if (document.visibilityState !== 'visible' || !liveEventId) return;
+  if (!document.getElementById('sec-scores')?.classList.contains('active')) return;
+  manageWakeLock();
+  // A request that hung while the phone slept can leave these stuck on true
+  // forever, silently stopping every future sync.
+  queueProcessing = false; scorecardQueueProcessing = false;
+  processScorecardQueue(); processScoreQueue();
+  // The websocket almost certainly died — rebuild it.
+  unsubscribeLiveScores();
+  subscribeToLiveScores(liveEventId);
+  try {
+    await Promise.race([loadLiveScoresData(liveEventId), new Promise(res => setTimeout(res, 10000))]);
+  } catch(e){}
+  try { renderLiveScores(); } catch(e){ console.warn('Re-render after wake failed:', e); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') resumeLiveAfterWake(); });
+window.addEventListener('pageshow', e => { if (e.persisted) resumeLiveAfterWake(); });
+
 async function loadLiveScoresData(eventId){
   if (!db) return;
   try {
@@ -6118,6 +6193,8 @@ function scorecardFor(eventId, roundId, playerId){
 }
 
 async function openLiveScores(){
+  const fr = pendingFocusRestore; pendingFocusRestore = null;
+  if (fr) liveEventId = fr.eventId;
   if (!liveEventId){
     // default to the most recently started event
     const upcoming = events.filter(e => eventStatus(e) === 'upcoming').sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -6128,8 +6205,10 @@ async function openLiveScores(){
   if (liveEventId){
     const evRounds = roundsForEvent(liveEventId);
     liveRoundId = evRounds.length ? evRounds[0].id : null;
+    if (fr) liveRoundId = fr.roundId || null;
     await loadLiveScoresData(liveEventId);
     subscribeToLiveScores(liveEventId);
+    if (fr) applyFocusSession(fr);
   }
   renderLiveScores();
 }
@@ -6147,6 +6226,7 @@ function renderLiveScores(){
   }
 
   if (scoringFocusMode && (liveSubView === 'entry' || liveSubView === 'leaderboard')){
+    saveFocusSession();
     el.innerHTML = renderScoringFocus();
     updateSyncIndicator();
     manageLeaderboardPoll();
@@ -6155,6 +6235,7 @@ function renderLiveScores(){
     return;
   }
   manageFocusGpsWatch();
+  clearFocusSession();
 
   const shortCourse = c => (c || '').replace(/\s+golf\s+club\s*$/i, '').replace(/\s+GC\s*$/i, '').trim();
   const shortDate = iso => {
@@ -6318,6 +6399,7 @@ function syncScoringFocusClass(){
   const secActive = document.getElementById('sec-scores')?.classList.contains('active');
   const active = scoringFocusMode && (liveSubView === 'entry' || liveSubView === 'leaderboard') && !!secActive;
   document.body.classList.toggle('scoring-focus', active);
+  manageWakeLock();
 }
 
 function setLiveSubView(view){
@@ -7237,6 +7319,8 @@ function changeHole(hole){
 let scoreQueue = [];
 try { scoreQueue = JSON.parse(localStorage.getItem('glgs-score-queue') || '[]'); } catch(e){ scoreQueue = []; }
 let queueProcessing = false;
+let queueProcessingSince = 0;
+let scorecardQueueSince = 0;
 
 let scorecardQueue = [];
 try { scorecardQueue = JSON.parse(localStorage.getItem('glgs-scorecard-queue') || '[]'); } catch(e){ scorecardQueue = []; }
@@ -7264,8 +7348,9 @@ function mergeScorecardQueueIntoScorecards(){
 }
 
 async function processScorecardQueue(){
+  if (scorecardQueueProcessing && Date.now() - scorecardQueueSince > 45000) scorecardQueueProcessing = false;
   if (scorecardQueueProcessing || !db || !scorecardQueue.length || !navigator.onLine){ updateSyncIndicator(); return; }
-  scorecardQueueProcessing = true;
+  scorecardQueueProcessing = true; scorecardQueueSince = Date.now();
   updateSyncIndicator();
   const remaining = [];
   for (const item of scorecardQueue){
@@ -7325,9 +7410,10 @@ async function setHoleScore(scorecardId, hole, points, strokes = null){
 }
 
 async function processScoreQueue(){
+  if (queueProcessing && Date.now() - queueProcessingSince > 45000) queueProcessing = false; // hung request (e.g. phone slept mid-sync)
   if (queueProcessing || !db || !scoreQueue.length){ updateSyncIndicator(); return; }
   if (!navigator.onLine){ updateSyncIndicator(); return; }
-  queueProcessing = true;
+  queueProcessing = true; queueProcessingSince = Date.now();
   updateSyncIndicator();
   if (scorecardQueue.length) await processScorecardQueue();
   const remaining = [];
@@ -10933,6 +11019,14 @@ async function init(){
     } else if (outcome === 'cancelled'){
       alert('Checkout was cancelled — no payment was taken. You can try again or pay by bank transfer instead.');
     }
+  }
+
+  /* Page was reloaded mid-round (phone slept and iOS discarded the tab, or an
+     accidental refresh) — put the marker straight back on their hole. */
+  const savedFocus = readFocusSession();
+  if (savedFocus && !params.has('stripe')){
+    pendingFocusRestore = savedFocus;
+    goTo('scores');
   }
 }
 init();
