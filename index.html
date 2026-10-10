@@ -1693,6 +1693,8 @@
   .lb-pos.num{font-size:.82rem; color:rgba(250,248,242,.55); font-weight:700;}
   .lb-name{flex:1; min-width:0; font-size:.86rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .lb-name .prize-tag{display:block; width:fit-content; margin-top:.2rem; background:rgba(227,193,115,.18); color:var(--brass-light); border:1px solid rgba(227,193,115,.45);}
+  .lb-name .lb-sub{display:block; font-size:.68rem; font-weight:500; color:rgba(250,248,242,.55); margin-top:.15rem; white-space:normal;}
+  .lb-name .lb-sub.fun{font-style:italic; color:var(--brass-light);}
   .lb-row:has(.prize-tag){border:1px solid rgba(227,193,115,.35);}
   .lb-pts{font-size:.88rem; font-weight:800; color:var(--brass-light); font-variant-numeric:tabular-nums;}
   .lb-thru{font-size:.68rem; color:rgba(250,248,242,.5); width:3.2rem; text-align:right; flex-shrink:0; font-variant-numeric:tabular-nums;}
@@ -7031,14 +7033,34 @@ function renderFocusEntry(){
     </div>`;
 }
 
-function focusLbRowHtml(entry, i, frozen, prizes){
+/* Everything a leaderboard row needs beyond the entry itself: prize slots,
+   "Group N" labels (same tee-time numbering as Groupings/Enter Scores), and
+   the playful leader / last-place captions. */
+function lbExtras(lb){
+  const n = lb.filter(e => e.started).length;
+  let lastIdx = -1;
+  lb.forEach((e, idx) => { if (e.started) lastIdx = idx; });
+  const groups = new Map();
+  matchGroups.filter(g => g.event_id === liveEventId && (liveRoundId ? g.round_id === liveRoundId : !g.round_id))
+    .sort((a,b) => a.tee_time.localeCompare(b.tee_time))
+    .forEach((g, idx) => matchGroupPlayers.filter(gp => gp.group_id === g.id).forEach(gp => groups.set(gp.player_id, 'Group ' + (idx + 1))));
+  return { prizes: prizeSlots(lb), groups, lastIdx, n, seed: new Date().getDate() };
+}
+
+function focusLbRowHtml(entry, i, frozen, x){
+  const prizes = x && x.prizes;
   const mine = entry.player && scoringPlayerIds.includes(entry.player.id);
   const pos = !entry.started ? `<span class="lb-pos">—</span>`
     : i < 3 ? `<span class="lb-pos">${['🥇','🥈','🥉'][i]}</span>` : `<span class="lb-pos num">${i+1}</span>`;
   const thruLabel = !entry.started ? 'Not started' : `Thru ${entry.thru}`;
+  const groupName = x && entry.player && x.groups.get(entry.player.id);
+  const isFirst = x && x.n >= 2 && entry.started && i === 0;
+  const isLast = x && x.n >= 2 && entry.started && i === x.lastIdx && i !== 0;
+  const fun = isFirst ? pickLabel(LEADER_LABELS, x.seed) : isLast ? pickLabel(LAST_PLACE_LABELS, x.seed) : '';
+  const sub = (groupName ? `<span class="lb-sub">${groupName}</span>` : '') + (fun ? `<span class="lb-sub fun">${escapeHtml(fun)}</span>` : '');
   return `<div class="lb-row ${mine?'me':''} ${frozen?'frozen':''}">
     ${pos}
-    <span class="lb-name">${entry.player ? escapeHtml(entry.player.first_name + ' ' + entry.player.last_name) : 'Unknown'}${prizes ? prizeTagHtml(prizes.get(i)) : ''}</span>
+    <span class="lb-name">${entry.player ? escapeHtml(entry.player.first_name + ' ' + entry.player.last_name) : 'Unknown'}${prizes ? prizeTagHtml(prizes.get(i)) : ''}${sub}</span>
     <span class="lb-pts">${entry.started ? entry.total : '—'}</span>
     <span class="lb-thru">${thruLabel}</span>
   </div>`;
@@ -7080,9 +7102,10 @@ function renderFocusLeaderboard(chrome = true){
 
   // Admin: bypasses the blackout entirely, same as the normal chrome view
   if (isLoggedIn){
-    const pz = prizeSlots(fullLb);
+    const pz = lbExtras(fullLb);
     const rows = fullLb.map((e,i) => focusLbRowHtml(e,i,false,pz)).join('');
-    const doneBanner = allFinished ? `<div class="done-banner">✓ Every player's finished — full standings, admin view</div>` : '';
+    const adminNote = pastBlackout ? `<div class="frozen-banner"><span class="lock">👁</span><div><div class="t">Admin view</div><div class="d">The public leaderboard is frozen at hole ${blackoutHole}. You can see all ${maxHoleAnyone} holes played.</div></div></div>` : '';
+    const doneBanner = adminNote + (allFinished ? `<div class="done-banner">✓ Every player's finished — full standings, admin view</div>` : '');
     const cta = allFinished
       ? (evRounds.length
           ? `<p class="muted" style="padding:0 1rem 1.4rem; color:rgba(250,248,242,.55); font-size:.78rem; text-align:center;">This round is finished — exit focus mode and select "🏆 Overall (combined)" once every round is done to finalise the tour's overall winner.</p>`
@@ -7119,7 +7142,7 @@ function renderFocusLeaderboard(chrome = true){
   // Non-admin, past the blackout hole → frozen
   if (pastBlackout){
     const frozenLb = getLeaderboard(liveEventId, blackoutHole, liveRoundId);
-    const pz = prizeSlots(frozenLb);
+    const pz = lbExtras(frozenLb);
     const rows = frozenLb.map((e,i) => focusLbRowHtml(e,i,true,pz)).join('');
     return topBar + title + `
       <div class="frozen-banner">
@@ -7136,7 +7159,7 @@ function renderFocusLeaderboard(chrome = true){
   // Normal live view: full board for a non-trophy event, or before the
   // blackout hole on a trophy one.
   const lb = isTrophyEvent ? getLeaderboard(liveEventId, blackoutHole, liveRoundId) : fullLb;
-  const pz = prizeSlots(lb);
+  const pz = lbExtras(lb);
   const rows = lb.map((e,i) => focusLbRowHtml(e,i,false,pz)).join('');
   return topBar + title + `<div class="focus-lb-list">${rows}</div>` + focusLbFootHtml();
 }
