@@ -6816,7 +6816,11 @@ function startScoring(){
   entryScoreMode = null;
   const ev = eventById(liveEventId);
   entryScoreMode = (ev && ev.scoring_format && ev.scoring_format !== 'stableford') ? 'strokes' : 'points';
-  handicapConfirmQueue = scoringPlayerIds.filter(pid => !handicapConfirmedKeys.has(handicapConfirmKey(pid)));
+  // Plain Stableford points entry never uses the handicap, so don't interrupt scoring to confirm it;
+  // Stroke/Match Play compute net points from it, so those still confirm first.
+  handicapConfirmQueue = entryScoreMode === 'strokes'
+    ? scoringPlayerIds.filter(pid => !handicapConfirmedKeys.has(handicapConfirmKey(pid)))
+    : [];
   handicapEditOpen = false;
   renderLiveScores();
 }
