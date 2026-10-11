@@ -292,6 +292,10 @@ Guests can't win and may only play twice in any 3 years before they must join (t
 
 Finalising a trophy event (`syncHonourForEvent()` → `syncWinnerNews()`) also creates a News post "{Winner} wins the {Trophy} at {Course}" (id `winner-<eventId>[-<roundId>]`, dated today, `event_id` set, excerpt with the score and a pointer to the Hall of Fame). Home's Latest-news carousel (`renderHighlightsCarousel()`) already shows the four newest posts, with a "🏆 Winner" tag for these. Re-finalising only rewrites the post when the winner changes, so an admin's edits (photo, wording) survive; it can be edited or deleted like any news post. Non-trophy events don't post.
 
+### Live Scores landing after the round (2026-10-11)
+
+`renderLiveLandingView()` has three phases: **live** (default: "Today's round", Enter scores + Leaderboard), **done** (every started player has all holes but no Hall of Fame entry yet: "Round complete", "result to follow", Enter scores row hidden), and **final** (an `honours` row exists for the event/round: "Final result", a winner block with name and points, featured "Final results" row). From **done** onwards the Enter scores row is replaced by a plain "Edit scores" row for admins only. A non-trophy event never gets an honour, so it stops at **done**.
+
 ## Known follow-up work (not yet done)
 
 - **Match Play scoring** — schema/dropdown-only (see GPS distances + proper scoring above): `events.scoring_format` accepts `'match_play'` and it's selectable in the admin UI, but there's no actual head-to-head pairing or hole-by-hole up/down leaderboard built yet. Needs a pairing concept (which two players/teams face off) added to the groupings UI before this is real.
