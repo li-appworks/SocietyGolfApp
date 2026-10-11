@@ -5865,7 +5865,7 @@ function renderHighlightsCarousel(){
     .map(n => ({
       sortKey: new Date(n.date).getTime() || 0,
       html: highlightCardHtml({
-        tag: 'Latest news', image: n.image_url, title: n.title, meta: fmtDate(n.date), desc: n.excerpt,
+        tag: String(n.id).startsWith('winner-') ? '🏆 Winner' : 'Latest news', image: n.image_url, title: n.title, meta: fmtDate(n.date), desc: n.excerpt,
         ctaLabel: 'Read more', ctaOnClick: "goTo('news')",
       }),
     }));
@@ -7575,9 +7575,42 @@ async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffi
       if (data) honours.push(data);
     }
     renderHonours();
+    await syncWinnerNews(eventId, winnerName, roundId, shortCourse, winnerScore);
   } catch(err){
     console.error('Could not update Hall of Fame:', err);
     alert('Result saved, but the Hall of Fame entry could not be updated — you can add it manually on the Hall of Fame page.');
+  }
+}
+
+/* Finalising a trophy event also posts the winner to News (so it shows in
+   the Home page's "Latest news" carousel). One post per event/round, id
+   winner-<event>[-<round>]; re-finalising only rewrites it when the winner
+   changes, so edits an admin makes to the post (photo, wording) survive. */
+async function syncWinnerNews(eventId, winnerName, roundId, courseText, winnerScore){
+  if (!db || !winnerName) return;
+  const ev = eventById(eventId);
+  if (!ev || !ev.trophy) return;
+  const id = 'winner-' + eventId + (roundId ? '-' + roundId : '');
+  const title = winnerName + ' wins the ' + ev.trophy + (courseText ? ' at ' + courseText : '');
+  const excerpt = 'Congratulations to ' + winnerName + ', who won the ' + ev.trophy + (courseText ? ' at ' + courseText : '')
+    + (winnerScore != null ? ' with ' + winnerScore + ' points' : '') + '. Full honours are in the Hall of Fame.';
+  const existing = news.find(n => n.id === id);
+  try {
+    if (existing){
+      if (existing.title === title) return;
+      const { error } = await db.from('news').update({ title, excerpt }).eq('id', id);
+      if (error) throw error;
+      Object.assign(existing, { title, excerpt });
+    } else {
+      const payload = { id, title, date: new Date().toISOString().slice(0,10), excerpt, event_id: eventId, society_id: societyId };
+      const { error } = await db.from('news').insert(payload);
+      if (error) throw error;
+      news.push({ ...payload, eventId });
+    }
+    renderNews();
+    renderHome();
+  } catch(err){
+    console.error('Could not post the winner to News:', err);
   }
 }
 
