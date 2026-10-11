@@ -410,6 +410,23 @@
     font-family:var(--body); font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
     padding:.3rem .65rem; border-radius:999px;
   }
+  /* winner banner — stands in for a photo on auto-generated winner news posts */
+  .winner-banner{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:1.2rem 1rem 1.6rem; color:var(--paper); overflow:hidden;
+    background:radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--brass) 38%, transparent), transparent 55%),
+               linear-gradient(160deg, var(--ink-soft, var(--ink)) 0%, var(--ink) 55%, #1d0710 100%);
+  }
+  .winner-banner::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:.55rem;
+    background:repeating-linear-gradient(135deg, var(--ink) 0 .6rem, var(--claret) .6rem 1.2rem, var(--brass) 1.2rem 1.8rem);
+  }
+  .winner-banner .wb-trophy{font-size:2.6rem; line-height:1; filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));}
+  .winner-banner .wb-label{font-family:var(--body); font-size:.62rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--brass-light); margin-top:.7rem;}
+  .winner-banner .wb-name{font-family:var(--display); font-size:1.55rem; font-weight:800; line-height:1.1; margin-top:.25rem; text-wrap:balance;}
+  .winner-banner .wb-trophy-name{font-family:var(--body); font-size:.8rem; font-weight:600; color:var(--brass-light); margin-top:.45rem;}
+  .winner-banner .wb-meta{font-family:var(--body); font-size:.7rem; color:rgba(250,248,242,.65); margin-top:.15rem;}
+  .news-card-media{position:relative; height:240px; border-radius:var(--radius); overflow:hidden; margin-bottom:.9rem;}
   .highlight-card-body{padding:1.1rem 1.2rem 1.3rem; display:flex; flex-direction:column; flex:1;}
   .highlight-card-body time{font-family:var(--body); font-size:.72rem; color:var(--text-muted);}
   .highlight-card-body h4{font-family:var(--display); font-size:1.05rem; margin:.3rem 0 .45rem; color:var(--ink); line-height:1.25;}
@@ -5053,7 +5070,7 @@ function newsCardHtml(n){
 
   return `
     <article class="news-card">
-      ${n.image_url ? `<img class="news-card-image" src="${n.image_url}" alt="" loading="lazy">` : ''}
+      ${n.image_url ? `<img class="news-card-image" src="${n.image_url}" alt="" loading="lazy">` : (winnerBannerHtml(n) ? `<div class="news-card-media">${winnerBannerHtml(n)}</div>` : '')}
       <time>${fmtDate(n.date)}${editToggle}</time>
       <h3>${escapeHtml(n.title)}</h3>
       <p>${escapeHtml(n.excerpt)}</p>
@@ -5840,8 +5857,26 @@ function galleryTimestamp(g){
   return parseInt((g.id || '').split('-')[1], 10) || 0;
 }
 
-function highlightCardHtml({ tag, image, isVideo, title, meta, desc, ctaLabel, ctaOnClick }){
-  const media = image
+/* Banner for auto-generated winner posts ("X wins the T at C", see
+   syncWinnerNews) that have no photo. Returns '' for any other post, or a
+   winner post whose title an admin has reworded past recognition. */
+function winnerBannerHtml(n){
+  if (!n || !String(n.id).startsWith('winner-') || n.image_url) return '';
+  const m = String(n.title || '').match(/^(.+?) wins the (.+?)(?: at (.+))?$/);
+  if (!m) return '';
+  const year = n.date ? new Date(n.date + 'T00:00:00').getFullYear() : '';
+  const meta = [m[3], year].filter(Boolean).join(' · ');
+  return `<div class="winner-banner">
+    <div class="wb-trophy">🏆</div>
+    <div class="wb-label">Winner</div>
+    <div class="wb-name">${escapeHtml(m[1])}</div>
+    <div class="wb-trophy-name">${escapeHtml(m[2])}</div>
+    ${meta ? `<div class="wb-meta">${escapeHtml(meta)}</div>` : ''}
+  </div>`;
+}
+
+function highlightCardHtml({ tag, image, isVideo, title, meta, desc, ctaLabel, ctaOnClick, bannerHtml }){
+  const media = bannerHtml ? bannerHtml : image
     ? (isVideo ? `<video src="${image}" muted playsinline></video>` : `<img src="${image}" alt="" loading="lazy">`)
     : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-family:var(--body); font-size:.8rem;">${escapeHtml(tag)}</div>`;
   return `
@@ -5870,7 +5905,7 @@ function renderHighlightsCarousel(){
     .map(n => ({
       sortKey: new Date(n.date).getTime() || 0,
       html: highlightCardHtml({
-        tag: String(n.id).startsWith('winner-') ? '🏆 Winner' : 'Latest news', image: n.image_url, title: n.title, meta: fmtDate(n.date), desc: n.excerpt,
+        tag: String(n.id).startsWith('winner-') ? '🏆 Winner' : 'Latest news', image: n.image_url, bannerHtml: winnerBannerHtml(n), title: n.title, meta: fmtDate(n.date), desc: n.excerpt,
         ctaLabel: 'Read more', ctaOnClick: "goTo('news')",
       }),
     }));

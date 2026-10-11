@@ -292,6 +292,8 @@ Guests can't win and may only play twice in any 3 years before they must join (t
 
 Finalising a trophy event (`syncHonourForEvent()` → `syncWinnerNews()`) also creates a News post "{Winner} wins the {Trophy} at {Course}" (id `winner-<eventId>[-<roundId>]`, dated today, `event_id` set, excerpt with the score and a pointer to the Hall of Fame). Home's Latest-news carousel (`renderHighlightsCarousel()`) already shows the four newest posts, with a "🏆 Winner" tag for these. Re-finalising only rewrites the post when the winner changes, so an admin's edits (photo, wording) survive; it can be edited or deleted like any news post. Non-trophy events don't post.
 
+Winner posts have no photo, so `winnerBannerHtml(n)` draws a burgundy banner in its place (trophy, "Winner", the name large, trophy name, course · year, club-tie stripe along the bottom) on both the home carousel card and the News page card. It parses the title (`X wins the T at C`); a post an admin has given a photo, or reworded so it no longer parses, falls back to the normal card.
+
 ### Live Scores landing after the round (2026-10-11)
 
 `renderLiveLandingView()` has three phases: **live** (default: "Today's round", Enter scores + Leaderboard), **done** (every started player has all holes but no Hall of Fame entry yet: "Round complete", "result to follow", Enter scores row hidden), and **final** (an `honours` row exists for the event/round: "Final result", a winner block with name and points, featured "Final results" row). From **done** onwards the Enter scores row is replaced by a plain "Edit scores" row for admins only. A non-trophy event never gets an honour, so it stops at **done**.
