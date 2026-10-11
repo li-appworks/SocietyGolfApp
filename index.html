@@ -8279,7 +8279,10 @@ function renderHonours(){
         </ol>
       </div>`;
   } else if (expandedTrophy === '__memoriam__'){
-    const people = [...memoriam].sort((a,b) => a.name.localeCompare(b.name));
+    const memName = m => { const p = m.player_id ? players.find(x => x.id === m.player_id) : null; return p ? p.first_name + ' ' + p.last_name : m.name; };
+    const people = [...memoriam].sort((a,b) => memName(a).localeCompare(memName(b)));
+    const pickable = [...players].filter(p => !memoriam.some(m => m.player_id === p.id))
+      .sort((a,b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name));
     winnersPanel.innerHTML = `
       <div class="trophy-winners">
         <h3>In Memoriam</h3>
@@ -8289,14 +8292,17 @@ function renderHonours(){
         ${people.length ? `<ol style="columns:2; gap:1.4rem;">
           ${people.map(m => `
             <li style="break-inside:avoid;">
-              <span class="tw-name">${escapeHtml(m.name)}</span>
+              <span class="tw-name">${escapeHtml(memName(m))}</span>
               ${m.passed_year ? `<span class="tw-course">${m.passed_year}</span>` : ''}
-              ${isLoggedIn ? `<button type="button" title="Remove" aria-label="Remove ${escapeHtml(m.name)}" onclick="deleteMemoriam(${m.id})" style="background:none; border:none; color:rgba(255,255,255,.45); cursor:pointer; font-size:.9rem; padding:0 .3rem;">✕</button>` : ''}
+              ${isLoggedIn ? `<button type="button" title="Remove" aria-label="Remove ${escapeHtml(memName(m))}" onclick="deleteMemoriam(${m.id})" style="background:none; border:none; color:rgba(255,255,255,.45); cursor:pointer; font-size:.9rem; padding:0 .3rem;">✕</button>` : ''}
             </li>`).join('')}
         </ol>` : '<p style="color:rgba(255,255,255,.55); font-size:.85rem;">Nobody added yet.</p>'}
         ${isLoggedIn ? `
         <div style="margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,.15); display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
-          <input id="mem-name" placeholder="Name" style="flex:2; min-width:160px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font:inherit;">
+          <select id="mem-player" style="flex:2; min-width:180px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:#2a0d15; color:#fff; font:inherit;">
+            <option value="">Choose a player…</option>
+            ${pickable.map(p => `<option value="${p.id}">${escapeHtml(p.first_name + ' ' + p.last_name)}${p.active === false ? ' (inactive)' : ''}</option>`).join('')}
+          </select>
           <input id="mem-year" type="number" placeholder="Year (optional)" style="flex:1; min-width:110px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font:inherit;">
           <button type="button" class="btn brass" onclick="addMemoriam()">Add</button>
           <span id="mem-status" style="font-size:.78rem; color:rgba(255,255,255,.6); flex-basis:100%;"></span>
@@ -8463,14 +8469,21 @@ function honourPlayerSelectHtml(inputId){
 async function addMemoriam(){
   if (!db || !isLoggedIn) return;
   const status = document.getElementById('mem-status');
-  const name = (document.getElementById('mem-name')?.value || '').trim();
+  const pid = Number(document.getElementById('mem-player')?.value) || null;
   const yr = document.getElementById('mem-year')?.value;
-  if (!name){ if (status) status.textContent = 'Enter a name.'; return; }
-  const payload = { name, passed_year: yr ? Number(yr) : null, society_id: societyId };
+  const player = pid ? players.find(p => p.id === pid) : null;
+  if (!player){ if (status) status.textContent = 'Choose a player from the list.'; return; }
+  const payload = { player_id: player.id, name: player.first_name + ' ' + player.last_name, passed_year: yr ? Number(yr) : null, society_id: societyId };
   const { data, error } = await db.from('memoriam').insert(payload).select().single();
   if (error){ console.error(error); if (status) status.textContent = 'Could not save — please try again.'; return; }
   memoriam.push(data);
+  // Someone who has passed away shouldn't stay on the active player lists (sign-ups, groups).
+  if (player.active !== false){
+    const { error: aErr } = await db.from('players').update({ active: false }).eq('id', player.id);
+    if (!aErr) player.active = false;
+  }
   renderHonours();
+  if (typeof renderPlayers === 'function') renderPlayers();
 }
 
 async function deleteMemoriam(id){
