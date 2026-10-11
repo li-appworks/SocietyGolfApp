@@ -2133,6 +2133,7 @@ let events = [];
 let committee = [];
 let gallery = [];
 let news = [];
+let memoriam = []; // members who have sadly passed away (Hall of Fame -> In Memoriam)
 let societyId = null; // loaded from societies table on init
 let currentSociety = null; // full societies row for the resolved societyId - name, colours, logo, founded year
 
@@ -2503,6 +2504,16 @@ async function loadData(){
   } catch (err){
     console.warn('Honours table not available yet (run add-hall-of-fame.sql):', err);
     honours = [];
+  }
+
+  /* In Memoriam — same graceful fallback if the table isn't there yet */
+  try {
+    const meRes = await db.from('memoriam').select('*').eq('society_id', societyId);
+    if (meRes.error) throw meRes.error;
+    memoriam = meRes.data || [];
+  } catch (err){
+    console.warn('Memoriam table not available:', err);
+    memoriam = [];
   }
 
   /* rounds — optional per-event rounds for multi-round/multi-day fixtures.
@@ -8189,17 +8200,17 @@ function renderHonours(){
       <div class="trophy-count">${captains.filter(h => h.title.toLowerCase()==='captain').length} captains</div>
     </div>`;
 
-  /* In Memoriam tile — only if there are archived players */
-  const archived = players.filter(p => p.active === false);
+  /* In Memoriam tile — once someone is listed (admins always see it, so they can add the first name) */
+  const archived = memoriam;
   const memTileSelected = expandedTrophy === '__memoriam__';
-  if (archived.length){
+  if (archived.length || isLoggedIn){
     shelf.innerHTML += `
       <div class="trophy-card ${memTileSelected ? 'selected' : ''}" role="button" tabindex="0"
            onclick="toggleTrophy('__memoriam__')"
            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('__memoriam__');}">
         ${trophySvg('Memoriam')}
         <h3>In Memoriam</h3>
-        <div class="trophy-count">${archived.length} member${archived.length===1?'':'s'}</div>
+        <div class="trophy-count">${archived.length} remembered</div>
       </div>`;
   }
 
@@ -8268,20 +8279,28 @@ function renderHonours(){
         </ol>
       </div>`;
   } else if (expandedTrophy === '__memoriam__'){
-    const archived = [...players].filter(p => p.active === false)
-      .sort((a,b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name));
+    const people = [...memoriam].sort((a,b) => a.name.localeCompare(b.name));
     winnersPanel.innerHTML = `
       <div class="trophy-winners">
         <h3>In Memoriam</h3>
         <p style="font-size:.85rem; color:rgba(255,255,255,.55); margin:.3rem 0 1rem; max-width:38ch; line-height:1.6;">
-          Players who were members of ${escapeHtml(currentSociety?.name || 'Gytte Lane Golf Society')} and are no longer with us.
+          Members of ${escapeHtml(currentSociety?.name || 'Gytte Lane Golf Society')} who have sadly passed away.
         </p>
-        <ol style="columns:2; gap:1.4rem;">
-          ${archived.map(p => `
+        ${people.length ? `<ol style="columns:2; gap:1.4rem;">
+          ${people.map(m => `
             <li style="break-inside:avoid;">
-              <span class="tw-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</span>
+              <span class="tw-name">${escapeHtml(m.name)}</span>
+              ${m.passed_year ? `<span class="tw-course">${m.passed_year}</span>` : ''}
+              ${isLoggedIn ? `<button type="button" title="Remove" aria-label="Remove ${escapeHtml(m.name)}" onclick="deleteMemoriam(${m.id})" style="background:none; border:none; color:rgba(255,255,255,.45); cursor:pointer; font-size:.9rem; padding:0 .3rem;">✕</button>` : ''}
             </li>`).join('')}
-        </ol>
+        </ol>` : '<p style="color:rgba(255,255,255,.55); font-size:.85rem;">Nobody added yet.</p>'}
+        ${isLoggedIn ? `
+        <div style="margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,.15); display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
+          <input id="mem-name" placeholder="Name" style="flex:2; min-width:160px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font:inherit;">
+          <input id="mem-year" type="number" placeholder="Year (optional)" style="flex:1; min-width:110px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font:inherit;">
+          <button type="button" class="btn brass" onclick="addMemoriam()">Add</button>
+          <span id="mem-status" style="font-size:.78rem; color:rgba(255,255,255,.6); flex-basis:100%;"></span>
+        </div>` : ''}
       </div>`;
   } else if (expandedTrophy === '__ntp1__'){
     winnersPanel.innerHTML = `
@@ -8439,6 +8458,29 @@ function honourPlayerSelectHtml(inputId){
       <option value="">— Select player —</option>
       ${sorted.map(p => `<option value="${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>`).join('')}
     </select>`;
+}
+
+async function addMemoriam(){
+  if (!db || !isLoggedIn) return;
+  const status = document.getElementById('mem-status');
+  const name = (document.getElementById('mem-name')?.value || '').trim();
+  const yr = document.getElementById('mem-year')?.value;
+  if (!name){ if (status) status.textContent = 'Enter a name.'; return; }
+  const payload = { name, passed_year: yr ? Number(yr) : null, society_id: societyId };
+  const { data, error } = await db.from('memoriam').insert(payload).select().single();
+  if (error){ console.error(error); if (status) status.textContent = 'Could not save — please try again.'; return; }
+  memoriam.push(data);
+  renderHonours();
+}
+
+async function deleteMemoriam(id){
+  if (!db || !isLoggedIn) return;
+  const m = memoriam.find(x => x.id === id);
+  if (!m || !confirm('Remove ' + m.name + ' from In Memoriam?')) return;
+  const { error } = await db.from('memoriam').delete().eq('id', id);
+  if (error){ console.error(error); alert('Could not remove — please try again.'); return; }
+  memoriam = memoriam.filter(x => x.id !== id);
+  renderHonours();
 }
 
 let addHonourMode = null; // null | 'trophy' | 'captain'

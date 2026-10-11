@@ -300,6 +300,10 @@ The Hall of Fame page opens with the same banner (`#latest-winner-slot`, `.hof-l
 
 `renderLiveLandingView()` has three phases: **live** (default: "Today's round", Enter scores + Leaderboard), **done** (every started player has all holes but no Hall of Fame entry yet: "Round complete", "result to follow", Enter scores row hidden), and **final** (an `honours` row exists for the event/round: "Final result", a winner block with name and points, featured "Final results" row). From **done** onwards the Enter scores row is replaced by a plain "Edit scores" row for admins only. A non-trophy event never gets an honour, so it stops at **done**.
 
+### In Memoriam (2026-10-11)
+
+Members who have sadly passed away. It used to be inferred from inactive players (`players.active = false`), which can't be added to and would memorialise anyone who simply left; it's now its own table `memoriam` (`id`, `society_id`, `name`, optional `passed_year`; public read, admin insert/update/delete via `is_admin(society_id)`), loaded into `memoriam` in `loadData()`. The two previously-inactive players (Andy Hawkins, Sandy Callander) were copied across when it was created. On Hall of Fame → In Memoriam, admins get a name + optional year form (`addMemoriam()`) and a ✕ on each name (`deleteMemoriam()`); the tile always shows for admins so the first name can be added, and for everyone once the list isn't empty. Names don't need to be players.
+
 ## Known follow-up work (not yet done)
 
 - **Match Play scoring** — schema/dropdown-only (see GPS distances + proper scoring above): `events.scoring_format` accepts `'match_play'` and it's selectable in the admin UI, but there's no actual head-to-head pairing or hole-by-hole up/down leaderboard built yet. Needs a pairing concept (which two players/teams face off) added to the groupings UI before this is real.
