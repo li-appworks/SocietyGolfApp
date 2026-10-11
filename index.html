@@ -426,6 +426,8 @@
   .winner-banner .wb-name{font-family:var(--display); font-size:1.55rem; font-weight:800; line-height:1.1; margin-top:.25rem; text-wrap:balance;}
   .winner-banner .wb-trophy-name{font-family:var(--body); font-size:.8rem; font-weight:600; color:var(--brass-light); margin-top:.45rem;}
   .winner-banner .wb-meta{font-family:var(--body); font-size:.7rem; color:rgba(250,248,242,.65); margin-top:.15rem;}
+  .hof-latest{position:relative; height:250px; border-radius:var(--radius); overflow:hidden; margin-bottom:1.6rem; cursor:pointer; max-width:640px;}
+  .hof-latest .winner-banner .wb-name{font-size:1.9rem;}
   .news-card-media{position:relative; height:240px; border-radius:var(--radius); overflow:hidden; margin-bottom:.9rem;}
   .highlight-card-body{padding:1.1rem 1.2rem 1.3rem; display:flex; flex-direction:column; flex:1;}
   .highlight-card-body time{font-family:var(--body); font-size:.72rem; color:var(--text-muted);}
@@ -1962,6 +1964,7 @@
     <h2 class="section-title">Hall of Fame</h2>
     <p class="lede" style="margin-bottom:1.6rem;">Tap a trophy to see its winners through the years.</p>
 
+    <div id="latest-winner-slot"></div>
     <div class="trophy-shelf" id="trophy-shelf"></div>
     <div id="trophy-winners-panel"></div>
 
@@ -5865,12 +5868,15 @@ function winnerBannerHtml(n){
   const m = String(n.title || '').match(/^(.+?) wins the (.+?)(?: at (.+))?$/);
   if (!m) return '';
   const year = n.date ? new Date(n.date + 'T00:00:00').getFullYear() : '';
-  const meta = [m[3], year].filter(Boolean).join(' · ');
+  return winnerBannerCore({ name: m[1], trophy: m[2], meta: [m[3], year].filter(Boolean).join(' · ') });
+}
+
+function winnerBannerCore({ name, trophy, meta, label }){
   return `<div class="winner-banner">
     <div class="wb-trophy">🏆</div>
-    <div class="wb-label">Winner</div>
-    <div class="wb-name">${escapeHtml(m[1])}</div>
-    <div class="wb-trophy-name">${escapeHtml(m[2])}</div>
+    <div class="wb-label">${escapeHtml(label || 'Winner')}</div>
+    <div class="wb-name">${escapeHtml(name)}</div>
+    <div class="wb-trophy-name">${escapeHtml(trophy)}</div>
     ${meta ? `<div class="wb-meta">${escapeHtml(meta)}</div>` : ''}
   </div>`;
 }
@@ -8131,6 +8137,23 @@ function renderHonours(){
   const isCaptainEntry = h => ['captain','vice-captain'].includes((h.title||'').trim().toLowerCase());
   const trophies = honours.filter(h => !isCaptainEntry(h));
   const captains = honours.filter(h => isCaptainEntry(h)).sort((a,b) => a.year - b.year);
+
+  /* Latest winner banner — the most recent trophy honour (by its event's date
+     when linked, otherwise by year), tapping it opens that trophy's list. */
+  const latestSlot = document.getElementById('latest-winner-slot');
+  if (latestSlot){
+    const when = h => { const ev = h.event_id ? events.find(e => e.id === h.event_id) : null; return ev ? new Date(ev.date + 'T00:00:00').getTime() : new Date((h.year || 0) + '-12-31T00:00:00').getTime(); };
+    const latest = [...trophies].filter(h => h.winner).sort((a,b) => when(b) - when(a) || String(b.id).localeCompare(String(a.id), undefined, {numeric:true}))[0];
+    if (latest){
+      const base = honourBaseName(latest.title);
+      const meta = [honourCourse(latest.title), latest.year, latest.winner_score != null ? latest.winner_score + ' pts' : ''].filter(Boolean).join(' · ');
+      latestSlot.innerHTML = `<div class="hof-latest" role="button" tabindex="0"
+          onclick="toggleTrophy('${base.replace(/'/g,"\\'")}')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('${base.replace(/'/g,"\\'")}');}">
+          ${winnerBannerCore({ name: latest.winner, trophy: base, meta, label: 'Latest winner' })}
+        </div>`;
+    } else latestSlot.innerHTML = '';
+  }
 
   /* group trophies by base competition name */
   const groups = {};

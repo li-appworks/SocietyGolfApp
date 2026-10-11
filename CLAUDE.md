@@ -294,6 +294,8 @@ Finalising a trophy event (`syncHonourForEvent()` → `syncWinnerNews()`) also c
 
 Winner posts have no photo, so `winnerBannerHtml(n)` draws a burgundy banner in its place (trophy, "Winner", the name large, trophy name, course · year, club-tie stripe along the bottom) on both the home carousel card and the News page card. It parses the title (`X wins the T at C`); a post an admin has given a photo, or reworded so it no longer parses, falls back to the normal card.
 
+The Hall of Fame page opens with the same banner (`#latest-winner-slot`, `.hof-latest`, built from `winnerBannerCore()`), labelled "Latest winner", for the most recent non-captain honour (by its event's date, else its year) with course · year · points; tapping it opens that trophy's winners list.
+
 ### Live Scores landing after the round (2026-10-11)
 
 `renderLiveLandingView()` has three phases: **live** (default: "Today's round", Enter scores + Leaderboard), **done** (every started player has all holes but no Hall of Fame entry yet: "Round complete", "result to follow", Enter scores row hidden), and **final** (an `honours` row exists for the event/round: "Final result", a winner block with name and points, featured "Final results" row). From **done** onwards the Enter scores row is replaced by a plain "Edit scores" row for admins only. A non-trophy event never gets an honour, so it stops at **done**.
