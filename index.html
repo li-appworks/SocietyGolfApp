@@ -1439,6 +1439,53 @@
   .focus-nav button:disabled{opacity:.35; cursor:default;}
   .focus-nav button.finish{background:#5CC17A; border-color:#5CC17A; color:#0F2A18;}
 
+  /* ===== strokes-first scoring card (2026-10-12): everything on one screen ===== */
+  .sx-root{flex:1; min-height:0; display:flex; flex-direction:column; gap:.5rem; padding:calc(env(safe-area-inset-top) + .5rem) .6rem calc(env(safe-area-inset-bottom) + .65rem); width:100%; max-width:520px; margin:0 auto;}
+  .sx-top{display:flex; align-items:center; gap:.5rem; flex-shrink:0;}
+  .sx-top .focus-exit{width:2.2rem; height:2.2rem;}
+  .sx-live{flex:1; display:flex; align-items:center; gap:.4rem; min-width:0;}
+  .sx-live .live-dot{width:.5rem; height:.5rem; border-radius:50%; background:#5CC17A; flex-shrink:0;}
+  .sx-live .sync-indicator{margin:0; padding:0; background:none !important; text-align:left; font-size:.9rem; font-weight:600; color:rgba(250,248,242,.62); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sx-back{font:inherit; font-size:.9rem; font-weight:700; color:var(--paper); background:rgba(250,248,242,.1); border:1px solid rgba(250,248,242,.14); border-radius:999px; padding:.4rem .85rem; min-height:2.2rem; cursor:pointer; flex-shrink:0;}
+  .sx-back:disabled{opacity:.35; cursor:default;}
+  .sx-hole{display:flex; align-items:stretch; gap:.6rem; flex-shrink:0; background:#0D0D10; border:2px solid #B8862F; border-radius:18px; padding:.5rem .7rem;}
+  .sx-hn{display:flex; flex-direction:column; justify-content:center; padding-right:.7rem; border-right:2px solid #B8862F; min-width:4.4rem;}
+  .sx-hn small{font-size:.9rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#E3C173; line-height:1;}
+  .sx-hn b{font-size:4rem; font-weight:800; line-height:.95; letter-spacing:-.04em; color:#fff; font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .sx-hs{flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:.3rem; align-items:center; text-align:center; min-width:0;}
+  .sx-hs b{display:block; font-size:2rem; font-weight:800; color:#fff; font-family:ui-monospace,Menlo,Consolas,monospace; line-height:1.1;}
+  .sx-hs .mix b{font-size:1.35rem;}
+  .sx-hs span{display:block; font-size:.9rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#E3C173; margin-top:.15rem; white-space:nowrap;}
+  .sx-hs .par b{color:#E3C173;}
+  .sx-ribbon{display:flex; align-items:center; gap:.55rem; flex-shrink:0; border-radius:12px; background:linear-gradient(135deg,#D2A243,#A97A25); color:var(--ink); padding:.4rem .75rem; min-height:2.5rem;}
+  .sx-ribbon .pin{font-size:1.2rem; line-height:1;}
+  .sx-ribbon .t{line-height:1.15; min-width:0;}
+  .sx-ribbon .t b{display:block; font-size:.95rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase;}
+  .sx-ribbon .t span{display:block; font-size:.9rem; font-weight:600; color:rgba(75,19,32,.85);}
+  .sx-body{flex:1; min-height:0; display:flex; flex-direction:column; gap:.45rem;}
+  .sx-prow{flex:1 1 0; min-height:6rem; max-height:9.5rem; display:grid; grid-template-columns:5.6rem 1fr 5.2rem; gap:.4rem; align-items:center; background:rgba(250,248,242,.07); border:1px solid rgba(250,248,242,.12); border-radius:16px; padding:.4rem .5rem;}
+  .sx-pn b{display:block; font-size:1.05rem; font-weight:700; line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .sx-shots{display:flex; gap:3px; align-items:center; font-size:.9rem; color:rgba(250,248,242,.62); font-weight:600; white-space:nowrap; margin:.1rem 0 .3rem;}
+  .sx-shots i{width:9px; height:9px; border-radius:50%; background:var(--brass-light); display:inline-block;}
+  .sx-blob{font:inherit; width:100%; font-size:.9rem; font-weight:700; border-radius:10px; min-height:2.75rem; border:1px dashed rgba(250,248,242,.4); background:transparent; color:var(--paper); cursor:pointer;}
+  .sx-blob.on{border-style:solid; background:var(--brass-light); border-color:var(--brass-light); color:var(--ink);}
+  .sx-ctl{display:flex; align-items:center; justify-content:center; gap:.3rem;}
+  .sx-stp{width:3.1rem; height:3.1rem; border-radius:14px; border:1px solid rgba(250,248,242,.12); background:rgba(250,248,242,.12); color:var(--paper); font-size:1.8rem; line-height:1; cursor:pointer; flex-shrink:0;}
+  .sx-val{background:none; border:2px dashed transparent; border-radius:12px; color:var(--c, var(--paper)); width:3.2rem; padding:0; cursor:pointer; text-align:center;}
+  .sx-val .n{display:block; font-size:2.6rem; font-weight:800; line-height:1; font-variant-numeric:tabular-nums;}
+  .sx-val .l{display:block; font-size:.9rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; line-height:1.1;}
+  .sx-unconf .sx-val{border-color:rgba(250,248,242,.35);} .sx-unconf .sx-val .n{opacity:.5;}
+  .sx-sc{display:flex; flex-direction:column; text-align:right;}
+  .sx-sc div{line-height:1;} .sx-sc b{font-size:2.15rem; font-weight:800; font-variant-numeric:tabular-nums; color:var(--brass-light);} .sx-sc div+div b{color:var(--paper);}
+  .sx-sc span{font-size:.9rem; font-weight:700; color:rgba(250,248,242,.62); margin-left:.2rem;}
+  .sx-eagle{--c:#E3C173;} .sx-birdie{--c:#5CC17A;} .sx-par{--c:#FAF8F2;} .sx-bogey{--c:#E0A33B;} .sx-dbl{--c:#E0707A;} .sx-pu{--c:rgba(250,248,242,.62);}
+  .sx-bottom{display:flex; gap:.5rem; flex-shrink:0;}
+  .sx-bottom button{font:inherit; font-weight:800; border-radius:16px; min-height:3.4rem; cursor:pointer; font-size:1rem; padding:.5rem .7rem; line-height:1.15;}
+  .sx-bottom .lb{flex:1.25; background:transparent; color:var(--paper); border:2px solid var(--brass-light);}
+  .sx-bottom .nxt{flex:1; background:var(--brass); color:var(--ink); border:2px solid var(--brass);}
+  .sx-bottom .nxt:disabled{opacity:.4; cursor:default;}
+  .focus-back{padding:.4rem 1rem calc(env(safe-area-inset-bottom) + 1rem); flex-shrink:0;}
+  .focus-back button{width:100%; min-height:3.4rem; border-radius:16px; border:2px solid var(--brass); background:var(--brass); color:var(--ink); font-size:1rem; font-weight:800; cursor:pointer;}
   .done-banner{
     margin:0 1rem .8rem; padding:.65rem .8rem; border-radius:.85rem;
     background:rgba(92,193,122,.14); border:1px solid rgba(92,193,122,.35);
@@ -1614,6 +1661,21 @@
   .evw-secondary-btn:hover{ border-color:var(--brass-light); color:var(--brass-light); background:rgba(227,193,115,.08); }
   .evw-secondary-btn:active{ transform:scale(.96); }
 
+  /* tee + contest-hole controls (2026-10-12) — built from the same pieces as the rest of the wizard */
+  .evw-tee-sum{ margin-top:.55rem; font-size:.78rem; color:rgba(250,248,242,.75); line-height:1.5; }
+  .evw-tee-sum b{ color:var(--brass-light); font-weight:700; }
+  .evw-noscan{ border:1px dashed rgba(255,255,255,.28); border-radius:10px; padding:.75rem .85rem; font-size:.78rem; line-height:1.5; color:rgba(250,248,242,.75); }
+  .evw-noscan b{ color:var(--paper); }
+  .evw-holegrid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:.7rem; }
+  .evw-hole{ font-family:var(--body); border-radius:10px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.05); color:var(--paper); padding:.4rem 0 .35rem; cursor:pointer; text-align:center; line-height:1.1; }
+  .evw-hole b{ display:block; font-size:.95rem; font-weight:800; }
+  .evw-hole small{ display:block; font-size:.58rem; font-weight:600; letter-spacing:.04em; opacity:.7; margin-top:2px; }
+  .evw-hole.sel{ background:var(--brass); color:var(--ink); border-color:var(--brass); }
+  .evw-hole:disabled{ opacity:.22; cursor:default; border-style:dashed; }
+  .evw-pick-note{ font-size:.72rem; color:var(--brass-light); margin:.5rem 0 0; line-height:1.4; }
+  .evw-ntp-body{ background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:0 0 10px 10px; margin-top:-4px; padding:.9rem .8rem .8rem; }
+  .evw-ntp-body .lab{ font-size:.68rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:rgba(250,248,242,.55); }
+  .evw-hint{ font-size:.7rem; color:rgba(250,248,242,.45); margin:.4rem 0 0; line-height:1.45; }
   .evw-nav{ display:flex; align-items:center; gap:.7rem; padding:.8rem 1.25rem calc(env(safe-area-inset-bottom) + 1.1rem); flex-shrink:0; max-width:520px; margin:0 auto; width:100%; }
   .evw-nav button{
     flex:1; padding:.75rem 0; border-radius:.85rem; border:1px solid rgba(250,248,242,.25);
@@ -3119,6 +3181,7 @@ function eventDetailHtml(e){
             <label>Nearest the Pin (2)</label>
             <input id="ef-ntp2-${e.id}" placeholder="Winner's name" value="${escapeHtml(e.nearest_pin_2||'')}">
           </div>
+          ${eventTeeFieldsHtml(e)}
           <div>
             <label>Meeting time</label>
             <input type="time" id="ef-meeting-${e.id}" value="${escapeHtml(e.meeting_time||'')}">
@@ -3661,6 +3724,7 @@ async function saveEvent(eventId){
     trophy: gv('ef-trophy-' + eventId) || null,
     nearest_pin_1: gv('ef-ntp1-' + eventId) || null,
     nearest_pin_2: gv('ef-ntp2-' + eventId) || null,
+    ...eventTeePayload(eventId),
     meeting_time: gv('ef-meeting-' + eventId) || null,
     tee_time: gv('ef-tee-' + eventId) || null,
     cost: gv('ef-cost-' + eventId) || null,
@@ -3805,7 +3869,7 @@ function evwBlankState(){
     formatPreset: '', formatCustom: '', scoringMethod: 'stableford', scoringTouched: false, holes: 18, holesTouched: false,
     multiRound: false, rounds: [],
     hasTrophy: false, trophy: '',
-    hasNtp1: false, hasNtp2: false,
+    hasNtp1: false, hasNtp2: false, ntpHole: null, ntp2Hole: null, teeId: null, ladiesTeeId: null,
     meetingTime: '09:00', teeTime: '10:00', meetAt: '', maxPlayers: '',
     cost: '', signupBy: '', payBy: '', included: '',
   };
@@ -3952,6 +4016,7 @@ function evwRenderStep(){
   } else if (s === 'course'){
     body = `
       ${evwFld('Course', evwCourseFieldHtml())}
+      ${evwTeeFieldsHtml()}
       ${evwFld('Format', `
         <div class="evw-chip-scroll">
           ${EVW_PLAY_FORMATS.map(f => `<button class="evw-chip ${evwState.formatPreset===f.v?'sel':''}" onclick="evwState.formatPreset='${f.v}'; evwRenderStep();">${f.l}</button>`).join('')}
@@ -4013,8 +4078,8 @@ function evwRenderStep(){
           </div>`)}
         ${evwState.trophy==='__new__' ? evwFld('New trophy name', `<input type="text" placeholder="e.g. Spring Cup" oninput="evwState.trophy=this.value">`) : ''}
       ` : ''}
-      ${evwNtpToggleHtml('hasNtp1', 'Nearest the Pin', "One prize hole on the day — the winner's name gets added later via this event's own edit form, once the round's finished")}
-      ${evwNtpToggleHtml('hasNtp2', 'Nearest the Pin in 2', 'A second prize hole, e.g. a par 5')}
+      ${evwNtpBlockHtml('hasNtp1', 'ntpHole', 'ntp1', 'Nearest the Pin', "A par 3 prize hole. The winner's name gets added later via this event's own edit form")}
+      ${evwNtpBlockHtml('hasNtp2', 'ntp2Hole', 'ntp2', 'Nearest the Pin in 2', 'A par 4 or 5 prize hole: closest after two shots')}
     `;
   } else if (s === 'logistics'){
     body = `
@@ -4034,8 +4099,11 @@ function evwRenderStep(){
         <div class="evw-rev-row"><span class="k">Date</span><span class="v">${evwState.date || '—'}</span></div>
         <div class="evw-rev-row"><span class="k">Course</span><span class="v">${evwEsc(evwState.courseName) || '—'}</span></div>
         <div class="evw-rev-row"><span class="k">Format</span><span class="v">${evwEsc(formatText)}</span></div>
+        ${evwState.teeId ? `<div class="evw-rev-row"><span class="k">Tee</span><span class="v">${evwEsc(evwTeeReviewText())}</span></div>` : ''}
         <div class="evw-rev-row"><span class="k">Rounds</span><span class="v">${evwState.multiRound ? evwState.rounds.length+' rounds' : (evwState.holes+' holes, single round')}</span></div>
         <div class="evw-rev-row"><span class="k">Trophy</span><span class="v">${evwState.hasTrophy ? (evwEsc(evwState.trophy)||'—') : 'No'}</span></div>
+        ${evwState.hasNtp1 ? `<div class="evw-rev-row"><span class="k">Nearest the pin</span><span class="v">${evwState.ntpHole ? 'Hole ' + evwState.ntpHole : 'Hole to be set'}</span></div>` : ''}
+        ${evwState.hasNtp2 ? `<div class="evw-rev-row"><span class="k">Nearest the pin in 2</span><span class="v">${evwState.ntp2Hole ? 'Hole ' + evwState.ntp2Hole : 'Hole to be set'}</span></div>` : ''}
         <div class="evw-rev-row"><span class="k">Cost</span><span class="v">${evwState.cost ? evwEsc(fmtCost(evwState.cost)) : '—'}</span></div>
         <div class="evw-rev-row"><span class="k">Tee time</span><span class="v">${evwState.teeTime || '—'}</span></div>
       </div>
@@ -4099,6 +4167,82 @@ function evwFormatLabel(){
   if (!preset) return '';
   return preset.v==='other' ? (evwState.formatCustom || 'Other') : preset.l;
 }
+/* ---- tees (2026-10-12): an event names the tee it's played from, and
+   optionally a ladies' tee for women players (players.sex). A course has
+   tees once its scorecard has been entered (gps_tees / gps_tee_holes). ---- */
+function teesForGpsCourse(gid){
+  return gid ? gpsTees.filter(t => t.gps_course_id === gid).sort((a,b) => (a.sort_order||0) - (b.sort_order||0) || a.name.localeCompare(b.name)) : [];
+}
+function courseParsFor(gid){
+  const a = Array(18).fill(null);
+  courseHoles.filter(h => h.gps_course_id === gid).forEach(h => { if (h.hole_number >= 1 && h.hole_number <= 18) a[h.hole_number - 1] = h.par; });
+  return a;
+}
+function teeById(id){ return id ? (gpsTees.find(t => t.id === id) || null) : null; }
+function teeTotalYards(teeId){ return gpsTeeHoles.filter(h => h.gps_tee_id === teeId).reduce((s,h) => s + (h.yardage || 0), 0); }
+function teeHoleOf(teeId, n){ return gpsTeeHoles.find(h => h.gps_tee_id === teeId && h.hole_number === n) || null; }
+const menTeesOf = list => list.filter(t => t.gender !== 'women');
+const womenTeesOf = list => { const w = list.filter(t => t.gender === 'women'); return w.length ? w : list.filter(t => t.gender !== 'men'); };
+function fmtRating(r){ return r == null ? '' : Number(r).toFixed(1); }
+function teeSummaryText(t){
+  if (!t) return '';
+  const par = courseParsFor(t.gps_course_id).reduce((s,p) => s + (p || 0), 0);
+  return [par ? 'Par ' + par : '', teeTotalYards(t.id) ? teeTotalYards(t.id).toLocaleString('en-GB') + ' yds' : '', t.rating != null && t.slope != null ? 'Rating ' + fmtRating(t.rating) + ' · Slope ' + t.slope : ''].filter(Boolean).join(' · ');
+}
+function evwCourseObj(){ return courses.find(c => c.id === evwState.courseId) || null; }
+function evwCourseTees(){ const c = evwCourseObj(); return c && c.gps_course_id ? teesForGpsCourse(c.gps_course_id) : []; }
+function evwDefaultTees(){
+  const c = evwCourseObj(), tees = evwCourseTees();
+  evwState.teeId = null; evwState.ladiesTeeId = null; evwState.ntpHole = null; evwState.ntp2Hole = null;
+  if (!c || !tees.length) return;
+  const last = [...events].filter(e => e.course_id === c.id && e.tee_id && tees.some(t => t.id === e.tee_id)).sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+  const men = menTeesOf(tees);
+  evwState.teeId = last ? last.tee_id : (men[0] ? men[0].id : null);
+  evwState.ladiesTeeId = last && last.ladies_tee_id ? last.ladies_tee_id : null;
+  if (last){ evwState.ntpHole = last.ntp_hole || null; evwState.ntp2Hole = last.ntp2_hole || null; }
+}
+function evwTeeReviewText(){
+  const t = teeById(evwState.teeId), l = teeById(evwState.ladiesTeeId);
+  return [t ? t.name + ' · ' + teeTotalYards(t.id).toLocaleString('en-GB') + ' yds' + (t.rating != null ? ' · ' + fmtRating(t.rating) + '/' + t.slope : '') : '', l ? 'Ladies: ' + l.name : ''].filter(Boolean).join(' · ');
+}
+function evwTeeFieldsHtml(){
+  if (evwState.courseId == null) return '';
+  const tees = evwCourseTees();
+  if (!tees.length){
+    return evwFld('Tee', `<div class="evw-noscan"><b>No scorecard on file for this course yet.</b><br>Scores for this event will be entered as points. Once the course's scorecard has been added you can choose the tee, and scores are entered as strokes with the points worked out for you.</div>`);
+  }
+  const men = menTeesOf(tees), women = womenTeesOf(tees);
+  const t = teeById(evwState.teeId);
+  const chip = (id, t, sel, key) => `<button class="evw-chip ${sel ? 'sel' : ''}" onclick="evwState.${key}=${id}; evwRenderStep();">${evwEsc(t.name)}<small>${teeTotalYards(t.id).toLocaleString('en-GB')} yds</small></button>`;
+  return `
+    ${evwFld('Tee', `
+      <div class="evw-chip-scroll">${men.map(x => chip(x.id, x, x.id === evwState.teeId, 'teeId')).join('')}</div>
+      ${t ? `<div class="evw-tee-sum"><b>${evwEsc(t.name)}</b> · ${evwEsc(teeSummaryText(t))}</div>` : ''}`)}
+    ${evwFld("Ladies' tee <span style='text-transform:none; letter-spacing:0; font-weight:500;'>(optional)</span>", `
+      <div class="evw-chip-scroll">
+        <button class="evw-chip ${!evwState.ladiesTeeId ? 'sel' : ''}" onclick="evwState.ladiesTeeId=null; evwRenderStep();">None<small>no ladies playing</small></button>
+        ${women.map(x => chip(x.id, x, x.id === evwState.ladiesTeeId, 'ladiesTeeId')).join('')}
+      </div>
+      <p class="evw-hint">Women players (set on their player profile) play from this tee.</p>`)}`;
+}
+function evwNtpBlockHtml(flagKey, holeKey, kind, label, sub){
+  const on = evwState[flagKey];
+  const toggle = `<div class="evw-toggle-row">
+    <div><div style="font-weight:700; font-size:.85rem;">${label}</div><div style="font-size:.7rem; color:rgba(250,248,242,.5);">${sub}</div></div>
+    <div class="evw-switch ${on?'on':''}" onclick="evwState.${flagKey}=!evwState.${flagKey}; evwRenderStep();"><div class="evw-knob"></div></div>
+  </div>`;
+  if (!on) return toggle;
+  const c = evwCourseObj(), pars = c && c.gps_course_id ? courseParsFor(c.gps_course_id) : [];
+  const scanned = pars.some(p => p != null) && evwState.teeId;
+  if (!scanned) return `<div>${toggle}<div class="evw-ntp-body"><p class="evw-hint" style="margin:0;">Choose the hole once the course has a scorecard on file. You can still record the winner's name afterwards.</p></div></div>`;
+  const cur = evwState[holeKey];
+  const elig = n => kind === 'ntp1' ? pars[n-1] === 3 : (pars[n-1] != null && pars[n-1] !== 3);
+  const grid = pars.map((p,i) => { const n = i + 1;
+    return `<button class="evw-hole ${n === cur ? 'sel' : ''}" ${elig(n) ? '' : 'disabled'} onclick="evwState.${holeKey}=${n}; evwRenderStep();" aria-label="Hole ${n}, par ${p ?? '?'}"><b>${n}</b><small>PAR ${p ?? '–'}</small></button>`; }).join('');
+  const th = cur ? teeHoleOf(evwState.teeId, cur) : null;
+  return `<div>${toggle}<div class="evw-ntp-body"><div class="lab">Which hole?</div><div class="evw-holegrid">${grid}</div>
+    <p class="evw-pick-note">${cur ? 'Hole ' + cur + ' · par ' + pars[cur-1] + (th && th.yardage ? ' · ' + th.yardage + ' yds' : '') : 'Tap a hole'}</p></div></div>`;
+}
 function evwNtpToggleHtml(flagKey, label, sub){
   return `<div class="evw-toggle-row">
     <div><div style="font-weight:700; font-size:.85rem;">${label}</div><div style="font-size:.7rem; color:rgba(250,248,242,.5);">${sub}</div></div>
@@ -4148,9 +4292,10 @@ function evwSelectCourse(id){
   const c = courses.find(x => x.id === id);
   if (!c) return;
   evwState.courseId = id; evwState.courseName = c.name; evwState.postcode = c.postcode || '';
+  evwDefaultTees();
   evwRenderStep();
 }
-function evwClearCourseSelection(){ evwState.courseId=null; evwState.courseName=''; evwState.postcode=''; evwRenderStep(); }
+function evwClearCourseSelection(){ evwState.courseId=null; evwState.courseName=''; evwState.postcode=''; evwState.teeId=null; evwState.ladiesTeeId=null; evwState.ntpHole=null; evwState.ntp2Hole=null; evwRenderStep(); }
 function evwOpenBrowseCourses(){ evwSubView = 'browseCourses'; evwRenderStep(); }
 function evwCloseBrowseCourses(){ evwSubView = null; evwRenderStep(); }
 function evwBrowseCoursesHtml(){
@@ -4248,6 +4393,9 @@ async function evwCreateEvent(){
     // to remember intent for whenever editing reuses this wizard.
     nearest_pin_1: evwState.hasNtp1 ? '' : null,
     nearest_pin_2: evwState.hasNtp2 ? '' : null,
+    tee_id: evwState.teeId || null, ladies_tee_id: evwState.ladiesTeeId || null,
+    ntp_hole: evwState.hasNtp1 ? (evwState.ntpHole || null) : null,
+    ntp2_hole: evwState.hasNtp2 ? (evwState.ntp2Hole || null) : null,
     meeting_time: evwState.meetingTime || null, tee_time: evwState.teeTime || null,
     meet_at: evwState.meetAt || null, max_players: evwState.maxPlayers ? Number(evwState.maxPlayers) : null,
     cost: evwState.cost || null, signup_by: evwState.signupBy || null, pay_by: evwState.payBy || null,
@@ -5298,6 +5446,7 @@ function renderPlayers(){
           <div><label>Last name</label><input id="ep-lname-${p.id}" value="${escapeHtml(p.last_name)}"></div>
           <div><label>Email</label><input type="email" id="ep-email-${p.id}" value="${(p.email||'').replace(/"/g,'&quot;')}"></div>
           <div><label>Handicap</label><input type="number" step="0.1" id="ep-hcap-${p.id}" value="${p.handicap??''}"></div>
+          <div><label>Plays from</label><select id="ep-sex-${p.id}"><option value="" ${!p.sex?'selected':''}>Not set (men's tee)</option><option value="M" ${p.sex==='M'?'selected':''}>Men's tee</option><option value="F" ${p.sex==='F'?'selected':''}>Ladies' tee</option></select></div>
           <div class="full">
             <label>Handicap mode <span style="font-family:var(--body); font-size:.7rem; color:var(--text-muted); font-weight:normal;">(shared = one official handicap synced across every society they play in; override = this society runs its own number for them)</span></label>
             <select id="ep-hcapsrc-${p.id}">
@@ -5640,6 +5789,7 @@ async function savePlayerEdit(id){
   const active     = document.getElementById('ep-active-'+id)?.checked !== false;
   const is_committee = document.getElementById('ep-committee-'+id)?.checked === true;
   const is_guest = document.getElementById('ep-guest-'+id)?.checked === true;
+  const sex = document.getElementById('ep-sex-'+id)?.value || null;
   const invited_by = is_guest ? (Number(document.getElementById('ep-host-'+id)?.value) || null) : null;
   if (!first_name || !last_name){ setStatus('First and last name are required.','error'); return; }
   if (is_guest && !invited_by){ setStatus('Choose the member who invited this guest.','error'); return; }
@@ -5648,9 +5798,9 @@ async function savePlayerEdit(id){
   const p = players.find(x => x.id === id);
   const emailNewlyAdded = !!email && !p?.email;
   const sendWelcome = emailNewlyAdded && active && document.getElementById('ep-welcome-'+id)?.checked;
-  const { error } = await db.from('players').update({ first_name, last_name, email, handicap, handicap_source, active, is_committee, is_guest, invited_by }).eq('id', id);
+  const { error } = await db.from('players').update({ first_name, last_name, email, handicap, handicap_source, active, is_committee, is_guest, invited_by, sex }).eq('id', id);
   if (error){ console.error(error); setStatus('Save failed.','error'); return; }
-  if (p) Object.assign(p, { first_name, last_name, email, handicap, handicap_source, active, is_committee, is_guest, invited_by });
+  if (p) Object.assign(p, { first_name, last_name, email, handicap, handicap_source, active, is_committee, is_guest, invited_by, sex });
   if (sendWelcome){
     setStatus('Saved \u2014 sending welcome email\u2026','loading');
     const result = await sendWelcomeEmail(id);
@@ -5699,6 +5849,7 @@ function openAddPlayer(){
         <div><label>Last name</label><input id="np-lname" placeholder="Last name"></div>
         <div><label>Email (optional)</label><input type="email" id="np-email" placeholder="email@example.com"></div>
         <div><label>Handicap (optional)</label><input type="number" step="0.1" id="np-hcap" placeholder="e.g. 18"></div>
+        <div><label>Plays from</label><select id="np-sex"><option value="">Not set (men's tee)</option><option value="M">Men's tee</option><option value="F">Ladies' tee</option></select></div>
         <div class="full" style="display:flex;align-items:center;gap:.6rem;">
           <input type="checkbox" id="np-guest" onchange="document.getElementById('np-host-wrap').style.display=this.checked?'block':'none'" style="width:16px;height:16px;accent-color:var(--brass);">
           <label for="np-guest" style="font-size:.85rem;">Guest (can't win; plays twice in 3 years, then must join)</label>
@@ -5729,13 +5880,14 @@ async function saveNewPlayer(){
   const email      = (document.getElementById('np-email')?.value||'').trim()||null;
   const handicap   = document.getElementById('np-hcap')?.value !== '' ? Number(document.getElementById('np-hcap')?.value) : null;
   const is_guest = document.getElementById('np-guest')?.checked === true;
+  const sex = document.getElementById('np-sex')?.value || null;
   const invited_by = is_guest ? (Number(document.getElementById('np-host')?.value) || null) : null;
   if (!first_name || !last_name){ setStatus('First and last name are required.','error'); return; }
   if (is_guest && !invited_by){ setStatus('Choose the member who invited this guest.','error'); return; }
   if (email && !isValidEmail(email)){ setStatus('Enter a valid email address (no spaces), or leave it blank.','error'); return; }
   setStatus('Saving\u2026','loading');
   const sendWelcome = !!email && document.getElementById('np-welcome')?.checked;
-  const { data, error } = await db.from('players').insert({ first_name, last_name, email, handicap, is_guest, invited_by, society_id: societyId }).select().single();
+  const { data, error } = await db.from('players').insert({ first_name, last_name, email, handicap, is_guest, invited_by, sex, society_id: societyId }).select().single();
   if (error){ console.error(error); setStatus('Save failed.','error'); return; }
   if (data) players.push(data);
   if (sendWelcome && data){
@@ -6226,8 +6378,8 @@ async function loadLiveScoresData(eventId){
 function mergeQueueIntoHoleScores(){
   for (const q of scoreQueue){
     const existing = holeScores.find(h => h.scorecard_id === q.scorecard_id && h.hole_number === q.hole_number);
-    if (existing) existing.points = q.points;
-    else holeScores.push({ scorecard_id: q.scorecard_id, hole_number: q.hole_number, points: q.points });
+    if (existing){ existing.points = q.points; existing.strokes = q.strokes ?? null; existing.picked_up = !!q.picked_up; }
+    else holeScores.push({ scorecard_id: q.scorecard_id, hole_number: q.hole_number, points: q.points, strokes: q.strokes ?? null, picked_up: !!q.picked_up });
   }
 }
 
@@ -6986,7 +7138,7 @@ function startScoring(){
   entryScoreMode = (ev && ev.scoring_format && ev.scoring_format !== 'stableford') ? 'strokes' : 'points';
   // Plain Stableford points entry never uses the handicap, so don't interrupt scoring to confirm it;
   // Stroke/Match Play compute net points from it, so those still confirm first.
-  handicapConfirmQueue = entryScoreMode === 'strokes'
+  handicapConfirmQueue = (entryScoreMode === 'strokes' && !strokesModeFor(ev))
     ? scoringPlayerIds.filter(pid => !handicapConfirmedKeys.has(handicapConfirmKey(pid)))
     : [];
   handicapEditOpen = false;
@@ -7114,7 +7266,99 @@ async function setStrokeScore(scorecardId, hole, strokes, par, strokeIndex, hand
   await setHoleScore(scorecardId, hole, points, strokes);
 }
 
+/* ===== strokes-first scoring card =====
+   Used for any event with a tee (events.tee_id). Strokes are what the marker
+   enters; the Stableford points are worked out from the player's handicap
+   shots on that hole (stroke index of THEIR tee: men's/open or ladies').
+   A hole row only exists once the marker has confirmed it (par is shown
+   faded until then), so a missing row = "not entered yet". A pick up (blob)
+   is stored as strokes = null, picked_up = true, points = 0. Events with no
+   tee keep the original points screen untouched. */
+function strokesModeFor(ev){ return !!(ev && ev.tee_id && teeById(ev.tee_id)); }
+function eventTeeFor(ev, player){
+  const ladies = player && player.sex === 'F' && ev.ladies_tee_id ? teeById(ev.ladies_tee_id) : null;
+  return ladies || teeById(ev.tee_id);
+}
+function sxHoleFacts(ev, round, n, player){
+  const tee = eventTeeFor(ev, player);
+  const ch = courseHoleFor(round, ev, n);
+  const th = tee ? teeHoleOf(tee.id, n) : null;
+  return { par: ch && ch.par != null ? ch.par : 4, si: th && th.stroke_index != null ? th.stroke_index : (ch ? ch.stroke_index : null), yards: th ? th.yardage : null };
+}
+function sxRel(strokes, par){
+  const d = strokes - par;
+  return d <= -2 ? ['sx-eagle','Eagle'] : d === -1 ? ['sx-birdie','Birdie'] : d === 0 ? ['sx-par','Par'] : d === 1 ? ['sx-bogey','Bogey'] : d === 2 ? ['sx-dbl','Double'] : ['sx-dbl','+' + d];
+}
+function sxExisting(scId, n){ return holeScores.find(h => h.scorecard_id === scId && h.hole_number === n); }
+async function sxStep(scId, n, par, si, hcp, delta){
+  const hs = sxExisting(scId, n);
+  const base = hs && !hs.picked_up && hs.strokes != null ? hs.strokes : par;
+  await setStrokeScore(scId, n, Math.max(1, base + delta), par, si, hcp);
+}
+async function sxConfirm(scId, n, par, si, hcp){
+  if (sxExisting(scId, n)) return;
+  await setStrokeScore(scId, n, par, par, si, hcp);
+}
+async function sxPickUp(scId, n, par, si, hcp){
+  const hs = sxExisting(scId, n);
+  if (hs && hs.picked_up){ await setStrokeScore(scId, n, par, par, si, hcp); return; } // undo = back to a confirmed par
+  await setHoleScore(scId, n, 0, null, true);
+}
+function sxNext(){
+  const ev = eventById(liveEventId);
+  const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  if (currentHole >= roundHoles(activeRound, ev)) finishRound(); else changeHole(currentHole + 1);
+}
+function renderStrokesEntry(){
+  const ev = eventById(liveEventId);
+  const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  const holes = roundHoles(activeRound, ev), n = currentHole;
+  const group = scoringPlayerIds.map(pid => players.find(p => p.id === pid)).filter(Boolean);
+  const fm = sxHoleFacts(ev, activeRound, n, null);
+  const hasLadies = !!ev.ladies_tee_id && group.some(p => p.sex === 'F');
+  const fl = hasLadies ? sxHoleFacts(ev, activeRound, n, { sex:'F' }) : null;
+  const mixed = fl && (fl.yards !== fm.yards || fl.si !== fm.si);
+  const cell = (v, lab, v2, lab2) => mixed
+    ? `<div class="mix"><b>${v ?? '–'}/${v2 ?? '–'}</b><span>${lab2}</span></div>`
+    : `<div><b>${v ?? '–'}</b><span>${lab}</span></div>`;
+  const contest = !activeRound ? (ev.ntp_hole === n ? 'ntp' : ev.ntp2_hole === n ? 'ntp2' : null) : null;
+  const ribbon = contest ? `<div class="sx-ribbon"><span class="pin">📍</span><span class="t"><b>${contest === 'ntp' ? 'Nearest the pin' : 'Nearest the pin in 2'}</b><span>${contest === 'ntp' ? 'Closest to the flag from the tee' : 'Closest to the flag after two shots'}</span></span></div>` : '';
+  let missing = 0;
+  const rows = group.map(p => {
+    const sc = scorecardFor(liveEventId, liveRoundId, p.id);
+    if (!sc) return '';
+    const f = sxHoleFacts(ev, activeRound, n, p);
+    const hs = sxExisting(sc.id, n);
+    const pu = !!(hs && hs.picked_up), un = !hs;
+    if (un) missing++;
+    const shotsN = holeAllowance(p.handicap, f.si);
+    const shotsHtml = p.handicap == null ? '<span class="sx-shots">no handicap</span>'
+      : shotsN ? `<span class="sx-shots">${'<i></i>'.repeat(shotsN)} ${shotsN} shot${shotsN > 1 ? 's' : ''}</span>` : '<span class="sx-shots">no shot</span>';
+    const strokes = hs && !pu ? hs.strokes : null;
+    const [cls, label] = pu ? ['sx-pu', 'Blob'] : un ? sxRel(f.par, f.par) : (strokes != null ? sxRel(strokes, f.par) : ['sx-par', '']);
+    const arg = `${JSON.stringify(sc.id).replace(/"/g,'&quot;')}, ${n}, ${f.par}, ${f.si == null ? 'null' : f.si}, ${p.handicap == null ? 'null' : p.handicap}`;
+    return `<div class="sx-prow ${un ? 'sx-unconf' : ''} ${cls}">
+      <div class="sx-pn"><b>${escapeHtml(p.first_name)} ${escapeHtml((p.last_name || '')[0] || '')}.</b>${shotsHtml}<button class="sx-blob ${pu ? 'on' : ''}" onclick="sxPickUp(${arg})">${pu ? 'Undo' : 'Pick up'}</button></div>
+      <div class="sx-ctl"><button class="sx-stp" onclick="sxStep(${arg}, -1)" aria-label="One less">−</button><button class="sx-val" onclick="sxConfirm(${arg})" aria-label="Confirm"><span class="n">${pu ? '–' : (un ? f.par : (strokes ?? '?'))}</span><span class="l">${pu ? 'Blob' : un ? 'Par' : label}</span></button><button class="sx-stp" onclick="sxStep(${arg}, 1)" aria-label="One more">+</button></div>
+      <div class="sx-sc"><div><b>${un ? '–' : hs.points}</b><span>pts</span></div><div><b>${getRunningTotal(sc.id)}</b><span>tot</span></div></div>
+    </div>`;
+  }).join('');
+  const last = n >= holes;
+  return `<div class="sx-root">
+    <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
+      <div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div>
+      <button class="sx-back" ${n <= 1 ? 'disabled' : ''} onclick="changeHole(${n - 1})">‹ Previous hole</button></div>
+    <div class="sx-hole"><div class="sx-hn"><small>Hole</small><b>${n}</b></div>
+      <div class="sx-hs"><div class="par"><b>${fm.par}</b><span>Par</span></div>${cell(fm.si, 'Index', fl && fl.si, 'Index M/L')}${cell(fm.yards, 'Yards', fl && fl.yards, 'Yards M/L')}</div></div>
+    ${ribbon}
+    <div class="sx-body">${rows}</div>
+    <div class="sx-bottom"><button class="lb" onclick="setLiveSubView('leaderboard')">🏆 View live leaderboard</button>
+      <button class="nxt" ${missing ? 'disabled' : ''} onclick="sxNext()">${missing ? 'Confirm ' + missing + ' more' : (last ? 'Finish round ✓' : 'Next hole →')}</button></div>
+  </div>`;
+}
+
 function renderFocusEntry(){
+  if (strokesModeFor(eventById(liveEventId))) return renderStrokesEntry();
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
   const ev = eventById(liveEventId);
   const holes = roundHoles(activeRound, ev);
@@ -7248,7 +7492,11 @@ function focusLbFootHtml(){
   return `<div class="focus-lb-foot"><button onclick="refreshLeaderboardNow(this)">🔄 Refresh</button> · updates automatically</div>`;
 }
 
+function focusBackHtml(){ return `<div class="focus-back"><button onclick="setLiveSubView('entry')">← Back to scoring</button></div>`; }
 function renderFocusLeaderboard(chrome = true){
+  return renderFocusLeaderboardInner(chrome) + (chrome ? focusBackHtml() : '');
+}
+function renderFocusLeaderboardInner(chrome = true){
   const evRounds = roundsForEvent(liveEventId);
   const ev = eventById(liveEventId);
   const topBar = chrome ? focusTopBarHtml('leaderboard') : '';
@@ -7536,15 +7784,15 @@ async function processScorecardQueue(){
   processScoreQueue();
 }
 
-async function setHoleScore(scorecardId, hole, points, strokes = null){
+async function setHoleScore(scorecardId, hole, points, strokes = null, pickedUp = false){
   // 1. Update the screen immediately
   const existing = holeScores.find(h => h.scorecard_id === scorecardId && h.hole_number === hole);
-  if (existing) Object.assign(existing, { points, strokes });
-  else holeScores.push({ scorecard_id: scorecardId, hole_number: hole, points, strokes });
+  if (existing) Object.assign(existing, { points, strokes, picked_up: pickedUp });
+  else holeScores.push({ scorecard_id: scorecardId, hole_number: hole, points, strokes, picked_up: pickedUp });
 
   // 2. Queue it locally (replacing any earlier queued tap for the same hole)
   scoreQueue = scoreQueue.filter(q => !(q.scorecard_id === scorecardId && q.hole_number === hole));
-  scoreQueue.push({ scorecard_id: scorecardId, hole_number: hole, points, strokes });
+  scoreQueue.push({ scorecard_id: scorecardId, hole_number: hole, points, strokes, picked_up: pickedUp });
   persistScoreQueue();
 
   renderLiveScores();
@@ -7569,7 +7817,7 @@ async function processScoreQueue(){
     }
     try {
       const { error } = await db.from('hole_scores').upsert(
-        { scorecard_id: item.scorecard_id, hole_number: item.hole_number, points: item.points, strokes: item.strokes ?? null, updated_at: new Date().toISOString(), society_id: societyId },
+        { scorecard_id: item.scorecard_id, hole_number: item.hole_number, points: item.points, strokes: item.strokes ?? null, picked_up: !!item.picked_up, updated_at: new Date().toISOString(), society_id: societyId },
         { onConflict: 'scorecard_id,hole_number' }
       );
       if (error) throw error;
@@ -8690,6 +8938,30 @@ async function saveNewCourseFromEvent(eventId){
   autoSetupGpsForCourse(data);
 }
 
+/* The edit form's tee + contest-hole selects. The tee select has a blank
+   "not set" option on purpose: an older event with no tee must stay on
+   points entry unless someone deliberately picks a tee. */
+function eventTeeFieldsHtml(e){
+  const c = courses.find(x => x.id === e.course_id);
+  const gid = c ? c.gps_course_id : null;
+  const tees = teesForGpsCourse(gid);
+  if (!tees.length) return `<div class="full"><label>Tee</label><p class="muted" style="font-size:.8rem; margin:.2rem 0 0;">No scorecard on file for this course yet, so scores are entered as points.</p></div>`;
+  const opt = (list, sel, blank) => `<option value="">${blank}</option>` + list.map(t => `<option value="${t.id}" ${t.id === sel ? 'selected' : ''}>${escapeHtml(t.name)} · ${teeTotalYards(t.id).toLocaleString('en-GB')} yds${t.rating != null ? ' · ' + fmtRating(t.rating) + '/' + t.slope : ''}</option>`).join('');
+  const pars = courseParsFor(gid);
+  const holeOpts = (isPar3, sel) => '<option value="">None</option>' + pars.map((p,i) => ({ n:i+1, p })).filter(x => x.p != null && (isPar3 ? x.p === 3 : x.p !== 3))
+    .map(x => `<option value="${x.n}" ${x.n === sel ? 'selected' : ''}>Hole ${x.n} · par ${x.p}</option>`).join('');
+  return `
+    <div><label>Tee</label><select id="ef-teeid-${e.id}">${opt(menTeesOf(tees), e.tee_id, 'Not set (points entry)')}</select></div>
+    <div><label>Ladies' tee</label><select id="ef-ladiestee-${e.id}">${opt(womenTeesOf(tees), e.ladies_tee_id, 'None')}</select></div>
+    <div><label>Nearest the Pin hole</label><select id="ef-ntphole-${e.id}">${holeOpts(true, e.ntp_hole)}</select></div>
+    <div><label>Nearest the Pin in 2 hole</label><select id="ef-ntp2hole-${e.id}">${holeOpts(false, e.ntp2_hole)}</select></div>`;
+}
+function eventTeePayload(eventId){
+  const gvn = id => { const el = document.getElementById(id); const v = el ? el.value : ''; return v === '' ? null : Number(v); };
+  // If the tee fields aren't on the form (course has no scorecard), leave those columns alone.
+  if (!document.getElementById('ef-teeid-' + eventId)) return {};
+  return { tee_id: gvn('ef-teeid-' + eventId), ladies_tee_id: gvn('ef-ladiestee-' + eventId), ntp_hole: gvn('ef-ntphole-' + eventId), ntp2_hole: gvn('ef-ntp2hole-' + eventId) };
+}
 function onTrophySelected(eventId){
   const sel = document.getElementById('ef-trophy-' + eventId);
   const newTrophyForm = document.getElementById('ef-new-trophy-form-' + eventId);
@@ -8939,8 +9211,10 @@ function scorecardSummaryHtml(course){
       ${tees.map(t => `<option value="${t.id}" ${t.id===selectedTeeId?'selected':''}>${escapeHtml(t.name)} tees</option>`).join('')}
     </select>` : '';
 
+  const selTee = tees.find(t => t.id === selectedTeeId);
+  const ratingLine = selTee && selTee.rating != null && selTee.slope != null ? `<p class="muted" style="font-size:.78rem; margin:.1rem 0 .3rem;">Course rating ${fmtRating(selTee.rating)} · Slope ${selTee.slope}</p>` : '';
   const table = open ? `
-    ${teeSelector}
+    ${teeSelector}${ratingLine}
     <div style="overflow-x:auto; margin-top:.3rem;">
       <table style="width:100%; border-collapse:collapse; font-size:.78rem;">
         <thead><tr style="color:var(--text-muted); text-align:right;">
@@ -8951,6 +9225,7 @@ function scorecardSummaryHtml(course){
         <tbody>
           <tr><td style="text-align:left; padding:.2rem .4rem; color:var(--text-muted);">Par</td>${holes.map(h => `<td style="padding:.2rem .4rem; text-align:right;">${h.par ?? '–'}</td>`).join('')}<td style="padding:.2rem .4rem; text-align:right; font-weight:800;">${totalPar}</td></tr>
           <tr><td style="text-align:left; padding:.2rem .4rem; color:var(--text-muted);">Yards</td>${holes.map(h => { const th = teeHoles.find(x=>x.hole_number===h.hole_number); return `<td style="padding:.2rem .4rem; text-align:right;">${th && th.yardage!=null ? th.yardage : '–'}</td>`; }).join('')}<td style="padding:.2rem .4rem; text-align:right; font-weight:800;">${totalYards||'–'}</td></tr>
+          <tr><td style="text-align:left; padding:.2rem .4rem; color:var(--text-muted);">Index</td>${holes.map(h => { const th = teeHoles.find(x=>x.hole_number===h.hole_number); return `<td style="padding:.2rem .4rem; text-align:right;">${th && th.stroke_index!=null ? th.stroke_index : '–'}</td>`; }).join('')}<td></td></tr>
         </tbody>
       </table>
     </div>` : '';
@@ -9445,18 +9720,38 @@ function teesEditorHtml(gpsCourseId){
 }
 
 function teeYardageEditorHtml(teeId){
+  const tee = gpsTees.find(t => t.id === teeId) || {};
   const holes = gpsTeeHoles.filter(h => h.gps_tee_id === teeId);
   const rows = Array.from({length:18}, (_,i) => i+1).map(n => {
     const h = holes.find(x => x.hole_number === n);
     return `
-      <div style="display:grid; grid-template-columns:2rem 5rem auto; gap:.35rem; align-items:end; margin-bottom:.3rem;">
+      <div style="display:grid; grid-template-columns:2rem 4.6rem 4.6rem auto; gap:.35rem; align-items:end; margin-bottom:.3rem;">
         <div style="font-size:.75rem; font-weight:700; padding-bottom:.5rem;">${n}</div>
         <div><label style="font-size:.65rem;">Yards</label><input type="number" id="tee-yd-${teeId}-${n}" value="${h && h.yardage!=null ? h.yardage : ''}"></div>
+        <div><label style="font-size:.65rem;">Index</label><input type="number" min="1" max="18" id="tee-si-${teeId}-${n}" value="${h && h.stroke_index!=null ? h.stroke_index : ''}"></div>
         <button class="committee-edit-btn" onclick="saveTeeYardage(${teeId}, ${n})">Save</button>
       </div>`;
   }).join('');
-  return `<div style="max-height:16rem; overflow-y:auto; margin:.4rem 0; padding-left:.5rem; border-left:2px solid var(--line);">${rows}</div>
+  return `
+    <div style="display:grid; grid-template-columns:1fr 4.5rem 4.5rem auto; gap:.35rem; align-items:end; margin:.4rem 0 .6rem; padding-left:.5rem; border-left:2px solid var(--line);">
+      <div><label style="font-size:.65rem;">Tee is for</label><select id="tee-gender-${teeId}"><option value="open" ${tee.gender==='open'||!tee.gender?'selected':''}>Anyone</option><option value="men" ${tee.gender==='men'?'selected':''}>Men</option><option value="women" ${tee.gender==='women'?'selected':''}>Women</option></select></div>
+      <div><label style="font-size:.65rem;">Rating</label><input type="number" step="0.1" id="tee-rating-${teeId}" value="${tee.rating!=null ? tee.rating : ''}"></div>
+      <div><label style="font-size:.65rem;">Slope</label><input type="number" id="tee-slope-${teeId}" value="${tee.slope!=null ? tee.slope : ''}"></div>
+      <button class="committee-edit-btn" onclick="saveTeeMeta(${teeId})">Save</button>
+    </div>
+    <div style="max-height:16rem; overflow-y:auto; margin:.4rem 0; padding-left:.5rem; border-left:2px solid var(--line);">${rows}</div>
     <div class="edit-status" id="tee-yd-status-${teeId}"></div>`;
+}
+
+async function saveTeeMeta(teeId){
+  if (!db) return;
+  const gv2 = id => { const el = document.getElementById(id); const v = el ? el.value.trim() : ''; return v === '' ? null : Number(v); };
+  const payload = { gender: document.getElementById('tee-gender-' + teeId)?.value || 'open', rating: gv2('tee-rating-' + teeId), slope: gv2('tee-slope-' + teeId) };
+  const statusEl = document.getElementById('tee-yd-status-' + teeId);
+  const { error } = await db.from('gps_tees').update(payload).eq('id', teeId);
+  if (error){ console.error(error); if (statusEl){ statusEl.textContent = 'Save failed — please try again.'; statusEl.className = 'edit-status error'; } return; }
+  const t = gpsTees.find(x => x.id === teeId); if (t) Object.assign(t, payload);
+  if (statusEl){ statusEl.textContent = 'Saved!'; statusEl.className = 'edit-status success'; }
 }
 
 async function saveNewTee(gpsCourseId){
@@ -9489,7 +9784,9 @@ async function saveTeeYardage(teeId, holeNumber){
   const existing = gpsTeeHoles.find(h => h.gps_tee_id === teeId && h.hole_number === holeNumber);
   const statusEl = document.getElementById(`tee-yd-status-${teeId}`);
   if (statusEl){ statusEl.textContent = 'Saving…'; statusEl.className = 'edit-status'; }
-  const payload = { gps_tee_id: teeId, hole_number: holeNumber, yardage, tee_lat: existing?.tee_lat ?? null, tee_lng: existing?.tee_lng ?? null };
+  const siRaw = document.getElementById(`tee-si-${teeId}-${holeNumber}`)?.value.trim();
+  const stroke_index = siRaw === '' || siRaw == null ? null : Number(siRaw);
+  const payload = { gps_tee_id: teeId, hole_number: holeNumber, yardage, stroke_index, tee_lat: existing?.tee_lat ?? null, tee_lng: existing?.tee_lng ?? null };
   try {
     const { data, error } = await db.from('gps_tee_holes').upsert(payload, { onConflict: 'gps_tee_id,hole_number' }).select().single();
     if (error) throw error;
