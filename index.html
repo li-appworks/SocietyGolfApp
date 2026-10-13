@@ -1323,6 +1323,30 @@
     color:var(--ink); border:1px solid var(--brass); background:color-mix(in srgb, var(--brass) 14%, transparent);
   }
 
+  /* ---------- about us + in memoriam ---------- */
+  .about-card, .memoriam-card{background:var(--paper); border:1px solid var(--line); border-top:3px solid var(--brass); border-radius:var(--radius); padding:1.4rem 1.4rem 1.3rem; max-width:680px;}
+  .about-card h3, .memoriam-card h3{font-family:var(--display); font-size:1.5rem; font-weight:800; margin:0 0 .25rem; color:var(--ink);}
+  .about-card .tag{font-style:italic; color:var(--text-muted); margin:0 0 1rem;}
+  .about-card p{line-height:1.7; margin:0 0 .9rem; max-width:62ch;}
+  .about-link{display:flex; align-items:center; gap:.9rem; width:100%; max-width:680px; margin-top:1rem; text-align:left; font-family:var(--body); color:var(--text); background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:1rem 1.1rem; cursor:pointer;}
+  .about-link:hover{border-color:var(--brass); box-shadow:0 6px 16px rgba(75,19,32,.1);}
+  .about-link .ic{font-size:1.5rem; line-height:1; flex-shrink:0;}
+  .about-link .body{flex:1; min-width:0;}
+  .about-link .t{display:block; font-family:var(--display); font-weight:700; font-size:1.05rem; color:var(--ink);}
+  .about-link .s{display:block; font-size:.88rem; color:var(--text-muted); margin-top:.15rem; line-height:1.4;}
+  .about-link .n{font-size:.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap;}
+  .about-link .chev{font-size:1.3rem; color:var(--text-muted);}
+  .about-back{display:inline-block; margin:0 0 .9rem; font-weight:600; font-size:.9rem;}
+  .memoriam-card .lede{margin:.2rem 0 1.1rem; max-width:52ch;}
+  .memoriam-list{list-style:none; margin:0; padding:0; columns:2 220px; column-gap:2rem;}
+  .memoriam-list li{break-inside:avoid; display:flex; align-items:baseline; gap:.5rem; padding:.45rem 0; border-bottom:1px solid var(--line);}
+  .memoriam-list .nm{font-family:var(--display); font-weight:600; color:var(--ink);}
+  .memoriam-list .yr{font-size:.82rem; color:var(--text-muted);}
+  .memoriam-list .rm{margin-left:auto; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:.9rem; padding:0 .3rem;}
+  .memoriam-add{margin-top:1.3rem; padding-top:1rem; border-top:1px solid var(--line); display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;}
+  .memoriam-add select, .memoriam-add input{font-family:var(--body); font-size:.95rem; padding:.55rem .7rem; border:1px solid var(--line); border-radius:var(--radius); background:var(--stone); color:var(--text);}
+  .memoriam-add select{flex:2; min-width:180px;} .memoriam-add input{flex:1; min-width:110px;}
+
   /* ---------- footer ---------- */
   footer{background:var(--ink); color:var(--on-dark-muted);}
   .foot-inner{max-width:1080px; margin:0 auto; padding:1.8rem 1.5rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;}
@@ -1897,6 +1921,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
       Hall of Fame
     </button>
+    <button class="tab-btn" role="tab" data-section="about" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="7.5" r="1" fill="currentColor"/></svg>
+      About
+    </button>
     <button class="tab-btn committee-only-tab" role="tab" data-section="accounts" aria-selected="false">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="1.8"/><polyline points="9 12 12 15 16 10" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
       Admin
@@ -2049,6 +2077,13 @@
     <div id="add-honour-slot" style="margin-top:1.4rem;"></div>
   </section>
 
+  <!-- ============ ABOUT ============ -->
+  <section class="section" id="sec-about" data-section="about">
+    <p class="eyebrow">Who we are</p>
+    <h2 class="section-title">About us</h2>
+    <div id="about-content"></div>
+  </section>
+
   <!-- ============ ACCOUNTS ============ -->
   <section class="section" id="sec-accounts" data-section="accounts">
     <p class="eyebrow">Admin only</p>
@@ -2145,6 +2180,9 @@
       </button>
       <button class="md-item" onclick="goTo('halloffame'); closeMoreDrawer(); setBottomNav('halloffame');">
         <svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>Hall of Fame
+      </button>
+      <button class="md-item" onclick="goTo('about'); closeMoreDrawer(); setBottomNav('about');">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="11" x2="12" y2="17"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg>About
       </button>
       <button class="md-item committee-only-tab" onclick="goTo('accounts'); closeMoreDrawer(); setBottomNav('accounts');">
         <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 12 15 16 10"/></svg>Admin
@@ -2852,6 +2890,7 @@ function goTo(sectionName, opts){
   if (opts && opts.highlightCommittee) highlightCommitteeMember(opts.highlightCommittee);
   if (sectionName === 'scores') openLiveScores();
   if (sectionName === 'courses') renderCoursesPanel();
+  if (sectionName === 'about'){ aboutView = 'main'; aboutEditing = false; renderAbout(); }
   if (sectionName === 'leaderboard'){ goTo('scores'); return; }
   if (sectionName === 'groupings') renderGroupings();
   if (sectionName === 'accounts'){
@@ -4637,6 +4676,7 @@ function renderAll(){
   renderNews();
   renderRules();
   renderHonours();
+  renderAbout();
   renderCoursesPanel();
   renderAccounts();
   renderMyAccount();
@@ -8620,20 +8660,6 @@ function renderHonours(){
       <div class="trophy-count">${captains.filter(h => h.title.toLowerCase()==='captain').length} captains</div>
     </div>`;
 
-  /* In Memoriam tile — once someone is listed (admins always see it, so they can add the first name) */
-  const archived = memoriam;
-  const memTileSelected = expandedTrophy === '__memoriam__';
-  if (archived.length || isLoggedIn){
-    shelf.innerHTML += `
-      <div class="trophy-card ${memTileSelected ? 'selected' : ''}" role="button" tabindex="0"
-           onclick="toggleTrophy('__memoriam__')"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('__memoriam__');}">
-        ${trophySvg('Memoriam')}
-        <h3>In Memoriam</h3>
-        <div class="trophy-count">${archived.length} remembered</div>
-      </div>`;
-  }
-
   /* Nearest the Pin tiles — only if at least one event records a winner */
   const ntp1Events = events.filter(e => e.nearest_pin_1).sort((a,b) => new Date(b.date) - new Date(a.date));
   const ntp2Events = events.filter(e => e.nearest_pin_2).sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -8676,7 +8702,7 @@ function renderHonours(){
       </div>`;
   }
 
-  if (!groupNames.length && !captains.length && !archived.length && !ntp1Events.length && !ntp2Events.length && !oomYears.length){
+  if (!groupNames.length && !captains.length && !ntp1Events.length && !ntp2Events.length && !oomYears.length){
     shelf.innerHTML = '<p class="muted">No trophies recorded yet.</p>';
   }
 
@@ -8697,36 +8723,6 @@ function renderHonours(){
             </li>`;
           }).join('')}
         </ol>
-      </div>`;
-  } else if (expandedTrophy === '__memoriam__'){
-    const memName = m => { const p = m.player_id ? players.find(x => x.id === m.player_id) : null; return p ? p.first_name + ' ' + p.last_name : m.name; };
-    const people = [...memoriam].sort((a,b) => memName(a).localeCompare(memName(b)));
-    const pickable = [...players].filter(p => !memoriam.some(m => m.player_id === p.id))
-      .sort((a,b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name));
-    winnersPanel.innerHTML = `
-      <div class="trophy-winners">
-        <h3>In Memoriam</h3>
-        <p style="font-size:.85rem; color:rgba(255,255,255,.55); margin:.3rem 0 1rem; max-width:38ch; line-height:1.6;">
-          Members of ${escapeHtml(currentSociety?.name || 'Gytte Lane Golf Society')} who have sadly passed away.
-        </p>
-        ${people.length ? `<ol style="columns:2; gap:1.4rem;">
-          ${people.map(m => `
-            <li style="break-inside:avoid;">
-              <span class="tw-name">${escapeHtml(memName(m))}</span>
-              ${m.passed_year ? `<span class="tw-course">${m.passed_year}</span>` : ''}
-              ${isLoggedIn ? `<button type="button" title="Remove" aria-label="Remove ${escapeHtml(memName(m))}" onclick="deleteMemoriam(${m.id})" style="background:none; border:none; color:rgba(255,255,255,.45); cursor:pointer; font-size:.9rem; padding:0 .3rem;">✕</button>` : ''}
-            </li>`).join('')}
-        </ol>` : '<p style="color:rgba(255,255,255,.55); font-size:.85rem;">Nobody added yet.</p>'}
-        ${isLoggedIn ? `
-        <div style="margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,.15); display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
-          <select id="mem-player" style="flex:2; min-width:180px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:#2a0d15; color:#fff; font:inherit;">
-            <option value="">Choose a player…</option>
-            ${pickable.map(p => `<option value="${p.id}">${escapeHtml(p.first_name + ' ' + p.last_name)}${p.active === false ? ' (inactive)' : ''}</option>`).join('')}
-          </select>
-          <input id="mem-year" type="number" placeholder="Year (optional)" style="flex:1; min-width:110px; padding:.55rem .7rem; border-radius:6px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font:inherit;">
-          <button type="button" class="btn brass" onclick="addMemoriam()">Add</button>
-          <span id="mem-status" style="font-size:.78rem; color:rgba(255,255,255,.6); flex-basis:100%;"></span>
-        </div>` : ''}
       </div>`;
   } else if (expandedTrophy === '__ntp1__'){
     winnersPanel.innerHTML = `
@@ -8886,6 +8882,91 @@ function honourPlayerSelectHtml(inputId){
     </select>`;
 }
 
+/* ===================== render: about ===================== */
+/* "About us": a short blurb about the society (societies.about_text, editable by
+   admins; until one is written it's built from the society's location, founded
+   year and intro text) and a link to the In Memoriam list — players who have
+   played for the society and have sadly passed away (moved here from the Hall of
+   Fame, 2026-10-13). */
+let aboutView = 'main';   // 'main' | 'memoriam'
+let aboutEditing = false;
+
+function societyAboutText(){
+  const soc = currentSociety || {};
+  if (soc.about_text && soc.about_text.trim()) return soc.about_text;
+  const first = `${soc.name || 'We'} ${soc.location ? 'is a golf society based in ' + soc.location : 'is a golf society'}${soc.founded ? ', founded in ' + soc.founded : ''}.`;
+  return [first, soc.intro_text].filter(Boolean).join(' ');
+}
+function aboutParagraphs(text){
+  return String(text).split(/\r?\n/).map(t => t.trim()).filter(Boolean).map(t => `<p>${escapeHtml(t)}</p>`).join('');
+}
+function memorialName(m){
+  const p = m.player_id ? players.find(x => x.id === m.player_id) : null;
+  return p ? p.first_name + ' ' + p.last_name : m.name;
+}
+
+function aboutMainHtml(){
+  const soc = currentSociety || {};
+  const count = memoriam.length;
+  const blurb = aboutEditing && isLoggedIn
+    ? `<textarea id="about-text-input" rows="8" style="width:100%; box-sizing:border-box; font-family:var(--body); font-size:1rem; line-height:1.6; padding:.7rem .8rem; border:1px solid var(--line); border-radius:var(--radius); background:var(--stone); color:var(--text);">${escapeHtml(soc.about_text || societyAboutText())}</textarea>
+       <p class="muted" style="font-size:.8rem; margin:.4rem 0 0;">A new line starts a new paragraph. Clear the box and save to go back to the automatic wording.</p>
+       <div class="edit-form-actions"><button class="btn brass" onclick="saveAboutText()">Save</button><button class="btn ghost" onclick="aboutEditing=false; renderAbout();">Cancel</button><div class="edit-status" id="about-status"></div></div>`
+    : aboutParagraphs(societyAboutText()) + (isLoggedIn ? `<button class="committee-edit-btn" onclick="aboutEditing=true; renderAbout();">Edit this page</button>` : '');
+  const link = (count || isLoggedIn) ? `
+    <button class="about-link" onclick="openAboutMemoriam()">
+      <span class="ic" aria-hidden="true">🕯️</span>
+      <span class="body"><span class="t">In Memoriam</span><span class="s">Players who have played for ${escapeHtml(soc.name || 'the society')} and have sadly passed away</span></span>
+      <span class="n">${count ? count + (count === 1 ? ' name' : ' names') : ''}</span><span class="chev" aria-hidden="true">›</span>
+    </button>` : '';
+  return `<div class="about-card">
+      <h3>${escapeHtml(soc.name || '')}</h3>
+      ${soc.tagline ? `<p class="tag">${escapeHtml(soc.tagline)}</p>` : ''}
+      ${blurb}
+    </div>${link}`;
+}
+
+function aboutMemoriamHtml(){
+  const soc = currentSociety || {};
+  const people = [...memoriam].sort((a,b) => memorialName(a).localeCompare(memorialName(b)));
+  const pickable = [...players].filter(p => !memoriam.some(m => m.player_id === p.id))
+    .sort((a,b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name));
+  return `<a href="#" class="about-back" onclick="aboutView='main'; renderAbout(); return false;">← About us</a>
+    <div class="memoriam-card">
+      <h3>In Memoriam</h3>
+      <p class="lede">Players who have played for ${escapeHtml(soc.name || 'the society')} and have sadly passed away. They are remembered here.</p>
+      ${people.length ? `<ul class="memoriam-list">${people.map(m => `
+        <li><span class="nm">${escapeHtml(memorialName(m))}</span>${m.passed_year ? `<span class="yr">${m.passed_year}</span>` : ''}
+          ${isLoggedIn ? `<button type="button" class="rm" title="Remove" aria-label="Remove ${escapeHtml(memorialName(m))}" onclick="deleteMemoriam(${m.id})">✕</button>` : ''}</li>`).join('')}</ul>`
+        : '<p class="muted">Nobody has been added yet.</p>'}
+      ${isLoggedIn ? `
+      <div class="memoriam-add">
+        <select id="mem-player"><option value="">Choose a player…</option>${pickable.map(p => `<option value="${p.id}">${escapeHtml(p.first_name + ' ' + p.last_name)}${p.active === false ? ' (inactive)' : ''}</option>`).join('')}</select>
+        <input id="mem-year" type="number" placeholder="Year (optional)">
+        <button type="button" class="btn brass" onclick="addMemoriam()">Add</button>
+        <span id="mem-status" class="muted" style="flex-basis:100%; font-size:.82rem;"></span>
+      </div>` : ''}
+    </div>`;
+}
+
+function renderAbout(){
+  const el = document.getElementById('about-content');
+  if (!el) return;
+  el.innerHTML = aboutView === 'memoriam' ? aboutMemoriamHtml() : aboutMainHtml();
+}
+function openAboutMemoriam(){ aboutView = 'memoriam'; renderAbout(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+async function saveAboutText(){
+  if (!db || !isLoggedIn) return;
+  const status = document.getElementById('about-status');
+  const v = (document.getElementById('about-text-input')?.value || '').trim();
+  const { error } = await db.from('societies').update({ about_text: v || null }).eq('id', societyId);
+  if (error){ console.error(error); if (status){ status.textContent = 'Could not save — please try again.'; status.className = 'edit-status error'; } return; }
+  if (currentSociety) currentSociety.about_text = v || null;
+  aboutEditing = false;
+  renderAbout();
+}
+
 async function addMemoriam(){
   if (!db || !isLoggedIn) return;
   const status = document.getElementById('mem-status');
@@ -8902,7 +8983,7 @@ async function addMemoriam(){
     const { error: aErr } = await db.from('players').update({ active: false }).eq('id', player.id);
     if (!aErr) player.active = false;
   }
-  renderHonours();
+  renderAbout();
   if (typeof renderPlayers === 'function') renderPlayers();
 }
 
@@ -8913,7 +8994,7 @@ async function deleteMemoriam(id){
   const { error } = await db.from('memoriam').delete().eq('id', id);
   if (error){ console.error(error); alert('Could not remove — please try again.'); return; }
   memoriam = memoriam.filter(x => x.id !== id);
-  renderHonours();
+  renderAbout();
 }
 
 let addHonourMode = null; // null | 'trophy' | 'captain'
@@ -11747,6 +11828,7 @@ async function init(){
 
   renderRules();
   renderHonours();
+  renderAbout();
   renderCoursesPanel();
   renderAccounts();
   renderMyAccount();
