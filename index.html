@@ -1347,6 +1347,58 @@
   .memoriam-add select, .memoriam-add input{font-family:var(--body); font-size:.95rem; padding:.55rem .7rem; border:1px solid var(--line); border-radius:var(--radius); background:var(--stone); color:var(--text);}
   .memoriam-add select{flex:2; min-width:180px;} .memoriam-add input{flex:1; min-width:110px;}
 
+  /* ---------- hall of fame: years + players (live-scoring look) ---------- */
+  .hof-wrap{background:linear-gradient(180deg,#5a1626 0%,#3a0f1a 45%,#2a0b13 100%); border:1px solid rgba(214,165,62,.35); border-radius:16px; padding:.2rem .6rem .8rem; margin-bottom:1.6rem; color:#fff; box-shadow:0 10px 26px rgba(42,11,19,.28);}
+  .hof-subhead{display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; margin:.7rem .3rem .2rem; padding-bottom:.5rem; border-bottom:1px solid rgba(214,165,62,.45);}
+  .hof-subhead .t{font:800 .78rem var(--body); letter-spacing:.16em; text-transform:uppercase; color:#e3c477;}
+  .hof-subhead .s{font:600 .75rem var(--body); color:rgba(255,255,255,.5);}
+  .hof-pills{display:flex; gap:.4rem; margin:.7rem .2rem .3rem;}
+  .hof-pills button{flex:1; font:700 .85rem var(--body); padding:.5rem .6rem; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:rgba(255,255,255,.75); cursor:pointer;}
+  .hof-pills button.on{background:#e3c477; color:#3a0f1a; border-color:#e3c477;}
+  .hof-pills button span{font-weight:600; opacity:.7; margin-left:.3rem;}
+  .hof-legend{display:flex; gap:1rem; flex-wrap:wrap; font-size:.82rem; color:rgba(255,255,255,.75); margin:.7rem .3rem .5rem;}
+  .hof-legend span{display:inline-flex; align-items:center; gap:.3rem;}
+  .hof-legend .hof-ic{width:16px; height:16px;} .hof-legend .hof-ic.flag{width:21px;}
+  .hof-split{display:grid; grid-template-columns:1fr; gap:.8rem; align-items:start;}
+  .hof-split[data-view="p"] .hof-col[data-v="y"], .hof-split[data-view="y"] .hof-col[data-v="p"]{display:none;}
+  .hof-col{min-width:0; max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 2px 2px;}
+  .hof-chead{display:none; position:sticky; top:0; z-index:1; font:700 .72rem var(--body); letter-spacing:.1em; text-transform:uppercase; color:#e3c477; padding:.1rem .1rem .5rem; background:#4a1220;}
+  .hof-item{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.05)); border:1px solid rgba(255,255,255,.1); border-radius:14px; margin:0 0 .45rem; overflow:hidden;}
+  .hof-item.open{border-color:#d6a53e;}
+  .hof-ih{display:flex; align-items:center; gap:.5rem; padding:.65rem .75rem; cursor:pointer;}
+  .hof-ih:focus-visible{outline:2px solid #e3c477; outline-offset:-2px;}
+  .hof-t{flex:1; min-width:0; font:800 1.05rem var(--body); color:#fff;}
+  .hof-t small{display:block; font:500 .74rem var(--body); color:rgba(255,255,255,.55);}
+  .hof-ch{color:#e3c477; font-size:.95rem; transition:transform .15s;}
+  .hof-item.open > .hof-ih .hof-ch{transform:rotate(90deg);}
+  .hof-body{display:none; border-top:1px solid rgba(255,255,255,.1); padding:.4rem .75rem; background:rgba(0,0,0,.22); font-size:.85rem;}
+  .hof-item.open > .hof-body{display:block;}
+  .hof-ev{padding:.5rem 0; border-bottom:1px dashed rgba(255,255,255,.14);} .hof-ev:last-child{border-bottom:0;}
+  .hof-ev-n{font-weight:700; color:#fff;} .hof-ev-n span{font-weight:400; color:rgba(255,255,255,.6);}
+  .hof-ev-d{font-size:.74rem; color:rgba(255,255,255,.5);}
+  .hof-res{display:flex; gap:.4rem; align-items:flex-start; margin-top:.2rem; line-height:1.35; color:#fff;}
+  .hof-res-l{color:rgba(255,255,255,.55);}
+  .hof-ic{flex:0 0 15px; width:15px; height:15px; margin-top:1px;} .hof-ic.flag{flex-basis:20px; width:20px; height:17px;}
+  .hof-team{font-size:.66rem; font-weight:800; color:#e3c477; letter-spacing:.05em;}
+  .hof-rk{width:1.3rem; text-align:center; font:800 .85rem var(--body); color:rgba(255,255,255,.5);}
+  .hof-pn{flex:1; min-width:0; font-weight:700; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .hof-badges{display:flex; gap:.2rem; flex-shrink:0;}
+  .hof-pill{display:inline-flex; align-items:center; gap:3px; font-weight:800; font-size:.85rem; min-width:2.1rem; color:#fff;}
+  .hof-pill .hof-ic{flex:0 0 auto; width:14px; height:14px; margin:0;} .hof-pill .hof-ic.flag{width:18px;}
+  .hof-more{width:100%; padding:.6rem; background:none; border:1px dashed rgba(255,255,255,.22); border-radius:12px; color:rgba(255,255,255,.65); font:600 .85rem var(--body); cursor:pointer;}
+  .hof-wrap .committee-edit-btn{margin-top:.4rem;}
+  .hof-wrap .edit-form{background:var(--paper); color:var(--text); border-radius:var(--radius); padding:.8rem;}
+  .hof-wrap .muted{color:rgba(255,255,255,.6);}
+  @media (min-width:700px){
+    .hof-pills{display:none;}
+    .hof-split{grid-template-columns:1fr 1fr; gap:1rem;}
+    .hof-split[data-view="p"] .hof-col[data-v="y"], .hof-split[data-view="y"] .hof-col[data-v="p"]{display:block;}
+    .hof-chead{display:block;}
+  }
+  @media (max-width:420px){
+    .hof-pill{min-width:0;} .hof-rk{display:none;}
+  }
+
   /* ---------- footer ---------- */
   footer{background:var(--ink); color:var(--on-dark-muted);}
   .foot-inner{max-width:1080px; margin:0 auto; padding:1.8rem 1.5rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;}
@@ -2068,9 +2120,10 @@
   <section class="section" id="sec-halloffame" data-section="halloffame">
     <p class="eyebrow">Since 1994</p>
     <h2 class="section-title">Hall of Fame</h2>
-    <p class="lede" style="margin-bottom:1.6rem;">Tap a trophy to see its winners through the years.</p>
+    <p class="lede" style="margin-bottom:1.6rem;">Every winner since 1994: pick a player to see what they have won, or a year to see its results.</p>
 
     <div id="latest-winner-slot"></div>
+    <div id="hof-split"></div>
     <div class="trophy-shelf" id="trophy-shelf"></div>
     <div id="trophy-winners-panel"></div>
 
@@ -8070,7 +8123,7 @@ setInterval(() => { if (scorecardQueue.length) processScorecardQueue(); if (scor
    collide because a multi-round event's own honours.find() lookup only
    ever matches a null row once finaliseEventOverall has run, same as any
    single-round event only ever having the one row. */
-async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffix = '', winnerScore = null, teamMembers = null){
+async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffix = '', winnerScore = null, teamMembers = null, secondName = null){
   if (!db || !winnerName) return;
   const ev = eventById(eventId);
   if (!ev || !ev.trophy) return; // not a trophy fixture — nothing to do
@@ -8092,12 +8145,12 @@ async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffi
   let hRow = null;
   try {
     if (existing){
-      const { error } = await db.from('honours').update({ year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers }).eq('id', existing.id);
+      const { error } = await db.from('honours').update({ year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers, second: secondName || null }).eq('id', existing.id);
       if (error) throw error;
-      Object.assign(existing, { year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers });
+      Object.assign(existing, { year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers, second: secondName || null });
       hRow = existing;
     } else {
-      const { data, error } = await db.from('honours').insert({ year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers, event_id: eventId, round_id: roundId, society_id: societyId }).select().single();
+      const { data, error } = await db.from('honours').insert({ year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers, second: secondName || null, event_id: eventId, round_id: roundId, society_id: societyId }).select().single();
       if (error) throw error;
       if (data){ honours.push(data); hRow = data; }
     }
@@ -8164,7 +8217,8 @@ async function finaliseScores(eventId, roundId = null){
   const winner = top[0] ? (top[0].team ? teamNames(top[0].team.members, true) : (top[0].player ? top[0].player.first_name + ' ' + top[0].player.last_name : '')) : '';
   const winningTeam = top[0] && top[0].team ? top[0].team.members : null;
   if (!ev || !ev.trophy){ alert('This event has no trophy set, so nothing was added to the Hall of Fame. Add a trophy on the event first.'); return; }
-  await syncHonourForEvent(eventId, winner, roundId, '', top[0] ? top[0].total : null, winningTeam);
+  const second = top[1] ? (top[1].team ? teamNames(top[1].team.members, true) : (top[1].player ? top[1].player.first_name + ' ' + top[1].player.last_name : '')) : '';
+  await syncHonourForEvent(eventId, winner, roundId, '', top[0] ? top[0].total : null, winningTeam, second);
   alert(winningTeam ? 'Scores finalised! The winning team (' + winner + ') has been added to the Hall of Fame, with each player credited.' : 'Scores finalised! ' + winner + ' has been added to the Hall of Fame.');
 }
 
@@ -8192,7 +8246,8 @@ async function finaliseEventOverall(eventId){
   // the ONLY honours entry a multi-round event ends up with (see
   // renderLeaderboardView, which hides the per-round Finalise button).
   const note = evRounds.length ? ` (combined score over ${evRounds.length} rounds)` : '';
-  await syncHonourForEvent(eventId, winner, null, note, top[0] ? top[0].total : null);
+  const second = top[1] && top[1].player ? top[1].player.first_name + ' ' + top[1].player.last_name : '';
+  await syncHonourForEvent(eventId, winner, null, note, top[0] ? top[0].total : null, null, second);
   alert('Event finalised! The overall winner has been added to the Hall of Fame.');
 }
 
@@ -8573,6 +8628,197 @@ function honourCourse(title){
 
 const TROPHY_ORDER = ['Winter Trophy','Spring Trophy','Summer Trophy','Autumn Trophy','Captains Day','Tour','Annual Singles Knockout','Captains v Presidents'];
 
+/* ===================== Hall of Fame: years + players ===================== */
+/* Two panels side by side: Years (left) and Players (right). Each player shows
+   a count of wins (gold star), runner-up places (silver star) and nearest the
+   pin / in 2 (flag). Counts are worked out live from `honours` (winner, second),
+   `honour_winners` (each member of a winning team) and the events' nearest_pin
+   fields — nothing is stored per player. Second place and nearest the pin are
+   only known for events finalised/entered from now on; older entries just have
+   a winner. Guests are never credited. */
+const hofOpenYears = new Set();
+const hofOpenPlayers = new Set();
+let hofShowAllPlayers = false;
+let hofYearsInit = false;
+let hofView = 'p'; // phone: which list shows (players first)
+const HOF_PLAYERS_SHOWN = 12;
+
+const hofStar = c => `<svg class="hof-ic" viewBox="0 0 24 24" aria-hidden="true"><path fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width="1" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>`;
+const HOF_GOLD = hofStar('#d49a1f');
+const HOF_SILVER = hofStar('#9aa3ab');
+const HOF_FLAG = `<svg class="hof-ic flag" viewBox="0 0 28 24" aria-hidden="true"><ellipse cx="14" cy="20" rx="13" ry="3.6" fill="#3f9a4a"/><ellipse cx="14" cy="19.4" rx="10" ry="2.2" fill="#56b562"/><line x1="8" y1="2" x2="8" y2="19.5" stroke="#6b5d56" stroke-width="1.6" stroke-linecap="round"/><path d="M9 3h9l-2.6 3.4L18 9.8H9z" fill="#c0392b"/><circle cx="19.5" cy="17.2" r="3.1" fill="#fff" stroke="#8a8079" stroke-width=".9"/><circle cx="18.6" cy="16.5" r=".5" fill="#8a8079"/><circle cx="20.5" cy="16.7" r=".5" fill="#8a8079"/><circle cx="19.6" cy="18.3" r=".5" fill="#8a8079"/></svg>`;
+const HOF_ICON = { w: HOF_GOLD, s: HOF_SILVER, f: HOF_FLAG };
+
+function hofSplitNames(txt){
+  return String(txt || '').split(/\s*(?:\/|&|,|\band\b)\s*/i).map(s => s.trim()).filter(Boolean);
+}
+
+/* A name as written in the Hall of Fame -> a player when we can tell who it is
+   (exact name, else same surname + same first letter when that's unambiguous,
+   e.g. "Mick Beecher" -> Michael Beecher). Anyone who was never a player keeps
+   their written name. Returns null for guests and for team labels. */
+function hofKey(name){
+  const n = String(name || '').trim().replace(/\s+/g, ' ');
+  if (!n || /^captains?$/i.test(n)) return null;
+  const low = n.toLowerCase();
+  let p = players.find(x => (x.first_name + ' ' + x.last_name).toLowerCase() === low);
+  if (!p){
+    const parts = low.split(' ');
+    if (parts.length > 1){
+      const last = parts[parts.length - 1], first = parts[0];
+      const cands = players.filter(x => x.last_name.toLowerCase() === last && x.first_name.toLowerCase()[0] === first[0]);
+      if (cands.length === 1) p = cands[0];
+    }
+  }
+  if (p) return isGuestPlayer(p) ? null : { key: 'p' + p.id, name: p.first_name + ' ' + p.last_name, player: p };
+  return { key: 'n:' + low, name: n, player: null };
+}
+
+function hofBuild(){
+  const people = new Map();
+  const person = k => {
+    let o = people.get(k.key);
+    if (!o){ o = { key: k.key, name: k.name, g: 0, s: 0, f: 0, items: [] }; people.set(k.key, o); }
+    return o;
+  };
+  const isSpecial = h => {
+    const t = (h.title || '').trim().toLowerCase();
+    return t === 'captain' || t === 'vice-captain' || honourBaseName(h.title).toLowerCase() === 'hole in one';
+  };
+  const byYear = new Map();
+  const add = (year, entry) => { if (!byYear.has(year)) byYear.set(year, []); byYear.get(year).push(entry); };
+  const ntpDone = new Set(), hadHonour = new Set();
+
+  honours.filter(h => !isSpecial(h)).forEach(h => {
+    const ev = h.event_id ? events.find(e => e.id === h.event_id) : null;
+    if (ev) hadHonour.add(ev.id);
+    const base = honourBaseName(h.title), course = honourCourse(h.title).replace(/\s*\(combined[^)]*\)/i, '');
+    const ts = ev ? new Date(ev.date + 'T00:00:00').getTime() : new Date((h.year || 0) + '-12-31T00:00:00').getTime();
+    const label = base + (course ? ' · ' + course : '');
+    const entry = { h, ev, base, course, year: h.year, ts, team: !!h.is_team, winners: h.winner || '', second: h.second || '', ntp1: '', ntp2: '' };
+
+    const credited = [];
+    const rows = honourWinners.filter(w => w.honour_id === h.id);
+    if (rows.length){
+      rows.forEach(w => { const p = players.find(x => x.id === w.player_id); if (p && !isGuestPlayer(p)) credited.push({ key: 'p' + p.id, name: p.first_name + ' ' + p.last_name, player: p }); });
+    } else {
+      hofSplitNames(h.winner).forEach(n => { const k = hofKey(n); if (k) credited.push(k); });
+    }
+    credited.forEach(k => { const o = person(k); o.g++; o.items.push({ kind: 'w', ts, label, year: h.year, team: entry.team }); });
+    hofSplitNames(h.second).forEach(n => { const k = hofKey(n); if (k){ const o = person(k); o.s++; o.items.push({ kind: 's', ts, label, year: h.year }); } });
+    if (ev && !ntpDone.has(ev.id)){ ntpDone.add(ev.id); entry.ntp1 = ev.nearest_pin_1 || ''; entry.ntp2 = ev.nearest_pin_2 || ''; }
+    add(h.year, entry);
+  });
+
+  events.forEach(ev => {
+    const year = new Date(ev.date + 'T00:00:00').getFullYear();
+    const ts = new Date(ev.date + 'T00:00:00').getTime();
+    const label = (ev.trophy || ev.name) + (ev.course ? ' · ' + eventCourseDisplay(ev) : '');
+    [['nearest_pin_1', 'Nearest the pin'], ['nearest_pin_2', 'Nearest the pin in 2']].forEach(([f, what]) => {
+      hofSplitNames(ev[f]).forEach(n => { const k = hofKey(n); if (k){ const o = person(k); o.f++; o.items.push({ kind: 'f', ts, label, year, what }); } });
+    });
+    // an event with a nearest-the-pin winner but no Hall of Fame entry still appears in its year
+    if ((ev.nearest_pin_1 || ev.nearest_pin_2) && !hadHonour.has(ev.id) && !ntpDone.has(ev.id)){
+      ntpDone.add(ev.id);
+      add(year, { h: null, ev, base: ev.trophy || ev.name, course: ev.course ? eventCourseDisplay(ev) : '', year, ts, team: false, winners: '', second: '', ntp1: ev.nearest_pin_1 || '', ntp2: ev.nearest_pin_2 || '' });
+    }
+  });
+
+  const years = [...byYear.entries()].sort((a, b) => b[0] - a[0]).map(([year, list]) => ({ year, entries: list.sort((a, b) => a.ts - b.ts) }));
+  const ranked = [...people.values()].filter(o => o.g || o.s || o.f)
+    .sort((a, b) => b.g - a.g || b.s - a.s || b.f - a.f || a.name.localeCompare(b.name));
+  return { years, ranked };
+}
+
+function hofShortName(full){
+  const parts = full.split(' ');
+  return parts.length > 1 ? parts[0] + ' ' + parts[parts.length - 1][0] + '.' : full;
+}
+
+function hofResultRow(kind, label, names, teamTag){
+  if (!names) return '';
+  return `<div class="hof-res">${HOF_ICON[kind]}<span>${label ? `<span class="hof-res-l">${label}</span> ` : ''}${escapeHtml(names)}${teamTag ? ' <span class="hof-team">TEAM</span>' : ''}</span></div>`;
+}
+
+function hofEntryHtml(en){
+  if (en.h && editingHonourIds.has(en.h.id)) return `<div class="hof-ev">${honourEditFormHtml(en.h)}</div>`;
+  const date = en.ev ? fmtDateShort(en.ev.date) : '';
+  return `<div class="hof-ev">
+    <div class="hof-ev-n">${escapeHtml(en.base)}${en.course ? `<span> · ${escapeHtml(en.course)}</span>` : ''}</div>
+    ${date ? `<div class="hof-ev-d">${date}</div>` : ''}
+    ${hofResultRow('w', '', en.winners, en.team)}
+    ${hofResultRow('s', '2nd', en.second)}
+    ${hofResultRow('f', 'Nearest the pin', en.ntp1)}
+    ${hofResultRow('f', 'Nearest the pin in 2', en.ntp2)}
+    ${isLoggedIn && en.h ? `<button class="committee-edit-btn" onclick="toggleHonourEdit(${en.h.id})">Edit</button>` : ''}
+  </div>`;
+}
+
+function renderHofSplit(){
+  const el = document.getElementById('hof-split');
+  if (!el) return;
+  const { years, ranked } = hofBuild();
+  if (!years.length && !ranked.length){ el.innerHTML = '<p class="muted">No results recorded yet.</p>'; return; }
+  if (!hofYearsInit && years.length){ hofOpenYears.add(years[0].year); hofYearsInit = true; }
+
+  const yearsHtml = years.map(y => `
+    <div class="hof-item ${hofOpenYears.has(y.year) ? 'open' : ''}" id="hof-y-${y.year}">
+      <div class="hof-ih" role="button" tabindex="0" onclick="hofToggleYear(${y.year})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();hofToggleYear(${y.year});}">
+        <span class="hof-t">${y.year}<small>${y.entries.length} event${y.entries.length === 1 ? '' : 's'}</small></span><span class="hof-ch">›</span>
+      </div>
+      <div class="hof-body">${y.entries.map(hofEntryHtml).join('')}</div>
+    </div>`).join('');
+
+  const shown = hofShowAllPlayers ? ranked : ranked.slice(0, HOF_PLAYERS_SHOWN);
+  const playersHtml = shown.map((p, i) => {
+    const items = [...p.items].sort((a, b) => b.ts - a.ts).map(it => {
+      const what = it.kind === 's' ? ' <span class="hof-res-l">2nd</span>' : it.kind === 'f' ? ` <span class="hof-res-l">${it.what}</span>` : (it.team ? ' <span class="hof-team">TEAM</span>' : '');
+      return `<div class="hof-res">${HOF_ICON[it.kind]}<span><b>${escapeHtml(it.label)}</b> <span class="hof-res-l">${it.year}</span>${what}</span></div>`;
+    }).join('');
+    return `<div class="hof-item ${hofOpenPlayers.has(p.key) ? 'open' : ''}">
+      <div class="hof-ih" role="button" tabindex="0" data-k="${escapeHtml(p.key)}" onclick="hofTogglePlayer(this.dataset.k)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();hofTogglePlayer(this.dataset.k);}">
+        <span class="hof-rk">${i + 1}</span>
+        <span class="hof-pn" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+        <span class="hof-badges">
+          <span class="hof-pill" title="Wins">${HOF_GOLD}${p.g}</span>
+          <span class="hof-pill" title="Second place">${HOF_SILVER}${p.s}</span>
+          <span class="hof-pill" title="Nearest the pin">${HOF_FLAG}${p.f}</span>
+        </span><span class="hof-ch">›</span>
+      </div>
+      <div class="hof-body">${items}</div>
+    </div>`;
+  }).join('');
+  const more = ranked.length > HOF_PLAYERS_SHOWN
+    ? `<button class="hof-more" onclick="hofShowAllPlayers=!hofShowAllPlayers; renderHofSplit();">${hofShowAllPlayers ? 'Show fewer ▴' : 'Show all ' + ranked.length + ' players ▾'}</button>` : '';
+
+  const winnerCount = ranked.filter(p => p.g > 0).length;
+  el.innerHTML = `<div class="hof-wrap">
+    <div class="hof-subhead"><span class="t">Hall of Fame</span><span class="s">${years.length} seasons · ${winnerCount} winners</span></div>
+    <div class="hof-pills">
+      <button class="${hofView === 'p' ? 'on' : ''}" onclick="hofSetView('p')">Players<span>${ranked.length}</span></button>
+      <button class="${hofView === 'y' ? 'on' : ''}" onclick="hofSetView('y')">Years<span>${years.length}</span></button>
+    </div>
+    <div class="hof-legend"><span>${HOF_GOLD} Winner</span><span>${HOF_SILVER} 2nd place</span><span>${HOF_FLAG} Nearest the pin</span></div>
+    <div class="hof-split" data-view="${hofView}">
+      <div class="hof-col" data-v="y"><div class="hof-chead">Years</div>${yearsHtml}</div>
+      <div class="hof-col" data-v="p"><div class="hof-chead">Players</div>${playersHtml}${more}</div>
+    </div></div>`;
+}
+function hofSetView(v){ hofView = v; renderHofSplit(); }
+function hofToggleYear(y){
+  if (hofOpenYears.has(y)) hofOpenYears.delete(y); else hofOpenYears.add(y);
+  document.getElementById('hof-y-' + y)?.classList.toggle('open', hofOpenYears.has(y));
+}
+function hofTogglePlayer(k){
+  if (hofOpenPlayers.has(k)) hofOpenPlayers.delete(k); else hofOpenPlayers.add(k);
+  renderHofSplit();
+}
+function hofJumpToYear(y){
+  hofOpenYears.add(y);
+  renderHofSplit();
+  document.getElementById('hof-y-' + y)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 function honourEditFormHtml(h){
   return `
     <div class="edit-form" style="margin:.4rem 0;">
@@ -8589,6 +8835,10 @@ function honourEditFormHtml(h){
         <div class="full">
           <label>Winner / name</label>
           <input id="ho-winner-${h.id}" value="${escapeHtml(h.winner||'')}">
+        </div>
+        <div class="full">
+          <label>Second place (optional)</label>
+          <input id="ho-second-${h.id}" value="${escapeHtml(h.second||'')}">
         </div>
       </div>
       <div class="edit-form-actions">
@@ -8619,26 +8869,20 @@ function renderHonours(){
       const base = honourBaseName(latest.title);
       const meta = [honourCourse(latest.title), latest.year, latest.winner_score != null ? latest.winner_score + ' pts' : ''].filter(Boolean).join(' · ');
       latestSlot.innerHTML = `<div class="hof-latest" role="button" tabindex="0"
-          onclick="toggleTrophy('${base.replace(/'/g,"\\'")}')"
-          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('${base.replace(/'/g,"\\'")}');}">
+          onclick="hofJumpToYear(${latest.year})"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); hofJumpToYear(${latest.year});}">
           ${winnerBannerCore({ name: latest.winner, trophy: base, meta, label: 'Latest winner' })}
         </div>`;
     } else latestSlot.innerHTML = '';
   }
 
-  /* group trophies by base competition name */
+  /* group trophies by base competition name (used by the Hole In One list) */
   const groups = {};
   trophies.forEach(h => {
     const base = honourBaseName(h.title);
     (groups[base] = groups[base] || []).push(h);
   });
-  const groupNames = Object.keys(groups).sort((a,b) => {
-    const ia = TROPHY_ORDER.indexOf(a), ib = TROPHY_ORDER.indexOf(b);
-    if (ia !== -1 && ib !== -1) return ia - ib;
-    if (ia !== -1) return -1;
-    if (ib !== -1) return 1;
-    return a.localeCompare(b);
-  });
+  const groupNames = Object.keys(groups).filter(n => /^hole in one$/i.test(n));
 
   shelf.innerHTML = groupNames.map(name => `
     <div class="trophy-card ${expandedTrophy === name ? 'selected' : ''}" role="button" tabindex="0"
@@ -8660,32 +8904,6 @@ function renderHonours(){
       <div class="trophy-count">${captains.filter(h => h.title.toLowerCase()==='captain').length} captains</div>
     </div>`;
 
-  /* Nearest the Pin tiles — only if at least one event records a winner */
-  const ntp1Events = events.filter(e => e.nearest_pin_1).sort((a,b) => new Date(b.date) - new Date(a.date));
-  const ntp2Events = events.filter(e => e.nearest_pin_2).sort((a,b) => new Date(b.date) - new Date(a.date));
-  const ntp1Selected = expandedTrophy === '__ntp1__';
-  const ntp2Selected = expandedTrophy === '__ntp2__';
-  if (ntp1Events.length){
-    shelf.innerHTML += `
-      <div class="trophy-card ${ntp1Selected ? 'selected' : ''}" role="button" tabindex="0"
-           onclick="toggleTrophy('__ntp1__')"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('__ntp1__');}">
-        ${trophySvg('Nearest the Pin')}
-        <h3>Nearest the Pin (1)</h3>
-        <div class="trophy-count">${ntp1Events.length} winner${ntp1Events.length===1?'':'s'}</div>
-      </div>`;
-  }
-  if (ntp2Events.length){
-    shelf.innerHTML += `
-      <div class="trophy-card ${ntp2Selected ? 'selected' : ''}" role="button" tabindex="0"
-           onclick="toggleTrophy('__ntp2__')"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('__ntp2__');}">
-        ${trophySvg('Nearest the Pin')}
-        <h3>Nearest the Pin (2)</h3>
-        <div class="trophy-count">${ntp2Events.length} winner${ntp2Events.length===1?'':'s'}</div>
-      </div>`;
-  }
-
   /* Season Standings — only shown once at least one trophy event has real
      live-scored results for some year (see oomAvailableYears()) */
   const oomYears = oomAvailableYears();
@@ -8702,9 +8920,6 @@ function renderHonours(){
       </div>`;
   }
 
-  if (!groupNames.length && !captains.length && !ntp1Events.length && !ntp2Events.length && !oomYears.length){
-    shelf.innerHTML = '<p class="muted">No trophies recorded yet.</p>';
-  }
 
   if (expandedTrophy === '__captains__'){
     /* group by year, show Captain + Vice-Captain together */
@@ -8722,32 +8937,6 @@ function renderHonours(){
               ${vc ? `<span class="tw-course" style="font-size:.78rem;">VC: ${vc.winner}</span>` : ''}
             </li>`;
           }).join('')}
-        </ol>
-      </div>`;
-  } else if (expandedTrophy === '__ntp1__'){
-    winnersPanel.innerHTML = `
-      <div class="trophy-winners">
-        <h3>Nearest the Pin (1)</h3>
-        <ol>
-          ${ntp1Events.map(e => `
-            <li>
-              <span class="tw-year">${new Date(e.date+'T00:00:00').getFullYear()}</span>
-              <span class="tw-name">${escapeHtml(e.nearest_pin_1)}</span>
-              ${e.course ? `<span class="tw-course">${escapeHtml(e.course)}</span>` : ''}
-            </li>`).join('')}
-        </ol>
-      </div>`;
-  } else if (expandedTrophy === '__ntp2__'){
-    winnersPanel.innerHTML = `
-      <div class="trophy-winners">
-        <h3>Nearest the Pin (2)</h3>
-        <ol>
-          ${ntp2Events.map(e => `
-            <li>
-              <span class="tw-year">${new Date(e.date+'T00:00:00').getFullYear()}</span>
-              <span class="tw-name">${escapeHtml(e.nearest_pin_2)}</span>
-              ${e.course ? `<span class="tw-course">${escapeHtml(e.course)}</span>` : ''}
-            </li>`).join('')}
         </ol>
       </div>`;
   } else if (expandedTrophy === '__oom__'){
@@ -8816,7 +9005,7 @@ function renderHonours(){
   }
 
   renderAddHonourSlot();
-
+  renderHofSplit();
 }
 
 function toggleTrophy(name){
@@ -8852,6 +9041,7 @@ async function saveHonour(id){
     year: Number(gv('ho-year-' + id)) || null,
     title: gv('ho-title-' + id),
     winner: gv('ho-winner-' + id),
+    second: gv('ho-second-' + id) || null,
   };
   if (!payload.year || !payload.title || !payload.winner){ setStatus('Year, event and winner are all required.', 'error'); return; }
   setStatus('Saving\u2026', 'loading');
