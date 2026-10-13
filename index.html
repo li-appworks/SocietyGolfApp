@@ -1366,10 +1366,16 @@
   .memoriam-add select{flex:2; min-width:180px;} .memoriam-add input{flex:1; min-width:110px;}
 
   /* ---------- hall of fame: years + players (live-scoring look) ---------- */
-  .hof-wrap{background:linear-gradient(180deg,#5a1626 0%,#3a0f1a 45%,#2a0b13 100%); border:1px solid rgba(214,165,62,.35); border-radius:16px; padding:.2rem .6rem .8rem; margin-bottom:1.6rem; color:#fff; box-shadow:0 10px 26px rgba(42,11,19,.28);}
-  .hof-subhead{display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; margin:.7rem .3rem .2rem; padding-bottom:.5rem; border-bottom:1px solid rgba(214,165,62,.45);}
-  .hof-subhead .t{font:800 .78rem var(--body); letter-spacing:.16em; text-transform:uppercase; color:#e3c477;}
-  .hof-subhead .s{font:600 .75rem var(--body); color:rgba(255,255,255,.5);}
+  .hof-wrap{
+    background:linear-gradient(180deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 55%, black) 45%, #050203 100%);
+    border-radius:1rem; padding:1.3rem .6rem .8rem; margin-top:.2rem; margin-bottom:1.6rem; color:#fff;
+    box-shadow:0 12px 28px rgba(20,4,8,.35);
+  }
+  .hof-head{text-align:center; padding:.1rem 1rem 1rem; margin:0 .4rem 1rem; border-bottom:2px solid var(--brass-light); position:relative;}
+  .hof-head::after{content:""; position:absolute; left:50%; bottom:-5px; width:8px; height:8px; background:var(--brass-light); transform:translateX(-50%) rotate(45deg);}
+  .hof-head .l{font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); font-weight:700;}
+  .hof-head .t{font-family:var(--display); font-size:1.4rem; font-weight:800; margin:.25rem 0 .1rem;}
+  .hof-head .s{font-size:.8rem; color:rgba(250,248,242,.62); margin:0;}
   .hof-pills{display:flex; gap:.4rem; margin:.7rem .2rem .3rem;}
   .hof-pills button{flex:1; font:700 .85rem var(--body); padding:.5rem .6rem; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:rgba(255,255,255,.75); cursor:pointer;}
   .hof-pills button.on{background:#e3c477; color:#3a0f1a; border-color:#e3c477;}
@@ -1380,7 +1386,7 @@
   .hof-split{display:grid; grid-template-columns:1fr; gap:.8rem; align-items:start;}
   .hof-split[data-view="p"] .hof-col[data-v="y"], .hof-split[data-view="y"] .hof-col[data-v="p"]{display:none;}
   .hof-col{min-width:0; max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 2px 2px;}
-  .hof-chead{display:none; position:sticky; top:0; z-index:1; font:700 .72rem var(--body); letter-spacing:.1em; text-transform:uppercase; color:#e3c477; padding:.1rem .1rem .5rem; background:#4a1220;}
+  .hof-chead{display:none; position:sticky; top:0; z-index:1; font:700 .72rem var(--body); letter-spacing:.1em; text-transform:uppercase; color:#e3c477; padding:.1rem .1rem .5rem; background:color-mix(in srgb, var(--ink) 70%, black);}
   .hof-item{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.05)); border:1px solid rgba(255,255,255,.1); border-radius:14px; margin:0 0 .45rem; overflow:hidden;}
   .hof-item.open{border-color:#d6a53e;}
   .hof-ih{display:flex; align-items:center; gap:.5rem; padding:.65rem .75rem; cursor:pointer;}
@@ -2136,9 +2142,7 @@
 
   <!-- ============ HALL OF FAME ============ -->
   <section class="section" id="sec-halloffame" data-section="halloffame">
-    <p class="eyebrow">Since 1994</p>
-    <h2 class="section-title">Hall of Fame</h2>
-    <p class="lede" style="margin-bottom:1.6rem;">Every winner since 1994: pick a player to see what they have won, or a year to see its results.</p>
+    <h2 class="section-title" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;">Hall of Fame</h2>
 
     <div id="hof-split"></div>
     <div class="trophy-shelf" id="trophy-shelf"></div>
@@ -8797,7 +8801,6 @@ function renderHofSplit(){
   if (!el) return;
   const { years, ranked } = hofBuild();
   if (!years.length && !ranked.length){ el.innerHTML = '<p class="muted">No results recorded yet.</p>'; return; }
-  if (!hofYearsInit && years.length){ hofOpenYears.add(years[0].year); hofYearsInit = true; }
 
   const yearsHtml = years.map(y => `
     <div class="hof-item ${hofOpenYears.has(y.year) ? 'open' : ''}" id="hof-y-${y.year}">
@@ -8831,7 +8834,7 @@ function renderHofSplit(){
 
   const winnerCount = ranked.filter(p => p.g > 0).length;
   el.innerHTML = `<div class="hof-wrap">
-    <div class="hof-subhead"><span class="t">Hall of Fame</span><span class="s">${years.length} seasons · ${winnerCount} winners</span></div>
+    <div class="hof-head"><div class="l">Since 1994</div><h2 class="t">Hall of Fame</h2><p class="s">${years.length} seasons · ${winnerCount} winners</p></div>
     <div class="hof-pills">
       <button class="${hofView === 'p' ? 'on' : ''}" onclick="hofSetView('p')">Players<span>${ranked.length}</span></button>
       <button class="${hofView === 'y' ? 'on' : ''}" onclick="hofSetView('y')">Years<span>${years.length}</span></button>
@@ -8842,7 +8845,7 @@ function renderHofSplit(){
       <div class="hof-col" data-v="p"><div class="hof-chead">Players</div>${playersHtml}${more}</div>
     </div></div>`;
 }
-function hofSetView(v){ hofView = v; renderHofSplit(); }
+function hofSetView(v){ hofView = v; hofOpenYears.clear(); hofOpenPlayers.clear(); renderHofSplit(); }
 function hofToggleYear(y){
   if (hofOpenYears.has(y)) hofOpenYears.delete(y); else hofOpenYears.add(y);
   document.getElementById('hof-y-' + y)?.classList.toggle('open', hofOpenYears.has(y));
