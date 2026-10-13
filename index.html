@@ -6621,13 +6621,13 @@ function renderLiveScores(){
     return;
   }
 
-  const backLink = `<a href="#" class="live-back-link" onclick="setLiveSubView('landing'); return false;">← Live Scores overview</a>`;
+  const backLink = `<a href="#" class="live-back-link" onclick="setLiveSubView('landing'); return false;">← Live Scores</a>`;
 
   const subTabs = `
     <div class="scores-sub-tabs">
-      <button class="scores-sub-tab ${liveSubView==='setup'||liveSubView==='entry'?'active':''}" onclick="setLiveSubView('setup')">⛳ Enter Scores</button>
+      <button class="scores-sub-tab ${liveSubView==='setup'||liveSubView==='entry'?'active':''}" onclick="setLiveSubView('setup')">⛳ Scorecard</button>
       <button class="scores-sub-tab ${liveSubView==='leaderboard'?'active':''}" onclick="setLiveSubView('leaderboard')">🏆 Leaderboard</button>
-      <button class="scores-sub-tab ${liveSubView==='groupings'?'active':''}" onclick="setLiveSubView('groupings')">👥 Groupings</button>
+      <button class="scores-sub-tab ${liveSubView==='groupings'?'active':''}" onclick="setLiveSubView('groupings')">👥 Groups</button>
     </div>`;
 
   let body = '';
@@ -7941,7 +7941,7 @@ function renderEntryView(){
       </div>
       ${rows}
       <div class="hole-entry-actions">
-        <button class="btn ghost" onclick="setLiveSubView('groupings')">👥 Groupings</button>
+        <button class="btn ghost" onclick="setLiveSubView('groupings')">👥 Groups</button>
         <button class="btn ghost" onclick="setLiveSubView('leaderboard')">🏆 Leaderboard</button>
         <button class="btn ghost" onclick="setLiveSubView('setup')">Change group</button>
       </div>
@@ -11684,7 +11684,7 @@ function renderGroupingsInScores(){
 
   const evRounds = roundsForEvent(liveEventId);
   if (evRounds.length && liveRoundId === null){
-    return '<p class="muted" style="margin-top:.5rem;">This is a multi-round event — select a specific round above to manage its groupings (each round is grouped separately).</p>';
+    return '<p class="muted" style="margin-top:.5rem;">This is a multi-round event — select a specific round above to manage its groups (each round is grouped separately).</p>';
   }
 
   const evGroups = matchGroups.filter(g => g.event_id === liveEventId && (liveRoundId ? g.round_id === liveRoundId : !g.round_id)).sort((a,b) => a.tee_time.localeCompare(b.tee_time));
