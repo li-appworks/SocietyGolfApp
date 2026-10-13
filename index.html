@@ -8682,6 +8682,7 @@ const hofOpenYears = new Set();
 const hofOpenPlayers = new Set();
 let hofShowAllPlayers = false;
 let hofYearsInit = false;
+let hofResetScroll = false;
 let hofView = 'p'; // phone: which list shows (players first)
 const HOF_PLAYERS_SHOWN = 12;
 
@@ -8832,6 +8833,8 @@ function renderHofSplit(){
   const more = ranked.length > HOF_PLAYERS_SHOWN
     ? `<button class="hof-more" onclick="hofShowAllPlayers=!hofShowAllPlayers; renderHofSplit();">${hofShowAllPlayers ? 'Show fewer ▴' : 'Show all ' + ranked.length + ' players ▾'}</button>` : '';
 
+  const keepScroll = hofResetScroll ? [] : [...document.querySelectorAll('#hof-split .hof-col')].map(c => c.scrollTop);
+  hofResetScroll = false;
   const winnerCount = ranked.filter(p => p.g > 0).length;
   el.innerHTML = `<div class="hof-wrap">
     <div class="hof-head"><div class="l">Since 1994</div><h2 class="t">Hall of Fame</h2><p class="s">${years.length} seasons · ${winnerCount} winners</p></div>
@@ -8844,15 +8847,26 @@ function renderHofSplit(){
       <div class="hof-col" data-v="y"><div class="hof-chead">Years</div>${yearsHtml}</div>
       <div class="hof-col" data-v="p"><div class="hof-chead">Players</div>${playersHtml}${more}</div>
     </div></div>`;
+  document.querySelectorAll('#hof-split .hof-col').forEach((c, i) => { if (keepScroll[i]) c.scrollTop = keepScroll[i]; });
 }
-function hofSetView(v){ hofView = v; hofOpenYears.clear(); hofOpenPlayers.clear(); renderHofSplit(); }
+function hofSetView(v){ hofView = v; hofOpenYears.clear(); hofOpenPlayers.clear(); hofResetScroll = true; renderHofSplit(); }
+function hofRevealCard(card){
+  if (card) setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 30);
+}
 function hofToggleYear(y){
   if (hofOpenYears.has(y)) hofOpenYears.delete(y); else hofOpenYears.add(y);
-  document.getElementById('hof-y-' + y)?.classList.toggle('open', hofOpenYears.has(y));
+  const card = document.getElementById('hof-y-' + y);
+  if (!card) return;
+  card.classList.toggle('open', hofOpenYears.has(y));
+  if (hofOpenYears.has(y)) hofRevealCard(card);
 }
 function hofTogglePlayer(k){
   if (hofOpenPlayers.has(k)) hofOpenPlayers.delete(k); else hofOpenPlayers.add(k);
-  renderHofSplit();
+  const head = [...document.querySelectorAll('#hof-split .hof-ih[data-k]')].find(h => h.dataset.k === k);
+  const card = head && head.closest('.hof-item');
+  if (!card){ renderHofSplit(); return; }
+  card.classList.toggle('open', hofOpenPlayers.has(k));
+  if (hofOpenPlayers.has(k)) hofRevealCard(card);
 }
 function hofJumpToYear(y){
   hofOpenYears.add(y);
