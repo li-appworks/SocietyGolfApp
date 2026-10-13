@@ -1071,6 +1071,43 @@
   .lp-past .lp-nm b{font-size:.92rem;}
   .lp-chip{font-size:.68rem; font-weight:700; padding:.18rem .55rem; border-radius:999px; background:rgba(227,193,115,.16); color:var(--brass-light); border:1px solid rgba(227,193,115,.35); white-space:nowrap;}
 
+  .lp-next{margin:0 1rem 1rem; padding:.9rem 1rem; border-radius:.8rem; border:1px solid rgba(227,193,115,.4); background:color-mix(in srgb, var(--brass) 14%, transparent); text-align:center; cursor:pointer;}
+  .lp-next:focus-visible{outline:2px solid var(--brass-light); outline-offset:2px;}
+  .lp-next .lp-label{margin-bottom:.2rem;}
+  .lp-next b{display:block; font-size:1.1rem; font-weight:700;}
+  .lp-next small{display:block; color:rgba(250,248,242,.62); font-size:.8rem; margin-top:.1rem;}
+  .lp-next .hint{display:block; font-size:.72rem; font-weight:700; color:var(--brass-light); margin-top:.45rem;}
+  /* the sync badge sits quietly in the panel's own colours */
+  .lp-foot .sync-indicator{display:inline-flex; align-items:center; gap:.4rem; font-size:.74rem; font-weight:600; padding:.35rem .8rem; border-radius:999px; background:rgba(250,248,242,.05); border:1px solid rgba(250,248,242,.12); color:rgba(250,248,242,.62); margin:0 0 .5rem;}
+  .lp-foot .sync-indicator.synced{color:#9ad7a6; border-color:rgba(154,215,166,.3); background:rgba(154,215,166,.07);}
+  .lp-foot .sync-indicator.offline{color:#e8c070; border-color:rgba(232,192,112,.35); background:rgba(232,192,112,.08);}
+  .lp-foot .sync-indicator.syncing, .lp-foot .sync-indicator.idle{color:rgba(250,248,242,.62);}
+
+  /* the Scorecard / Leaderboard / Groups screens behind the landing: same dark
+     fade-to-black panel; the light-page colours inside are remapped so the
+     existing layouts keep working unchanged */
+  .lp-screen{
+    --paper:rgba(250,248,242,.07); --stone:rgba(250,248,242,.08); --line:rgba(250,248,242,.16);
+    --text:#FAF8F2; --text-muted:rgba(250,248,242,.62); --ink:#E3C173; --bracken:#4d9a60; --claret:#ff9a9a;
+    margin-top:.2rem; border-radius:1rem; padding:1.1rem 1rem 1.3rem; color:#FAF8F2;
+    background:linear-gradient(180deg, #4B1320 0%, color-mix(in srgb, #4B1320 55%, black) 45%, #050203 100%);
+    box-shadow:0 12px 28px rgba(20,4,8,.35);
+  }
+  .lp-screen .live-back-link{color:var(--brass-light);}
+  .lp-screen .scores-sub-tabs{gap:.5rem;}
+  .lp-screen .tab-ic{font-size:1.25rem; line-height:1;}
+  .lp-screen .scores-sub-tab{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.2rem;
+    text-transform:none; letter-spacing:0; font-size:.82rem; font-weight:700; line-height:1.1;
+    padding:.75rem .4rem; border-radius:.8rem; border:1px solid rgba(250,248,242,.07);
+    background:linear-gradient(180deg, rgba(250,248,242,.09), rgba(250,248,242,.04)); color:rgba(250,248,242,.78);
+  }
+  .lp-screen .scores-sub-tab.active{background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 36%, transparent), color-mix(in srgb, var(--brass) 14%, transparent)); border-color:rgba(227,193,115,.55); color:#fff;}
+  .lp-screen .event-select-row select{background:rgba(250,248,242,.08); border-color:rgba(250,248,242,.16); color:#fff;}
+  .lp-screen .event-select-row select option{color:#2b2220; background:#fff;}
+  .lp-screen .btn.brass{color:#2a0b13;}
+  .lp-screen .lb-panel{--paper:#FAF8F2; --ink:#4B1320; background:none; padding-top:.4rem; margin-top:.6rem;}
+
   .live-back-link{
     display:inline-block; font-family:var(--body); font-size:.78rem; font-weight:600;
     color:var(--bracken); margin-bottom:.9rem;
@@ -6317,6 +6354,7 @@ let scoringPlayerIds = [];
 let currentHole = 1;
 let liveSubView = 'landing'; // 'landing' | 'setup' | 'entry' | 'leaderboard' | 'groupings'
 let liveShowPast = false;    // landing page: the "Past results" event list is open
+let liveEventPage = false;   // true = an event's page (Scorecard/Leaderboard/Groups); false = the quiet "nothing on" page
 
 /* pre-round handicap confirm/amend — shown once per (event,round,player)
    per browser session before Focus Mode's entry screen, for every scoring
@@ -6546,6 +6584,10 @@ function scorecardFor(eventId, roundId, playerId){
 async function openLiveScores(){
   const fr = pendingFocusRestore; pendingFocusRestore = null;
   if (fr) liveEventId = fr.eventId;
+  const activeEv = liveActiveEvent();
+  liveEventPage = !!activeEv || !!fr;
+  if (activeEv && !fr) liveEventId = activeEv.id;
+  if (!fr && !liveEventPage) liveSubView = 'landing';
   if (!liveEventId){
     // default to the most recently started event
     const upcoming = events.filter(e => eventStatus(e) === 'upcoming').sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -6614,7 +6656,13 @@ function renderLiveScores(){
     </div>` : '';
 
   if (liveSubView === 'landing'){
-    el.innerHTML = roundSelector + renderLiveLandingView();
+    if (!liveEventPage){
+      el.innerHTML = renderLiveQuietView();
+    } else {
+      const act = liveActiveEvent();
+      const toQuiet = (!act || act.id !== liveEventId) ? `<a href="#" class="live-back-link" onclick="liveEventPage=false; liveShowPast=false; renderLiveScores(); return false;">← Live Scores</a>` : '';
+      el.innerHTML = toQuiet + roundSelector + renderLiveLandingView();
+    }
     updateSyncIndicator();
     manageLeaderboardPoll();
     syncScoringFocusClass();
@@ -6625,9 +6673,9 @@ function renderLiveScores(){
 
   const subTabs = `
     <div class="scores-sub-tabs">
-      <button class="scores-sub-tab ${liveSubView==='setup'||liveSubView==='entry'?'active':''}" onclick="setLiveSubView('setup')">⛳ Scorecard</button>
-      <button class="scores-sub-tab ${liveSubView==='leaderboard'?'active':''}" onclick="setLiveSubView('leaderboard')">🏆 Leaderboard</button>
-      <button class="scores-sub-tab ${liveSubView==='groupings'?'active':''}" onclick="setLiveSubView('groupings')">👥 Groups</button>
+      <button class="scores-sub-tab ${liveSubView==='setup'||liveSubView==='entry'?'active':''}" onclick="setLiveSubView('setup')"><span class="tab-ic">⛳</span>Scorecard</button>
+      <button class="scores-sub-tab ${liveSubView==='leaderboard'?'active':''}" onclick="setLiveSubView('leaderboard')"><span class="tab-ic">🏆</span>Leaderboard</button>
+      <button class="scores-sub-tab ${liveSubView==='groupings'?'active':''}" onclick="setLiveSubView('groupings')"><span class="tab-ic">👥</span>Groups</button>
     </div>`;
 
   let body = '';
@@ -6636,7 +6684,7 @@ function renderLiveScores(){
   else if (liveSubView === 'setup')   body = renderSetupView();
   else if (liveSubView === 'entry')   body = renderEntryView();
 
-  el.innerHTML = backLink + subTabs + eventSelector + roundSelector + body;
+  el.innerHTML = `<div class="lp-screen">` + backLink + subTabs + eventSelector + roundSelector + body + `</div>`;
   updateSyncIndicator();
   manageLeaderboardPoll();
   syncScoringFocusClass();
@@ -6747,16 +6795,7 @@ function renderLiveLandingView(){
         + (isLoggedIn ? row(false, '⛳', 'Scorecard', 'Edit scores if something was entered wrongly', "setLiveSubView('setup')") : ''))
     + row(false, '👥', 'Groups', groupsSub, "setLiveSubView('groupings')");
 
-  let pastHtml = '';
-  if (liveShowPast){
-    const winnerOf = e => { const h = honours.find(x => x.event_id === e.id && !x.round_id) || honours.find(x => x.event_id === e.id); return h ? h.winner : ''; };
-    pastHtml = `<div class="lp-past">${[...events].sort((a,b) => new Date(b.date) - new Date(a.date)).map(e => {
-      const w = winnerOf(e);
-      return `<div class="lp-row ${e.id === liveEventId ? 'cur' : ''}" onclick="pickLiveEvent(${JSON.stringify(e.id).replace(/"/g, '&quot;')})" role="button" tabindex="0">
-        <div class="lp-nm"><b>${escapeHtml(e.name)}</b><small>${escapeHtml([eventCourseDisplay(e), fmtDateShort(e.date)].filter(Boolean).join(' · '))}</small></div>
-        ${w ? `<span class="lp-chip">🏆 ${escapeHtml(w)}</span>` : ''}<div class="lp-go">›</div></div>`;
-    }).join('')}</div>`;
-  }
+  const pastHtml = livePastListHtml();
 
   return `
     <div class="lp-panel">
@@ -6769,14 +6808,80 @@ function renderLiveLandingView(){
       </div>
       <div class="lp-rows">${rowsHtml}</div>
       <div class="lp-foot"><span id="sync-indicator" class="sync-indicator"></span></div>
-      <button class="lp-past-btn" onclick="toggleLivePast()">${liveShowPast ? 'Hide past results' : 'Looking for another round?'} <b>${liveShowPast ? '▴' : 'Past results ›'}</b></button>
+      ${livePastBtnHtml()}
       ${pastHtml}
     </div>
     ${isLoggedIn ? `<p style="text-align:center; margin:1.4rem 0 0;"><button class="committee-edit-btn" style="color:var(--claret);" onclick="resetScores()">Reset scores (admin)</button></p>` : ''}`;
 }
 
 function toggleLivePast(){ liveShowPast = !liveShowPast; renderLiveScores(); }
-function pickLiveEvent(id){ liveShowPast = false; return switchLiveEvent(id); }
+function pickLiveEvent(id){ liveShowPast = false; liveEventPage = true; liveSubView = 'landing'; return switchLiveEvent(id); }
+
+/* ===== Live Scores: quiet landing (nothing is being played) =====
+   An event counts as "being played" when it is today's date, or it has scores
+   but no Hall of Fame entry yet and is no more than 2 days old (a round that
+   ran past midnight). If there is one, Live Scores opens straight on that
+   event's page (Scorecard / Leaderboard / Groups). Otherwise it opens on the
+   quiet page: "Nothing on right now", the next round (tap it for its page),
+   and "Past results". The last winner is deliberately NOT shown here — the
+   Hall of Fame has it. */
+function liveActiveEvent(){
+  const todayIso = new Date().toLocaleDateString('en-CA');
+  const todays = events.filter(e => e.date === todayIso);
+  if (todays.length) return todays[0];
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 2);
+  const cutoffIso = cutoff.toLocaleDateString('en-CA');
+  return events.filter(e => e.date && e.date >= cutoffIso && e.date < todayIso
+      && !honours.some(h => h.event_id === e.id)
+      && allScorecards.some(sc => sc.event_id === e.id && allHoleScores.some(h => h.scorecard_id === sc.id)))
+    .sort((a,b) => new Date(b.date) - new Date(a.date))[0] || null;
+}
+
+function liveNextEvent(){
+  const todayIso = new Date().toLocaleDateString('en-CA');
+  return events.filter(e => e.date && e.date > todayIso).sort((a,b) => new Date(a.date) - new Date(b.date))[0] || null;
+}
+
+function livePastBtnHtml(){
+  return `<button class="lp-past-btn" onclick="toggleLivePast()">${liveShowPast ? 'Hide past results' : 'Looking for another round?'} <b>${liveShowPast ? '▴' : 'Past results ›'}</b></button>`;
+}
+
+function livePastListHtml(){
+  if (!liveShowPast) return '';
+  const winnerOf = e => { const h = honours.find(x => x.event_id === e.id && !x.round_id) || honours.find(x => x.event_id === e.id); return h ? h.winner : ''; };
+  return `<div class="lp-past">${[...events].sort((a,b) => new Date(b.date) - new Date(a.date)).map(e => {
+    const w = winnerOf(e);
+    return `<div class="lp-row ${e.id === liveEventId && liveEventPage ? 'cur' : ''}" onclick="pickLiveEvent(${JSON.stringify(e.id).replace(/"/g, '&quot;')})" role="button" tabindex="0">
+      <div class="lp-nm"><b>${escapeHtml(e.name)}</b><small>${escapeHtml([eventCourseDisplay(e), fmtDateShort(e.date)].filter(Boolean).join(' · '))}</small></div>
+      ${w ? `<span class="lp-chip">🏆 ${escapeHtml(w)}</span>` : ''}<div class="lp-go">›</div></div>`;
+  }).join('')}</div>`;
+}
+
+function renderLiveQuietView(){
+  const next = liveNextEvent();
+  const pick = next ? `pickLiveEvent(${JSON.stringify(next.id).replace(/"/g, '&quot;')})` : '';
+  const nextHtml = next ? `
+    <div class="lp-next" onclick="${pick}" role="button" tabindex="0"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); ${pick}}">
+      <div class="lp-label">Next round</div>
+      <b>${escapeHtml(next.name)}</b>
+      <small>${escapeHtml([eventCourseDisplay(next), fmtDate(next.date)].filter(Boolean).join(' — '))}</small>
+      <span class="hint">Groups and tee times ›</span>
+    </div>` : '';
+  return `
+    <div class="lp-panel">
+      <div class="lp-head">
+        <div class="lp-label">Live scoring</div>
+        <h2 class="lp-title">Nothing on right now</h2>
+        <p class="lp-sub">${next ? 'Scoring opens on the day of the next round.' : 'There is no round scheduled at the moment.'}</p>
+      </div>
+      ${nextHtml}
+      <div class="lp-foot"><span id="sync-indicator" class="sync-indicator" data-idle="1"></span></div>
+      ${livePastBtnHtml()}
+      ${livePastListHtml()}
+    </div>`;
+}
+
 
 /* Keeps body.scoring-focus in sync with actual state — separated from
    renderLiveScores() so goTo() can also call it the moment someone
@@ -8100,7 +8205,10 @@ function updateSyncIndicator(){
   const el = document.getElementById('sync-indicator');
   if (!el) return;
   const pending = scoreQueue.length + scorecardQueue.length;
-  if (!pending){
+  if (!pending && el.dataset.idle){
+    el.innerHTML = 'Live sync technology';
+    el.className = 'sync-indicator idle';
+  } else if (!pending){
     el.innerHTML = '\u2713 All scores synced';
     el.className = 'sync-indicator synced';
   } else if (!navigator.onLine){
