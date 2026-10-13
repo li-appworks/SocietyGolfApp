@@ -1089,8 +1089,8 @@
   .lp-screen{
     --paper:rgba(250,248,242,.07); --stone:rgba(250,248,242,.08); --line:rgba(250,248,242,.16);
     --text:#FAF8F2; --text-muted:rgba(250,248,242,.62); --ink:#E3C173; --bracken:#4d9a60; --claret:#ff9a9a;
-    margin-top:.2rem; border-radius:1rem; padding:1.1rem 1rem 1.3rem; color:#FAF8F2;
-    background:linear-gradient(180deg, #4B1320 0%, color-mix(in srgb, #4B1320 55%, black) 45%, #050203 100%);
+    margin-top:.2rem; border-radius:1rem; padding:1.1rem .75rem 1.3rem; color:#FAF8F2;
+    background:#070304;
     box-shadow:0 12px 28px rgba(20,4,8,.35);
   }
   .lp-screen .live-back-link{color:var(--brass-light);}
@@ -1113,6 +1113,8 @@
   .lp-lb .focus-lb-list, .lp-lb .finalise-cta{padding-left:0; padding-right:0;}
   .lp-lb .frozen-banner, .lp-lb .done-banner{margin-left:0; margin-right:0;}
   .lp-lb .lb-row{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07);}
+  .lp-screen .grp-tile{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07); border-radius:.8rem;}
+  .lp-screen .grp-tile.sel{background:linear-gradient(100deg, #6d4c16 0%, #3a2a0e 55%, #1a1207 100%); border:1px solid rgba(227,193,115,.55); border-left:3px solid var(--brass-light);}
   .lp-screen.lp-lb .lb-row:has(.prize-tag){background:linear-gradient(100deg, #6d4c16 0%, #3a2a0e 55%, #1a1207 100%); border:1px solid rgba(227,193,115,.35); border-left:3px solid var(--brass-light);}
 
   .live-back-link{
@@ -7415,8 +7417,7 @@ function renderSetupView(){
       const rosterLine = playerNames.join(', ') || '<span style="color:var(--text-muted);">No players assigned</span>';
 
       return `
-        <div style="background:var(--paper); border:2px solid ${isSelected ? 'var(--brass)' : 'var(--line)'}; border-radius:var(--radius);
-          padding:1rem 1.2rem; margin-bottom:.7rem; cursor:pointer; ${grpFinished ? 'opacity:.7;' : ''}"
+        <div class="grp-tile${isSelected ? ' sel' : ''}" style="padding:1rem 1.2rem; margin-bottom:.7rem; cursor:pointer; ${grpFinished ? 'opacity:.7;' : ''}"
           onclick="selectGroupForScoring(${g.id})">
           <div style="display:flex; align-items:baseline; gap:.8rem; margin-bottom:.5rem;">
             <span style="font-family:var(--body); font-size:1.2rem; font-weight:700; color:var(--ink);">${g.tee_time}</span>
@@ -11859,7 +11860,7 @@ function renderGroupingsInScores(){
       </div>` : '';
 
     return `
-      <div class="${justRandomizedGroupIds.has(g.id) ? 'group-reveal' : ''}" style="background:var(--paper); border:1px solid var(--line); border-left:4px solid var(--brass); border-radius:var(--radius); padding:.9rem 1.1rem; margin-bottom:.7rem;">
+      <div class="grp-tile ${justRandomizedGroupIds.has(g.id) ? 'group-reveal' : ''}" style="padding:.9rem 1.1rem; margin-bottom:.7rem;">
         <div style="display:flex; align-items:baseline; gap:.8rem; margin-bottom:.5rem; flex-wrap:wrap;">
           <span style="font-family:var(--body); font-size:1.3rem; font-weight:700; color:var(--ink);">${g.tee_time}</span>
           <span style="font-family:var(--body); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted);">Group ${idx+1}</span>
