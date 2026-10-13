@@ -1026,41 +1026,50 @@
   }
 
   /* ---------- live scores: landing ----------
-     First screen on opening Live Scores — which event you're on, then one
-     tap into each of the three real screens, instead of dropping straight
-     into Enter Scores' own group/player picker with no orientation. Same
-     dark-fade-to-black treatment as the event wizard/focus mode banners,
-     so "this is matchday" reads immediately. */
-  .live-hero{
-    background:linear-gradient(180deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 55%, black) 100%);
-    color:var(--paper); border-radius:var(--radius); padding:1.3rem 1.3rem 1.6rem; text-align:center;
+     First screen on opening Live Scores. One dark panel (the colour fades to
+     black like the other dark panels): the event's details with a gold rule
+     under them, then Scorecard / Leaderboard / Groups, then a link to past
+     rounds. */
+  .lp-panel{
+    margin-top:.2rem; border-radius:1rem; padding:1.3rem 0 .4rem; color:var(--paper);
+    background:linear-gradient(180deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 55%, black) 45%, #050203 100%);
+    box-shadow:0 12px 28px rgba(20,4,8,.35);
   }
-  .live-hero-eyebrow{font-family:var(--body); font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); margin:0 0 .3rem;}
-  .live-hero-title{font-family:var(--display); font-size:1.4rem; font-weight:800; margin:0 0 .3rem;}
-  .live-hero-sub{font-size:.82rem; color:rgba(250,248,242,.65); margin:0;}
-  .live-hero-sync{margin-top:.7rem;}
-  .live-hero-winner{margin-top:.9rem; padding-top:.9rem; border-top:1px solid rgba(227,193,115,.3);}
-  .live-hero-winner .trophy{font-size:1.8rem; line-height:1;}
-  .live-hero-winner .lbl{font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); margin-top:.3rem;}
-  .live-hero-winner .name{font-family:var(--display); font-size:1.5rem; font-weight:800; margin-top:.15rem;}
-  .live-hero-winner .pts{font-size:.85rem; color:var(--brass-light); margin-top:.1rem; font-variant-numeric:tabular-nums;}
-  .live-hero-sync .sync-indicator{display:inline-flex;}
-
-  .live-action-rows{display:flex; flex-direction:column; gap:.7rem; padding-top:.9rem;}
-  .live-action-row{
-    display:flex; align-items:center; gap:.8rem; background:var(--paper); border:1px solid var(--line);
-    border-radius:var(--radius); padding:.95rem 1.1rem; cursor:pointer;
-    box-shadow:0 6px 16px rgba(75,19,32,.08); transition:transform .15s, box-shadow .15s;
+  .lp-head{text-align:center; padding:.1rem 1rem 1rem; margin:0 1rem 1rem; border-bottom:2px solid var(--brass-light); position:relative;}
+  .lp-head::after{content:""; position:absolute; left:50%; bottom:-5px; width:8px; height:8px; background:var(--brass-light); transform:translateX(-50%) rotate(45deg);}
+  .lp-label{font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); font-weight:700;}
+  .lp-label .live{display:inline-flex; align-items:center; gap:.4rem; color:#ff9a9a;}
+  .lp-label .live i{width:7px; height:7px; border-radius:50%; background:#ff5d5d; box-shadow:0 0 0 3px rgba(255,93,93,.25); animation:pulse 1.4s ease-in-out infinite;}
+  .lp-title{font-family:var(--display); font-size:1.4rem; font-weight:800; margin:.25rem 0 .1rem;}
+  .lp-sub{font-size:.8rem; color:rgba(250,248,242,.62); margin:0;}
+  .lp-note{font-size:.8rem; color:rgba(250,248,242,.62); margin:.6rem 0 0;}
+  .lp-winner{margin-top:.8rem;}
+  .lp-winner .trophy{font-size:1.6rem; line-height:1;}
+  .lp-winner .lbl{font-size:.65rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); margin-top:.25rem;}
+  .lp-winner .name{font-family:var(--display); font-size:1.45rem; font-weight:800; margin-top:.1rem;}
+  .lp-winner .pts{font-size:.85rem; color:var(--brass-light); margin-top:.1rem; font-variant-numeric:tabular-nums;}
+  .lp-rows{display:flex; flex-direction:column; gap:.5rem; padding:0 1rem .4rem;}
+  .lp-row{
+    display:flex; align-items:center; gap:.8rem; padding:.95rem .9rem; border-radius:.8rem; cursor:pointer;
+    background:linear-gradient(180deg, rgba(250,248,242,.09), rgba(250,248,242,.04)); border:1px solid rgba(250,248,242,.07);
   }
-  .live-action-row:hover{transform:translateY(-1px); box-shadow:0 8px 20px rgba(75,19,32,.14);}
-  .live-action-row.featured{background:var(--brass); border-color:var(--brass);}
-  .lar-ic{font-size:1.3rem; width:32px; text-align:center; flex-shrink:0;}
-  .lar-body{flex:1; min-width:0;}
-  .lar-title{font-family:var(--display); font-weight:700; font-size:.98rem; color:var(--ink);}
-  .lar-sub{font-size:.76rem; color:var(--text-muted); margin-top:.1rem;}
-  .live-action-row.featured .lar-sub{color:color-mix(in srgb, var(--ink) 75%, transparent);}
-  .lar-chev{margin-left:auto; color:var(--text-muted); font-size:1.1rem; flex-shrink:0;}
-  .live-action-row.featured .lar-chev{color:var(--ink);}
+  .lp-row:focus-visible{outline:2px solid var(--brass-light); outline-offset:2px;}
+  .lp-row.me{background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 36%, transparent), color-mix(in srgb, var(--brass) 14%, transparent)); border-color:rgba(227,193,115,.55);}
+  .lp-ic{width:2.5rem; height:2.5rem; border-radius:50%; display:grid; place-items:center; font-size:1.3rem; background:rgba(250,248,242,.08); flex-shrink:0;}
+  .lp-row.me .lp-ic{background:rgba(227,193,115,.24);}
+  .lp-nm{flex:1; min-width:0;}
+  .lp-nm b{display:block; font-size:1.05rem; font-weight:700;}
+  .lp-nm small{display:block; font-size:.76rem; color:rgba(250,248,242,.58); margin-top:.1rem;}
+  .lp-go{color:var(--brass-light); font-size:1.2rem; flex-shrink:0;}
+  .lp-foot{padding:.5rem 1rem 0; text-align:center;}
+  .lp-foot .sync-indicator{display:inline-block; margin:0 0 .5rem;}
+  .lp-past-btn{display:flex; justify-content:center; gap:.4rem; width:100%; padding:.5rem 1rem 1.1rem; font-size:.72rem; color:rgba(250,248,242,.5); background:none; border:0; cursor:pointer; font-family:var(--body);}
+  .lp-past-btn b{color:var(--brass-light); font-weight:700;}
+  .lp-past{padding:0 1rem 1rem; display:flex; flex-direction:column; gap:.4rem;}
+  .lp-past .lp-row{padding:.7rem .8rem;}
+  .lp-past .lp-row.cur{border-color:rgba(227,193,115,.55);}
+  .lp-past .lp-nm b{font-size:.92rem;}
+  .lp-chip{font-size:.68rem; font-weight:700; padding:.18rem .55rem; border-radius:999px; background:rgba(227,193,115,.16); color:var(--brass-light); border:1px solid rgba(227,193,115,.35); white-space:nowrap;}
 
   .live-back-link{
     display:inline-block; font-family:var(--body); font-size:.78rem; font-weight:600;
@@ -2073,7 +2082,7 @@
 
   <!-- ============ LIVE SCORES ============ -->
   <section class="section" id="sec-scores" data-section="scores">
-    <p class="eyebrow">Today's round</p>
+    <p class="eyebrow">Matchday</p>
     <h2 class="section-title">Live Scores</h2>
     <div id="live-scores-content"></div>
   </section>
@@ -6307,6 +6316,7 @@ let scoringFocusMode = false;
 let scoringPlayerIds = [];
 let currentHole = 1;
 let liveSubView = 'landing'; // 'landing' | 'setup' | 'entry' | 'leaderboard' | 'groupings'
+let liveShowPast = false;    // landing page: the "Past results" event list is open
 
 /* pre-round handicap confirm/amend — shown once per (event,round,player)
    per browser session before Focus Mode's entry screen, for every scoring
@@ -6604,7 +6614,7 @@ function renderLiveScores(){
     </div>` : '';
 
   if (liveSubView === 'landing'){
-    el.innerHTML = eventSelector + roundSelector + renderLiveLandingView();
+    el.innerHTML = roundSelector + renderLiveLandingView();
     updateSyncIndicator();
     manageLeaderboardPoll();
     syncScoringFocusClass();
@@ -6673,11 +6683,11 @@ async function resetScores(){
   alert('Scores reset.');
 }
 
-/* Live Scores landing — the first thing you see on opening the page:
-   which event you're synced against, plus one tap into each of the
-   three real screens (scoring, leaderboard, groupings). Replaces what
-   used to be an immediate drop into "Enter Scores"' own group/player
-   picker, which read as a bare player list with no orientation. */
+/* Live Scores landing — the first thing you see on opening the page. One dark
+   panel: the event's details (with a gold rule under them), then Scorecard /
+   Leaderboard / Groups, then "Past results", which opens the list of every
+   event to switch to (that list replaced the event dropdown that used to sit
+   at the top of this screen; the other Live Scores screens still have it). */
 function renderLiveLandingView(){
   const ev = eventById(liveEventId);
   if (!ev) return `<p class="muted" style="margin-top:.5rem;">No events yet.</p>`;
@@ -6690,13 +6700,11 @@ function renderLiveLandingView(){
 
   const evGroups = matchGroups.filter(g => g.event_id === liveEventId && (liveRoundId ? g.round_id === liveRoundId : !g.round_id));
 
-  let scoreTitle = 'Enter scores';
   let scoreSub;
   if (evRounds.length && liveRoundId === null){
     scoreSub = 'Select a round above to start scoring';
   } else if (scoringPlayerIds.length){
-    scoreTitle = 'Resume scoring';
-    scoreSub = `Hole ${currentHole} of ${holes}`;
+    scoreSub = `Resume · Hole ${currentHole} of ${holes}`;
   } else if (evGroups.length){
     scoreSub = `${evGroups.length} group${evGroups.length===1?'':'s'} ready — pick yours to begin`;
   } else {
@@ -6704,46 +6712,71 @@ function renderLiveLandingView(){
   }
 
   const lb = getLeaderboard(liveEventId, holes, liveRoundId);
-  const startedCount = lb.filter(e => e.started).length;
   const startedEntries = lb.filter(e => e.started);
-  const roundDone = startedEntries.length > 0 && startedEntries.every(e => e.actualThru >= holes);
+  const startedCount = startedEntries.length;
+  const roundDone = startedCount > 0 && startedEntries.every(e => e.actualThru >= holes);
   const honour = honours.find(h => h.event_id === liveEventId && (liveRoundId ? h.round_id === liveRoundId : !h.round_id));
   // Three states: playing (default), everyone's finished but no result yet,
   // and finalised (a Hall of Fame entry exists for this event/round).
   const phase = honour ? 'final' : roundDone ? 'done' : 'live';
+  const who = isScrambleEvent(ev) ? 'team' : 'player';
   const lbSub = phase === 'final' ? 'See the full final standings'
-    : phase === 'done' ? `${startedCount} ${isScrambleEvent(ev) ? 'team' : 'player'}${startedCount===1?'':'s'} finished — result to follow`
-    : startedCount ? `${startedCount} ${isScrambleEvent(ev) ? 'team' : 'player'}${startedCount===1?'':'s'} on the course` : 'Live standings, updates automatically';
-  const eyebrow = phase === 'final' ? 'Final result' : phase === 'done' ? 'Round complete' : "Today's round";
+    : phase === 'done' ? `${startedCount} ${who}${startedCount===1?'':'s'} finished — result to follow`
+    : startedCount ? `${startedCount} ${who}${startedCount===1?'':'s'} on the course` : 'Live standings, updates automatically';
 
-  const groupingsSub = evGroups.length ? `${evGroups.length} group${evGroups.length===1?'':'s'} set` : 'No groups set up yet';
+  const todayIso = new Date().toLocaleDateString('en-CA');
+  const label = phase === 'final' ? 'Final result'
+    : phase === 'done' ? 'Round complete'
+    : (startedCount && ev.date === todayIso) ? '<span class="live"><i></i>Live now</span>'
+    : ev.date === todayIso ? "Today's round"
+    : ev.date > todayIso ? 'Next round' : 'Past round';
 
-  const row = (cls, icon, title, sub, onclick) => `
-    <div class="live-action-row ${cls}" onclick="${onclick}" role="button" tabindex="0"
+  const row = (me, icon, title, sub, onclick) => `
+    <div class="lp-row ${me ? 'me' : ''}" onclick="${onclick}" role="button" tabindex="0"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); ${onclick}}">
-      <div class="lar-ic">${icon}</div>
-      <div class="lar-body"><div class="lar-title">${escapeHtml(title)}</div><div class="lar-sub">${escapeHtml(sub)}</div></div>
-      <div class="lar-chev">›</div>
+      <div class="lp-ic">${icon}</div>
+      <div class="lp-nm"><b>${escapeHtml(title)}</b><small>${escapeHtml(sub)}</small></div>
+      <div class="lp-go">›</div>
     </div>`;
 
+  const groupsSub = evGroups.length ? `Tee times and who's with who · ${evGroups.length} group${evGroups.length===1?'':'s'}` : 'No groups set up yet';
+
+  const rowsHtml = (phase === 'live'
+      ? row(true, '⛳', 'Scorecard', scoreSub, "setLiveSubView('setup')") + row(false, '🏆', 'Leaderboard', lbSub, "setLiveSubView('leaderboard')")
+      : row(true, '🏆', 'Leaderboard', lbSub, "setLiveSubView('leaderboard')")
+        + (isLoggedIn ? row(false, '⛳', 'Scorecard', 'Edit scores if something was entered wrongly', "setLiveSubView('setup')") : ''))
+    + row(false, '👥', 'Groups', groupsSub, "setLiveSubView('groupings')");
+
+  let pastHtml = '';
+  if (liveShowPast){
+    const winnerOf = e => { const h = honours.find(x => x.event_id === e.id && !x.round_id) || honours.find(x => x.event_id === e.id); return h ? h.winner : ''; };
+    pastHtml = `<div class="lp-past">${[...events].sort((a,b) => new Date(b.date) - new Date(a.date)).map(e => {
+      const w = winnerOf(e);
+      return `<div class="lp-row ${e.id === liveEventId ? 'cur' : ''}" onclick="pickLiveEvent(${JSON.stringify(e.id).replace(/"/g, '&quot;')})" role="button" tabindex="0">
+        <div class="lp-nm"><b>${escapeHtml(e.name)}</b><small>${escapeHtml([eventCourseDisplay(e), fmtDateShort(e.date)].filter(Boolean).join(' · '))}</small></div>
+        ${w ? `<span class="lp-chip">🏆 ${escapeHtml(w)}</span>` : ''}<div class="lp-go">›</div></div>`;
+    }).join('')}</div>`;
+  }
+
   return `
-    <div class="live-hero">
-      <p class="live-hero-eyebrow">${eyebrow}</p>
-      <h2 class="live-hero-title">${escapeHtml(ev.name)}</h2>
-      ${subLine ? `<p class="live-hero-sub">${escapeHtml(subLine)}</p>` : ''}
-      ${phase === 'final' ? `<div class="live-hero-winner"><div class="trophy">🏆</div><div class="lbl">Winner</div><div class="name">${escapeHtml(honour.winner)}</div>${honour.winner_score != null ? `<div class="pts">${honour.winner_score} points</div>` : ''}</div>` : ''}
-      ${phase === 'done' ? `<p class="live-hero-sub" style="margin-top:.6rem;">Every score is in. The captain will announce the result shortly.</p>` : ''}
-      <div class="live-hero-sync"><span id="sync-indicator" class="sync-indicator"></span></div>
-    </div>
-    <div class="live-action-rows">
-      ${phase === 'live'
-        ? row('featured', '⛳', scoreTitle, scoreSub, "setLiveSubView('setup')") + row('', '🏆', 'Leaderboard', lbSub, "setLiveSubView('leaderboard')")
-        : row('featured', '🏆', phase === 'final' ? 'Final results' : 'Leaderboard', lbSub, "setLiveSubView('leaderboard')")
-          + (isLoggedIn ? row('', '⛳', 'Edit scores', 'Correct a score if something was entered wrongly', "setLiveSubView('setup')") : '')}
-      ${row('', '👥', 'Groupings', groupingsSub, "setLiveSubView('groupings')")}
+    <div class="lp-panel">
+      <div class="lp-head">
+        <div class="lp-label">${label}</div>
+        <h2 class="lp-title">${escapeHtml(ev.name)}</h2>
+        ${subLine ? `<p class="lp-sub">${escapeHtml(subLine)}</p>` : ''}
+        ${phase === 'final' ? `<div class="lp-winner"><div class="trophy">🏆</div><div class="lbl">Winner</div><div class="name">${escapeHtml(honour.winner)}</div>${honour.winner_score != null ? `<div class="pts">${honour.winner_score} points</div>` : ''}</div>` : ''}
+        ${phase === 'done' ? `<p class="lp-note">Every score is in. The captain will announce the result shortly.</p>` : ''}
+      </div>
+      <div class="lp-rows">${rowsHtml}</div>
+      <div class="lp-foot"><span id="sync-indicator" class="sync-indicator"></span></div>
+      <button class="lp-past-btn" onclick="toggleLivePast()">${liveShowPast ? 'Hide past results' : 'Looking for another round?'} <b>${liveShowPast ? '▴' : 'Past results ›'}</b></button>
+      ${pastHtml}
     </div>
     ${isLoggedIn ? `<p style="text-align:center; margin:1.4rem 0 0;"><button class="committee-edit-btn" style="color:var(--claret);" onclick="resetScores()">Reset scores (admin)</button></p>` : ''}`;
 }
+
+function toggleLivePast(){ liveShowPast = !liveShowPast; renderLiveScores(); }
+function pickLiveEvent(id){ liveShowPast = false; return switchLiveEvent(id); }
 
 /* Keeps body.scoring-focus in sync with actual state — separated from
    renderLiveScores() so goTo() can also call it the moment someone
