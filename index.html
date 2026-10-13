@@ -1107,6 +1107,13 @@
   .lp-screen .event-select-row select option{color:#2b2220; background:#fff;}
   .lp-screen .btn.brass{color:#2a0b13;}
   .lp-screen .lb-panel{--paper:#FAF8F2; --ink:#4B1320; background:none; padding-top:.4rem; margin-top:.6rem;}
+  /* leaderboard variant: black panel, wider tiles, each tile lit from the left (burgundy fading to dark),
+     prize places warmer with a gold edge */
+  .lp-screen.lp-lb{background:#070304; padding-left:.75rem; padding-right:.75rem;}
+  .lp-lb .focus-lb-list, .lp-lb .finalise-cta{padding-left:0; padding-right:0;}
+  .lp-lb .frozen-banner, .lp-lb .done-banner{margin-left:0; margin-right:0;}
+  .lp-lb .lb-row{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07);}
+  .lp-screen.lp-lb .lb-row:has(.prize-tag){background:linear-gradient(100deg, #6d4c16 0%, #3a2a0e 55%, #1a1207 100%); border:1px solid rgba(227,193,115,.35); border-left:3px solid var(--brass-light);}
 
   .live-back-link{
     display:inline-block; font-family:var(--body); font-size:.78rem; font-weight:600;
@@ -6688,7 +6695,7 @@ function renderLiveScores(){
   else if (liveSubView === 'setup')   body = renderSetupView();
   else if (liveSubView === 'entry')   body = renderEntryView();
 
-  el.innerHTML = `<div class="lp-screen">` + backLink + subTabs + eventSelector + roundSelector + body + `</div>`;
+  el.innerHTML = `<div class="lp-screen${liveSubView === 'leaderboard' ? ' lp-lb' : ''}">` + backLink + subTabs + eventSelector + roundSelector + body + `</div>`;
   updateSyncIndicator();
   manageLeaderboardPoll();
   syncScoringFocusClass();
