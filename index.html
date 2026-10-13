@@ -1106,6 +1106,25 @@
   .lp-screen .event-select-row select{background:rgba(250,248,242,.08); border-color:rgba(250,248,242,.16); color:#fff;}
   .lp-screen .event-select-row select option{color:#2b2220; background:#fff;}
   .lp-screen .btn.brass{color:#2a0b13;}
+  /* the in-page scoring screen (shown when you leave focus mode): these pieces used the light-page "ink"/"paper"
+     colours as fills and text, which the remap above turns into gold blocks with see-through text — so they
+     get explicit dark-panel colours instead */
+  .lp-screen .hole-nav{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07); border-radius:.8rem; color:#FAF8F2;}
+  .lp-screen .hole-nav h3{color:#fff;}
+  .lp-screen .hole-nav-btn{color:#FAF8F2; border-color:rgba(250,248,242,.3);}
+  .lp-screen .player-score-row{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07); border-radius:.8rem;}
+  .lp-screen .player-score-name{color:#fff;}
+  .lp-screen .points-btn{background:rgba(250,248,242,.07); color:#fff; border-color:rgba(250,248,242,.16); border-radius:.7rem;}
+  .lp-screen .points-btn.selected{background:var(--brass-light); color:#2a0b13; border-color:var(--brass-light);}
+  .lp-screen .points-btn.selected-0{background:rgba(250,248,242,.28); color:#fff; border-color:rgba(250,248,242,.28);}
+  .lp-screen .round-complete-banner{background:linear-gradient(100deg, #1f5a34 0%, #12331f 55%, #0a1a10 100%); border:1px solid rgba(154,215,166,.35); border-radius:.8rem; color:#e9f7ee;}
+  .lp-screen .round-complete-banner h3{color:#fff;}
+  .lp-screen .round-complete-banner .btn{background:rgba(250,248,242,.12) !important; color:#fff !important; border-color:rgba(250,248,242,.4);}
+  /* quiet sync badge on every dark screen, not just the landing */
+  .lp-screen .sync-indicator{display:inline-flex; align-items:center; gap:.4rem; font-size:.74rem; font-weight:600; padding:.35rem .8rem; border-radius:999px; background:rgba(250,248,242,.05); border:1px solid rgba(250,248,242,.12); color:rgba(250,248,242,.62); margin:0 0 .8rem;}
+  .lp-screen .sync-indicator.synced{color:#9ad7a6; border-color:rgba(154,215,166,.3); background:rgba(154,215,166,.07);}
+  .lp-screen .sync-indicator.offline{color:#e8c070; border-color:rgba(232,192,112,.35); background:rgba(232,192,112,.08);}
+  .lp-screen .sync-indicator.syncing{color:rgba(250,248,242,.62);}
   .lp-screen .lb-panel{--paper:#FAF8F2; --ink:#4B1320; background:none; padding-top:.4rem; margin-top:.6rem;}
   /* leaderboard variant: black panel, wider tiles, each tile lit from the left (burgundy fading to dark),
      prize places warmer with a gold edge */
