@@ -2122,7 +2122,6 @@
     <h2 class="section-title">Hall of Fame</h2>
     <p class="lede" style="margin-bottom:1.6rem;">Every winner since 1994: pick a player to see what they have won, or a year to see its results.</p>
 
-    <div id="latest-winner-slot"></div>
     <div id="hof-split"></div>
     <div class="trophy-shelf" id="trophy-shelf"></div>
     <div id="trophy-winners-panel"></div>
@@ -8858,23 +8857,6 @@ function renderHonours(){
   const isCaptainEntry = h => ['captain','vice-captain'].includes((h.title||'').trim().toLowerCase());
   const trophies = honours.filter(h => !isCaptainEntry(h));
   const captains = honours.filter(h => isCaptainEntry(h)).sort((a,b) => a.year - b.year);
-
-  /* Latest winner banner — the most recent trophy honour (by its event's date
-     when linked, otherwise by year), tapping it opens that trophy's list. */
-  const latestSlot = document.getElementById('latest-winner-slot');
-  if (latestSlot){
-    const when = h => { const ev = h.event_id ? events.find(e => e.id === h.event_id) : null; return ev ? new Date(ev.date + 'T00:00:00').getTime() : new Date((h.year || 0) + '-12-31T00:00:00').getTime(); };
-    const latest = [...trophies].filter(h => h.winner).sort((a,b) => when(b) - when(a) || String(b.id).localeCompare(String(a.id), undefined, {numeric:true}))[0];
-    if (latest){
-      const base = honourBaseName(latest.title);
-      const meta = [honourCourse(latest.title), latest.year, latest.winner_score != null ? latest.winner_score + ' pts' : ''].filter(Boolean).join(' · ');
-      latestSlot.innerHTML = `<div class="hof-latest" role="button" tabindex="0"
-          onclick="hofJumpToYear(${latest.year})"
-          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); hofJumpToYear(${latest.year});}">
-          ${winnerBannerCore({ name: latest.winner, trophy: base, meta, label: 'Latest winner' })}
-        </div>`;
-    } else latestSlot.innerHTML = '';
-  }
 
   /* group trophies by base competition name (used by the Hole In One list) */
   const groups = {};
