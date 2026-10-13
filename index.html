@@ -1486,6 +1486,22 @@
   .sx-bottom .nxt:disabled{opacity:.4; cursor:default;}
   .focus-back{padding:.4rem 1rem calc(env(safe-area-inset-bottom) + 1rem); flex-shrink:0;}
   .focus-back button{width:100%; min-height:3.4rem; border-radius:16px; border:2px solid var(--brass); background:var(--brass); color:var(--ink); font-size:1rem; font-weight:800; cursor:pointer;}
+  /* ===== Texas Scramble team card (2026-10-13) — same screen as the strokes card, one big team row ===== */
+  .sx-team{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:space-between; gap:.5rem; background:rgba(250,248,242,.07); border:1px solid rgba(250,248,242,.12); border-radius:18px; padding:.8rem .8rem .8rem;}
+  .sx-tmhead b{display:block; font-size:1.25rem; font-weight:800; line-height:1.15;}
+  .sx-tmhead span{display:block; font-size:.95rem; font-weight:500; color:rgba(250,248,242,.7); margin-top:.15rem;}
+  .sx-tmhcp{font-size:.95rem; color:rgba(250,248,242,.75); line-height:1.5;}
+  .sx-tmhcp b{color:var(--brass-light); font-size:1.15rem;}
+  .sx-team .sx-ctl{gap:.5rem;}
+  .sx-team .sx-stp{width:4.8rem; height:4.8rem; font-size:2.8rem; border-radius:20px;}
+  .sx-team .sx-val{flex:1; width:auto;}
+  .sx-team .sx-val .n{font-size:5rem;}
+  .sx-team .sx-val .l{font-size:.95rem;}
+  .sx-tmstats{display:grid; grid-template-columns:1fr 1fr; gap:.5rem;}
+  .sx-tmstats div{background:rgba(250,248,242,.08); border-radius:16px; padding:.5rem; text-align:center;}
+  .sx-tmstats b{display:block; font-size:3rem; font-weight:800; line-height:1; color:var(--brass-light); font-variant-numeric:tabular-nums;}
+  .sx-tmstats span{display:block; font-size:.9rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,242,.62); margin-top:.2rem;}
+  .sx-team .sx-blob{min-height:3.1rem; font-size:1rem;}
   .done-banner{
     margin:0 1rem .8rem; padding:.65rem .8rem; border-radius:.85rem;
     background:rgba(92,193,122,.14); border:1px solid rgba(92,193,122,.35);
@@ -2402,6 +2418,7 @@ function applyBranding(soc){
   }
 }
 let honours = [];
+let honourWinners = []; // one row per player credited on a team win (honour_winners)
 let allScorecards = [];
 let allHoleScores = [];
 let courses = [];
@@ -2566,6 +2583,16 @@ async function loadData(){
   } catch (err){
     console.warn('Honours table not available yet (run add-hall-of-fame.sql):', err);
     honours = [];
+  }
+
+  /* team wins: which players each team honour credits */
+  try {
+    const hwRes = await db.from('honour_winners').select('*').eq('society_id', societyId);
+    if (hwRes.error) throw hwRes.error;
+    honourWinners = hwRes.data || [];
+  } catch (err){
+    console.warn('honour_winners not available:', err);
+    honourWinners = [];
   }
 
   /* In Memoriam — same graceful fallback if the table isn't there yet */
@@ -3137,18 +3164,7 @@ function eventDetailHtml(e){
               <div class="edit-status" id="ef-nc-status-${e.id}" style="margin-top:.3rem;"></div>
             </div>
           </div>
-          <div>
-            <label>Format</label>
-            <input id="ef-format-${e.id}" value="${escapeHtml(e.format||'')}">
-          </div>
-          <div>
-            <label>Scoring format <span style="font-family:var(--body); font-size:.7rem; color:var(--text-muted); font-weight:normal;">(drives how scores are recorded &amp; ranked)</span></label>
-            <select id="ef-scoringformat-${e.id}">
-              <option value="stableford" ${(e.scoring_format||'stableford')==='stableford'?'selected':''}>Stableford</option>
-              <option value="strokes" ${e.scoring_format==='strokes'?'selected':''}>Stroke Play</option>
-              <option value="match_play" ${e.scoring_format==='match_play'?'selected':''}>Match Play</option>
-            </select>
-          </div>
+          ${eventFormatFieldsHtml(e)}
           <div>
             <label>Postcode</label>
             <input id="ef-postcode-${e.id}" value="${escapeHtml(e.postcode||'')}">
@@ -3717,8 +3733,7 @@ async function saveEvent(eventId){
     date: gv('ef-date-' + eventId),
     course: courseName,
     course_id: selectedCourse ? selectedCourse.id : null,
-    format: gv('ef-format-' + eventId),
-    scoring_format: gv('ef-scoringformat-' + eventId) || 'stableford',
+    ...eventFormatPayload(eventId),
     postcode: coursePostcode,
     status: gv('ef-status-' + eventId),
     trophy: gv('ef-trophy-' + eventId) || null,
@@ -3840,13 +3855,8 @@ function addNewEvent(){
    Nearest the Pin winner, and Meet at/Max players all need care before
    this can double as the edit flow too). */
 const EVW_PLAY_FORMATS = [
-  {v:'individual', l:'Individual'},
-  {v:'better_ball', l:'Better Ball'},
-  {v:'foursomes', l:'Foursomes'},
-  {v:'greensomes', l:'Greensomes'},
-  {v:'scramble', l:'Scramble'},
-  {v:'ryder_cup', l:'Ryder Cup'},
-  {v:'other', l:'Other…'},
+  {v:'individual', l:'Individual Stableford'},
+  {v:'scramble', l:'Texas Scramble'},
 ];
 const EVW_STEPS = ['basics','course','rounds','trophy','logistics','review'];
 const EVW_STEP_LABELS = {
@@ -3866,7 +3876,7 @@ function evwBlankState(){
   return {
     name: '', date: '',
     courseId: null, courseName: '', postcode: '',
-    formatPreset: '', formatCustom: '', scoringMethod: 'stableford', scoringTouched: false, holes: 18, holesTouched: false,
+    formatPreset: 'individual', formatCustom: '', scoringMethod: 'stableford', scoringTouched: true, teamHcpPct: 10, holes: 18, holesTouched: false,
     multiRound: false, rounds: [],
     hasTrophy: false, trophy: '',
     hasNtp1: false, hasNtp2: false, ntpHole: null, ntp2Hole: null, teeId: null, ladiesTeeId: null,
@@ -4018,18 +4028,11 @@ function evwRenderStep(){
       ${evwFld('Course', evwCourseFieldHtml())}
       ${evwTeeFieldsHtml()}
       ${evwFld('Format', `
-        <div class="evw-chip-scroll">
-          ${EVW_PLAY_FORMATS.map(f => `<button class="evw-chip ${evwState.formatPreset===f.v?'sel':''}" onclick="evwState.formatPreset='${f.v}'; evwRenderStep();">${f.l}</button>`).join('')}
-        </div>
-        ${evwState.formatPreset==='other' ? `<input type="text" style="margin-top:8px;" placeholder="Describe the format" value="${evwEsc(evwState.formatCustom)}" oninput="evwState.formatCustom=this.value">` : ''}
-        <p style="font-size:.7rem; color:rgba(250,248,242,.45); margin:.4rem 0 0;">How players group up on the day.</p>`)}
-      ${evwFld('Scoring method', `
         <div class="evw-seg-row">
-          ${evwScoringChip('stableford','Stableford')}
-          ${evwScoringChip('strokes','Stroke Play')}
-          ${evwScoringChip('match_play','Match Play')}
+          ${EVW_PLAY_FORMATS.map(f => `<button class="evw-seg-btn ${evwState.formatPreset===f.v?'sel':''}" onclick="evwState.formatPreset='${f.v}'; evwRenderStep();">${f.l}</button>`).join('')}
         </div>
-        <p style="font-size:.7rem; color:rgba(250,248,242,.45); margin:.4rem 0 0;">How the round gets recorded — independent of the format above (a Ryder Cup is a format, played with Match Play scoring).</p>`)}
+        <p class="evw-hint">${evwState.formatPreset==='scramble' ? 'The team plays one ball and enters one score per hole.' : 'Everyone plays their own ball and enters their own score.'}</p>`)}
+      ${evwState.formatPreset==='scramble' ? evwFld('Team handicap', `<input type="number" min="0" max="100" step="0.5" value="${evwEsc(evwState.teamHcpPct)}" oninput="evwState.teamHcpPct=this.value"><p class="evw-hint">Percent of the team's combined handicaps (10 is the usual). The points are worked out from the team's strokes using it.</p>`) : ''}
       ${!evwState.multiRound ? evwFld('Holes', `
         <div class="evw-seg-row">
           <button class="evw-seg-btn ${evwState.holesTouched && evwState.holes===18?'sel':''}" onclick="evwState.holes=18; evwState.holesTouched=true; evwRenderStep();">18 holes</button>
@@ -4092,13 +4095,14 @@ function evwRenderStep(){
       ${evwMoreDetailsHtml()}
     `;
   } else if (s === 'review'){
-    const formatText = [evwFormatLabel(), evwScoringLabel(evwState.scoringMethod)].filter(Boolean).join(' ');
+    const formatText = evwFormatLabel();
     body = `
       <div class="evw-rev-card">
         <h4>${evwEsc(evwState.name) || 'Untitled event'}</h4>
         <div class="evw-rev-row"><span class="k">Date</span><span class="v">${evwState.date || '—'}</span></div>
         <div class="evw-rev-row"><span class="k">Course</span><span class="v">${evwEsc(evwState.courseName) || '—'}</span></div>
         <div class="evw-rev-row"><span class="k">Format</span><span class="v">${evwEsc(formatText)}</span></div>
+        ${evwState.formatPreset==='scramble' ? `<div class="evw-rev-row"><span class="k">Team handicap</span><span class="v">${evwEsc(String(evwState.teamHcpPct).trim() || '10')}% of combined</span></div>` : ''}
         ${evwState.teeId ? `<div class="evw-rev-row"><span class="k">Tee</span><span class="v">${evwEsc(evwTeeReviewText())}</span></div>` : ''}
         <div class="evw-rev-row"><span class="k">Rounds</span><span class="v">${evwState.multiRound ? evwState.rounds.length+' rounds' : (evwState.holes+' holes, single round')}</span></div>
         <div class="evw-rev-row"><span class="k">Trophy</span><span class="v">${evwState.hasTrophy ? (evwEsc(evwState.trophy)||'—') : 'No'}</span></div>
@@ -4379,12 +4383,13 @@ async function evwCreateEvent(){
   setStatus('Creating…');
 
   const id = 'ev-' + Date.now();
-  const formatText = [evwFormatLabel(), evwScoringLabel(evwState.scoringMethod)].filter(Boolean).join(' ');
+  const formatText = evwFormatLabel();
   const payload = {
     id, society_id: societyId,
     name: evwState.name.trim(), date: evwState.date, status: 'upcoming',
     course: evwState.courseName || null, course_id: evwState.courseId ?? null, postcode: evwState.postcode || null,
-    format: formatText, format_preset: evwState.formatPreset || null, scoring_format: evwState.scoringMethod,
+    format: formatText, format_preset: evwState.formatPreset || 'individual', scoring_format: 'stableford',
+    team_hcp_pct: evwState.formatPreset === 'scramble' ? (String(evwState.teamHcpPct).trim() === '' || isNaN(Number(evwState.teamHcpPct)) ? 10 : Number(evwState.teamHcpPct)) : null,
     holes: evwState.multiRound ? 18 : evwState.holes,
     trophy: evwState.hasTrophy ? (evwState.trophy === '__new__' ? null : evwState.trophy) : null,
     // A toggled-on NTP with no winner yet is stored as '' (distinct from
@@ -6028,7 +6033,7 @@ function galleryTimestamp(g){
    winner post whose title an admin has reworded past recognition. */
 function winnerBannerHtml(n){
   if (!n || !String(n.id).startsWith('winner-') || n.image_url) return '';
-  const m = String(n.title || '').match(/^(.+?) wins the (.+?)(?: at (.+))?$/);
+  const m = String(n.title || '').match(/^(.+?) wins? the (.+?)(?: at (.+))?$/);
   if (!m) return '';
   const year = n.date ? new Date(n.date + 'T00:00:00').getFullYear() : '';
   return winnerBannerCore({ name: m[1], trophy: m[2], meta: [m[3], year].filter(Boolean).join(' · ') });
@@ -6038,7 +6043,7 @@ function winnerBannerCore({ name, trophy, meta, label }){
   return `<div class="winner-banner">
     <div class="wb-trophy">🏆</div>
     <div class="wb-label">${escapeHtml(label || 'Winner')}</div>
-    <div class="wb-name">${escapeHtml(name)}</div>
+    <div class="wb-name" ${String(name).length > 26 ? 'style="font-size:1.1rem;"' : ''}>${escapeHtml(name)}</div>
     <div class="wb-trophy-name">${escapeHtml(trophy)}</div>
     ${meta ? `<div class="wb-meta">${escapeHtml(meta)}</div>` : ''}
   </div>`;
@@ -6643,8 +6648,8 @@ function renderLiveLandingView(){
   // and finalised (a Hall of Fame entry exists for this event/round).
   const phase = honour ? 'final' : roundDone ? 'done' : 'live';
   const lbSub = phase === 'final' ? 'See the full final standings'
-    : phase === 'done' ? `${startedCount} player${startedCount===1?'':'s'} finished — result to follow`
-    : startedCount ? `${startedCount} player${startedCount===1?'':'s'} on the course` : 'Live standings, updates automatically';
+    : phase === 'done' ? `${startedCount} ${isScrambleEvent(ev) ? 'team' : 'player'}${startedCount===1?'':'s'} finished — result to follow`
+    : startedCount ? `${startedCount} ${isScrambleEvent(ev) ? 'team' : 'player'}${startedCount===1?'':'s'} on the course` : 'Live standings, updates automatically';
   const eyebrow = phase === 'final' ? 'Final result' : phase === 'done' ? 'Round complete' : "Today's round";
 
   const groupingsSub = evGroups.length ? `${evGroups.length} group${evGroups.length===1?'':'s'} set` : 'No groups set up yet';
@@ -6737,7 +6742,186 @@ function switchLiveRound(roundId){
    play, so a 9-hole round freezes with 2 to play too). */
 function blackoutHoleFor(holes){ return Math.max(1, holes - 2); }
 
+/* ===== Texas Scramble (2026-10-13) =====
+   A scramble is scored per TEAM: one ball, one strokes entry per hole. A team
+   is a tee-time group (matchGroups). Its scorecard is a scorecards row with
+   group_id set and player_id null. The team handicap is a percentage of the
+   members' combined handicaps (events.team_hcp_pct, default 10), rounded to a
+   whole number; the Stableford points per hole come from the team's strokes
+   and that handicap, using the event tee's stroke index. */
+function isScrambleEvent(ev){ return !!ev && (ev.format_preset === 'scramble' || /scramble/i.test(ev.format || '')); }
+function teamHcpPct(ev){ return ev && ev.team_hcp_pct != null ? Number(ev.team_hcp_pct) : 10; }
+function eventGroupsFor(eventId, roundId){
+  return matchGroups.filter(g => g.event_id === eventId && (roundId ? g.round_id === roundId : !g.round_id))
+    .sort((a,b) => (a.tee_time || '').localeCompare(b.tee_time || ''));
+}
+function groupMemberPlayers(groupId){
+  return matchGroupPlayers.filter(gp => gp.group_id === groupId).map(gp => players.find(p => p.id === gp.player_id)).filter(Boolean);
+}
+function teamCardFor(eventId, roundId, groupId){
+  return scorecards.find(s => s.event_id === eventId && s.group_id === groupId && (roundId ? s.round_id === roundId : !s.round_id));
+}
+function teamHandicapInfo(ev, members){
+  const sum = members.reduce((s,p) => s + (Number(p.handicap) || 0), 0);
+  const pct = teamHcpPct(ev);
+  return { sum: Math.round(sum * 10) / 10, pct, hcp: Math.round(sum * pct / 100) };
+}
+/* short "Pete S, Andy J" names, or full names "Pete Stanley, Andy Jones & Tim Rush" */
+function teamNames(members, full){
+  const names = members.map(p => full ? p.first_name + ' ' + p.last_name : p.first_name + ' ' + ((p.last_name || '')[0] || '') + '.');
+  if (!full || names.length < 2) return names.join(', ');
+  return names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
+}
+/* the group the device is currently scoring for: whichever group the first selected player is in */
+function scoringTeamGroupId(){
+  const gids = new Set(eventGroupsFor(liveEventId, liveRoundId).map(g => g.id));
+  const hit = matchGroupPlayers.find(gp => gp.player_id === scoringPlayerIds[0] && gids.has(gp.group_id));
+  return hit ? hit.group_id : null;
+}
+function teamLeaderboard(eventId, maxHole, roundId){
+  const entries = eventGroupsFor(eventId, roundId).map((g, idx) => {
+    const members = groupMemberPlayers(g.id);
+    const sc = teamCardFor(eventId, roundId, g.id);
+    const all = sc ? holeScores.filter(h => h.scorecard_id === sc.id) : [];
+    const vis = all.filter(h => h.hole_number <= maxHole);
+    const total = vis.reduce((s,h) => s + h.points, 0);
+    const thru = vis.length ? Math.max(...vis.map(h => h.hole_number)) : 0;
+    const actualThru = all.length ? Math.max(...all.map(h => h.hole_number)) : 0;
+    return { player: null, team: { id: g.id, label: 'Group ' + (idx + 1), members }, sc: sc || null, total, thru, actualThru, started: all.length > 0 };
+  });
+  return entries.sort((a, b) => {
+    if (a.started !== b.started) return a.started ? -1 : 1;
+    return b.total - a.total || a.thru - b.thru;
+  });
+}
+
+function startTeamScoring(ev){
+  const gid = scoringTeamGroupId();
+  if (!gid){ alert('Pick your group first. A scramble is scored with one card per group.'); return; }
+  if (!teamCardFor(liveEventId, liveRoundId, gid)){
+    const tempId = `local-${liveEventId}-${liveRoundId || 'x'}-g${gid}-${Date.now()}`;
+    scorecards.push({ id: tempId, event_id: liveEventId, round_id: liveRoundId, player_id: null, group_id: gid, society_id: societyId, _pending: true });
+    scorecardQueue.push({ tempId, event_id: liveEventId, round_id: liveRoundId, player_id: null, group_id: gid, society_id: societyId });
+    persistScorecardQueue();
+    processScorecardQueue();
+  }
+  const sc = teamCardFor(liveEventId, liveRoundId, gid);
+  const rows = sc ? holeScores.filter(h => h.scorecard_id === sc.id) : [];
+  const holes = roundHoles(liveRoundId ? rounds.find(r => r.id === liveRoundId) : null, ev);
+  currentHole = rows.length ? Math.min(holes, Math.max(...rows.map(h => h.hole_number))) : 1;
+  liveSubView = 'entry';
+  scoringFocusMode = true;
+  entryScoreMode = 'points';
+  handicapConfirmQueue = [];
+  handicapEditOpen = false;
+  renderLiveScores();
+}
+
+function renderTeamNeedsTee(){
+  return `<div class="sx-root">
+    <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button><div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div></div>
+    <div class="sx-team" style="justify-content:center; text-align:center;">
+      <div class="sx-tmhead"><b>Scorecard needed</b></div>
+      <p style="font-size:1rem; line-height:1.5; margin:.6rem .4rem; color:rgba(250,248,242,.75);">A Texas Scramble works out the team's points from par and stroke index, so this course needs its scorecard added and a tee chosen on the event first. Ask the captain to set that up.</p>
+    </div></div>`;
+}
+
+function renderTeamEntry(){
+  const ev = eventById(liveEventId);
+  const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  const holes = roundHoles(activeRound, ev), n = currentHole;
+  const gid = scoringTeamGroupId();
+  const members = gid ? groupMemberPlayers(gid) : [];
+  const sc = gid ? teamCardFor(liveEventId, liveRoundId, gid) : null;
+  const f = sxHoleFacts(ev, activeRound, n, null);
+  const th = teamHandicapInfo(ev, members);
+  const shotsN = holeAllowance(th.hcp, f.si);
+  const hs = sc ? sxExisting(sc.id, n) : null;
+  const pu = !!(hs && hs.picked_up), un = !hs;
+  const strokes = hs && !pu ? hs.strokes : null;
+  const [cls, label] = pu ? ['sx-pu', 'Blob'] : un ? sxRel(f.par, f.par) : (strokes != null ? sxRel(strokes, f.par) : ['sx-par', '']);
+  const arg = `${JSON.stringify(sc ? sc.id : null).replace(/"/g, '&quot;')}, ${n}, ${f.par}, ${f.si == null ? 'null' : f.si}, ${th.hcp}`;
+  const contest = !activeRound ? (ev.ntp_hole === n ? 'ntp' : ev.ntp2_hole === n ? 'ntp2' : null) : null;
+  const ribbon = contest ? `<div class="sx-ribbon"><span class="pin">📍</span><span class="t"><b>${contest === 'ntp' ? 'Nearest the pin' : 'Nearest the pin in 2'}</b><span>${contest === 'ntp' ? 'Closest to the flag from the tee' : 'Closest to the flag after two shots'}</span></span></div>` : '';
+  const gNum = gid ? eventGroupsFor(liveEventId, liveRoundId).findIndex(g => g.id === gid) + 1 : 0;
+  const shotsHtml = shotsN ? `<span class="sx-shots" style="display:inline-flex; margin:0;">${'<i></i>'.repeat(shotsN)} ${shotsN} shot${shotsN > 1 ? 's' : ''} here</span>` : '<span class="sx-shots" style="display:inline-flex; margin:0;">no shot here</span>';
+  const last = n >= holes;
+  return `<div class="sx-root">
+    <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
+      <div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div>
+      <button class="sx-back" ${n <= 1 ? 'disabled' : ''} onclick="changeHole(${n - 1})">‹ Previous hole</button></div>
+    <div class="sx-hole"><div class="sx-hn"><small>Hole</small><b>${n}</b></div>
+      <div class="sx-hs"><div class="par"><b>${f.par}</b><span>Par</span></div><div><b>${f.si ?? '–'}</b><span>Index</span></div><div><b>${f.yards ?? '–'}</b><span>Yards</span></div></div></div>
+    ${ribbon}
+    <div class="sx-team ${un ? 'sx-unconf' : ''} ${cls}">
+      <div class="sx-tmhead"><b>Group ${gNum || ''} · Texas Scramble</b><span>${escapeHtml(teamNames(members))}</span></div>
+      <div class="sx-tmhcp">Team handicap <b>${th.hcp}</b> <span>(${th.pct}% of ${th.sum})</span> ${shotsHtml}</div>
+      <div class="sx-ctl"><button class="sx-stp" onclick="sxStep(${arg}, -1)" aria-label="One less">−</button><button class="sx-val" onclick="sxConfirm(${arg})" aria-label="Confirm"><span class="n">${pu ? '–' : (un ? f.par : (strokes ?? '?'))}</span><span class="l">${pu ? 'Blob' : un ? 'Par · tap to confirm' : label}</span></button><button class="sx-stp" onclick="sxStep(${arg}, 1)" aria-label="One more">+</button></div>
+      <div class="sx-tmstats"><div><b>${un ? '–' : hs.points}</b><span>This hole</span></div><div><b>${sc ? getRunningTotal(sc.id) : 0}</b><span>Team total</span></div></div>
+      <button class="sx-blob ${pu ? 'on' : ''}" onclick="sxPickUp(${arg})">${pu ? 'Undo' : 'Pick up (blob)'}</button>
+    </div>
+    <div class="sx-bottom"><button class="lb" onclick="setLiveSubView('leaderboard')">🏆 View live leaderboard</button>
+      <button class="nxt" ${un ? 'disabled' : ''} onclick="sxNext()">${un ? 'Confirm the score' : (last ? 'Finish round ✓' : 'Next hole →')}</button></div>
+  </div>`;
+}
+
+/* Team wins: one honours row for the event (winner = all the names, is_team),
+   plus one honour_winners row per credited player, so each member shows as a
+   winner of that event. Guests are named in the entry but not credited. */
+async function syncHonourWinners(honour, members){
+  if (!db || !honour) return;
+  try {
+    const del = await db.from('honour_winners').delete().eq('honour_id', honour.id);
+    if (del && del.error) throw del.error;
+    honourWinners = honourWinners.filter(w => w.honour_id !== honour.id);
+    const credited = (members || []).filter(p => !isGuestPlayer(p));
+    if (credited.length){
+      const rows = credited.map(p => ({ honour_id: honour.id, player_id: p.id, society_id: societyId }));
+      const { data, error } = await db.from('honour_winners').insert(rows).select();
+      if (error) throw error;
+      honourWinners.push(...(data || []));
+    }
+  } catch(err){
+    console.error('Could not record the winning team members:', err);
+  }
+}
+
+async function finishRound(){
+  const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  const ev = eventById(liveEventId);
+  const holes = roundHoles(activeRound, ev);
+  if (isScrambleEvent(ev)){
+    const gid = scoringTeamGroupId();
+    const sc = gid ? teamCardFor(liveEventId, liveRoundId, gid) : null;
+    for (let h = 1; h <= holes; h++){
+      if (!sc || getHoleScore(sc.id, h) === null){
+        alert(`Hole ${h} has no score for your team. Add it (a blank hole can be a pick up), then tap Finish round again.`);
+        changeHole(h);
+        return;
+      }
+    }
+  } else {
+    for (let h = 1; h <= holes; h++){
+      const missing = scoringPlayerIds.filter(pid => {
+        const sc = scorecardFor(liveEventId, liveRoundId, pid);
+        return !sc || getHoleScore(sc.id, h) === null;
+      });
+      if (missing.length){
+        const names = missing.map(pid => { const p = players.find(x => x.id === pid); return p ? p.first_name : 'player'; }).join(', ');
+        alert(`Hole ${h} has no score for ${names}. Add it (a blank hole can be scored 0), then tap Finish round again.`);
+        changeHole(h);
+        return;
+      }
+    }
+  }
+  await processScorecardQueue();
+  await processScoreQueue();
+  scoringFocusMode = true;
+  setLiveSubView('leaderboard');
+}
+
 function getLeaderboard(eventId, maxHole = 18, roundId = null){
+  if (isScrambleEvent(eventById(eventId))) return teamLeaderboard(eventId, maxHole, roundId);
   const evScorecards = scorecards.filter(s => s.event_id === eventId
     && (roundId ? s.round_id === roundId : !s.round_id));
   const entries = evScorecards.map(sc => {
@@ -7006,7 +7190,7 @@ function renderSetupView(){
       // fallback below (browsing/searching the *entire* society roster)
       // is admin-only.
       const grpHoles = roundHoles(liveRoundId ? rounds.find(r => r.id === liveRoundId) : null, eventById(liveEventId));
-      const grpCards = gPlayers.map(gp => scorecardFor(liveEventId, liveRoundId, gp.player_id));
+      const grpCards = isScrambleEvent(eventById(liveEventId)) ? [teamCardFor(liveEventId, liveRoundId, g.id)] : gPlayers.map(gp => scorecardFor(liveEventId, liveRoundId, gp.player_id));
       const grpThru = grpCards.map(sc => sc ? holeScores.filter(h => h.scorecard_id === sc.id).length : 0);
       const grpFinished = gPlayers.length > 0 && grpThru.every(n => n >= grpHoles);
       const grpStarted = !grpFinished && grpThru.some(n => n > 0);
@@ -7107,6 +7291,7 @@ function toggleScoringPlayer(playerId){
 
 function startScoring(){
   if (!db || !scoringPlayerIds.length) return;
+  { const evT = eventById(liveEventId); if (isScrambleEvent(evT)){ startTeamScoring(evT); return; } }
   // Create scorecards for any players who don't have one yet FOR THIS ROUND
   // — a player can have a separate scorecard per round of a multi-round
   // event, so the "already has one" check must match round_id too. Same
@@ -7358,6 +7543,7 @@ function renderStrokesEntry(){
 }
 
 function renderFocusEntry(){
+  { const evX = eventById(liveEventId); if (isScrambleEvent(evX)) return strokesModeFor(evX) ? renderTeamEntry() : renderTeamNeedsTee(); }
   if (strokesModeFor(eventById(liveEventId))) return renderStrokesEntry();
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
   const ev = eventById(liveEventId);
@@ -7467,7 +7653,7 @@ function lbExtras(lb){
 
 function focusLbRowHtml(entry, i, frozen, x){
   const prizes = x && x.prizes;
-  const mine = entry.player && scoringPlayerIds.includes(entry.player.id);
+  const mine = entry.team ? (scoringPlayerIds.length > 0 && entry.team.members.some(m => m.id === scoringPlayerIds[0])) : (entry.player && scoringPlayerIds.includes(entry.player.id));
   const rank = x && x.ranks ? x.ranks[i] : (entry.started ? i + 1 : null);
   const guest = isGuestPlayer(entry.player);
   const pos = !entry.started ? `<span class="lb-pos">—</span>`
@@ -7479,10 +7665,11 @@ function focusLbRowHtml(entry, i, frozen, x){
   const isLast = x && x.n >= 2 && entry.started && !guest && i === x.lastIdx && rank !== 1;
   const fun = isFirst ? pickLabel(LEADER_LABELS, x.seed) : isLast ? pickLabel(LAST_PLACE_LABELS, x.seed) : '';
   const guestLine = guest ? `<span class="lb-sub guest">Guest${guestHostName(entry.player) ? ' of ' + escapeHtml(guestHostName(entry.player)) : ''} · not eligible</span>` : '';
-  const sub = guestLine + (groupName ? `<span class="lb-sub">${groupName}</span>` : '') + (fun ? `<span class="lb-sub fun">${escapeHtml(fun)}</span>` : '');
+  const teamLine = entry.team ? `<span class="lb-sub" style="white-space:normal;">${escapeHtml(teamNames(entry.team.members))}</span>` : '';
+  const sub = guestLine + teamLine + (groupName ? `<span class="lb-sub">${groupName}</span>` : '') + (fun ? `<span class="lb-sub fun">${escapeHtml(fun)}</span>` : '');
   return `<div class="lb-row ${mine?'me':''} ${frozen?'frozen':''}">
     ${pos}
-    <span class="lb-name">${entry.player ? escapeHtml(entry.player.first_name + ' ' + entry.player.last_name) : 'Unknown'}${prizes ? prizeTagHtml(prizes.get(i)) : ''}${sub}</span>
+    <span class="lb-name">${entry.team ? escapeHtml(entry.team.label) : (entry.player ? escapeHtml(entry.player.first_name + ' ' + entry.player.last_name) : 'Unknown')}${prizes ? prizeTagHtml(prizes.get(i)) : ''}${sub}</span>
     <span class="lb-pts">${entry.started ? entry.total : '—'}</span>
     <span class="lb-thru">${thruLabel}</span>
   </div>`;
@@ -7669,27 +7856,6 @@ function renderEntryView(){
    (jumping to the first gap if not), pushes any queued scores, and takes the
    marker to the leaderboard. Replaces a greyed-out "Hole 19" button that
    people mistook for a broken Submit. */
-async function finishRound(){
-  const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
-  const holes = roundHoles(activeRound, eventById(liveEventId));
-  for (let h = 1; h <= holes; h++){
-    const missing = scoringPlayerIds.filter(pid => {
-      const sc = scorecardFor(liveEventId, liveRoundId, pid);
-      return !sc || getHoleScore(sc.id, h) === null;
-    });
-    if (missing.length){
-      const names = missing.map(pid => { const p = players.find(x => x.id === pid); return p ? p.first_name : 'player'; }).join(', ');
-      alert(`Hole ${h} has no score for ${names}. Add it (a blank hole can be scored 0), then tap Finish round again.`);
-      changeHole(h);
-      return;
-    }
-  }
-  await processScorecardQueue();
-  await processScoreQueue();
-  scoringFocusMode = true;
-  setLiveSubView('leaderboard');
-}
-
 function changeHole(hole){
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
   const holes = roundHoles(activeRound, eventById(liveEventId));
@@ -7734,8 +7900,8 @@ function isPendingScorecardId(id){ return typeof id === 'string' && id.startsWit
 function mergeScorecardQueueIntoScorecards(){
   for (const item of scorecardQueue){
     if (item.event_id !== liveEventId) continue;
-    if (scorecardFor(item.event_id, item.round_id || null, item.player_id)) continue;
-    scorecards.push({ id: item.tempId, event_id: item.event_id, round_id: item.round_id || null, player_id: item.player_id, society_id: item.society_id, _pending: true });
+    if (item.group_id ? teamCardFor(item.event_id, item.round_id || null, item.group_id) : scorecardFor(item.event_id, item.round_id || null, item.player_id)) continue;
+    scorecards.push({ id: item.tempId, event_id: item.event_id, round_id: item.round_id || null, player_id: item.player_id ?? null, group_id: item.group_id || null, society_id: item.society_id, _pending: true });
   }
 }
 
@@ -7749,7 +7915,7 @@ async function processScorecardQueue(){
     let resolved = null;
     try {
       const { data, error } = await db.from('scorecards')
-        .insert({ event_id: item.event_id, round_id: item.round_id || null, player_id: item.player_id, society_id: item.society_id })
+        .insert({ event_id: item.event_id, round_id: item.round_id || null, player_id: item.player_id ?? null, group_id: item.group_id || null, society_id: item.society_id })
         .select().single();
       if (error) throw error;
       resolved = data;
@@ -7757,7 +7923,8 @@ async function processScorecardQueue(){
       if (err && err.code === '23505'){
         // Another device already set up this scorecard — adopt it instead of erroring.
         try {
-          let q = db.from('scorecards').select('*').eq('event_id', item.event_id).eq('player_id', item.player_id);
+          let q = db.from('scorecards').select('*').eq('event_id', item.event_id);
+          q = item.group_id ? q.eq('group_id', item.group_id) : q.eq('player_id', item.player_id);
           q = item.round_id ? q.eq('round_id', item.round_id) : q.is('round_id', null);
           const { data: existing } = await q.single();
           resolved = existing || null;
@@ -7863,7 +8030,7 @@ setInterval(() => { if (scorecardQueue.length) processScorecardQueue(); if (scor
    collide because a multi-round event's own honours.find() lookup only
    ever matches a null row once finaliseEventOverall has run, same as any
    single-round event only ever having the one row. */
-async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffix = '', winnerScore = null){
+async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffix = '', winnerScore = null, teamMembers = null){
   if (!db || !winnerName) return;
   const ev = eventById(eventId);
   if (!ev || !ev.trophy) return; // not a trophy fixture — nothing to do
@@ -7882,18 +8049,21 @@ async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffi
   const year = new Date((round ? round.date : ev.date) + 'T00:00:00').getFullYear();
 
   const existing = honours.find(h => h.event_id === eventId && (roundId ? h.round_id === roundId : !h.round_id));
+  let hRow = null;
   try {
     if (existing){
-      const { error } = await db.from('honours').update({ year, title, winner: winnerName, winner_score: winnerScore }).eq('id', existing.id);
+      const { error } = await db.from('honours').update({ year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers }).eq('id', existing.id);
       if (error) throw error;
-      Object.assign(existing, { year, title, winner: winnerName, winner_score: winnerScore });
+      Object.assign(existing, { year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers });
+      hRow = existing;
     } else {
-      const { data, error } = await db.from('honours').insert({ year, title, winner: winnerName, winner_score: winnerScore, event_id: eventId, round_id: roundId, society_id: societyId }).select().single();
+      const { data, error } = await db.from('honours').insert({ year, title, winner: winnerName, winner_score: winnerScore, is_team: !!teamMembers, event_id: eventId, round_id: roundId, society_id: societyId }).select().single();
       if (error) throw error;
-      if (data) honours.push(data);
+      if (data){ honours.push(data); hRow = data; }
     }
+    await syncHonourWinners(hRow, teamMembers);
     renderHonours();
-    await syncWinnerNews(eventId, winnerName, roundId, shortCourse, winnerScore);
+    await syncWinnerNews(eventId, winnerName, roundId, shortCourse, winnerScore, !!teamMembers);
   } catch(err){
     console.error('Could not update Hall of Fame:', err);
     alert('Result saved, but the Hall of Fame entry could not be updated — you can add it manually on the Hall of Fame page.');
@@ -7904,12 +8074,12 @@ async function syncHonourForEvent(eventId, winnerName, roundId = null, noteSuffi
    the Home page's "Latest news" carousel). One post per event/round, id
    winner-<event>[-<round>]; re-finalising only rewrites it when the winner
    changes, so edits an admin makes to the post (photo, wording) survive. */
-async function syncWinnerNews(eventId, winnerName, roundId, courseText, winnerScore){
+async function syncWinnerNews(eventId, winnerName, roundId, courseText, winnerScore, isTeam = false){
   if (!db || !winnerName) return;
   const ev = eventById(eventId);
   if (!ev || !ev.trophy) return;
   const id = 'winner-' + eventId + (roundId ? '-' + roundId : '');
-  const title = winnerName + ' wins the ' + ev.trophy + (courseText ? ' at ' + courseText : '');
+  const title = winnerName + (isTeam ? ' win the ' : ' wins the ') + ev.trophy + (courseText ? ' at ' + courseText : '');
   const excerpt = 'Congratulations to ' + winnerName + ', who won the ' + ev.trophy + (courseText ? ' at ' + courseText : '')
     + (winnerScore != null ? ' with ' + winnerScore + ' points' : '') + '. Full honours are in the Hall of Fame.';
   const existing = news.find(n => n.id === id);
@@ -7944,17 +8114,18 @@ async function finaliseScores(eventId, roundId = null){
   const guestsAhead = lb.filter(e => e.started && isGuestPlayer(e.player) && e.total >= top[0].total)
     .map(e => e.player.first_name + ' ' + e.player.last_name + ' (' + e.total + ')');
   const summary = top.map((e, i) => {
-    const name = e.player ? e.player.first_name + ' ' + e.player.last_name : 'Unknown';
+    const name = e.team ? e.team.label + ': ' + teamNames(e.team.members, true) : (e.player ? e.player.first_name + ' ' + e.player.last_name : 'Unknown');
     return `${i+1}. ${name} — ${e.total} pts`;
   }).join('\n') + (guestsAhead.length ? `\n\nGuests not eligible: ${guestsAhead.join(', ')}` : '');
   const label = round ? `"${ev ? ev.name : 'this event'}" — ${round.label}` : `"${ev ? ev.name : 'this event'}"`;
   const trophyNote = ev && ev.trophy ? `\n\nThe winner will be added to the Hall of Fame (${ev.trophy}).` : '';
   if (!confirm(`Finalise scores for ${label}?\n\n${summary}${trophyNote}`)) return;
 
-  const winner = top[0] ? (top[0].player ? top[0].player.first_name + ' ' + top[0].player.last_name : '') : '';
+  const winner = top[0] ? (top[0].team ? teamNames(top[0].team.members, true) : (top[0].player ? top[0].player.first_name + ' ' + top[0].player.last_name : '')) : '';
+  const winningTeam = top[0] && top[0].team ? top[0].team.members : null;
   if (!ev || !ev.trophy){ alert('This event has no trophy set, so nothing was added to the Hall of Fame. Add a trophy on the event first.'); return; }
-  await syncHonourForEvent(eventId, winner, roundId, '', top[0] ? top[0].total : null);
-  alert('Scores finalised! ' + winner + ' has been added to the Hall of Fame.');
+  await syncHonourForEvent(eventId, winner, roundId, '', top[0] ? top[0].total : null, winningTeam);
+  alert(winningTeam ? 'Scores finalised! The winning team (' + winner + ') has been added to the Hall of Fame, with each player credited.' : 'Scores finalised! ' + winner + ' has been added to the Hall of Fame.');
 }
 
 /* Combined winner across every round of a multi-round event — same
@@ -8312,6 +8483,7 @@ function orderOfMeritSummary(year){
     const byPlayer = new Map();
     evScorecards.forEach(sc => {
       const holes = allHoleScores.filter(h => h.scorecard_id === sc.id);
+      if (!sc.player_id) return; // a team (scramble) card isn't any one player's score
       if (!holes.length) return; // no-show / never started — doesn't count
       const pts = holes.reduce((s,h) => s + h.points, 0);
       if (isGuestPlayer(players.find(p => p.id === sc.player_id))) return; // guests can't win or earn standings points
@@ -8936,6 +9108,42 @@ async function saveNewCourseFromEvent(eventId){
   setStatus('');
   renderCoursesPanel();
   autoSetupGpsForCourse(data);
+}
+
+/* ---- event format (2026-10-13): only two real formats, Individual Stableford and
+   Texas Scramble. Every event is scored as Stableford from strokes; the scramble
+   scores one card per team using a team handicap (a % of the members' combined
+   handicaps, events.team_hcp_pct, default 10). An older event whose format text is
+   neither (e.g. "Better Ball") keeps its text via a "Keep:" option, so editing
+   it never silently rewrites it. ---- */
+function eventFormatFieldsHtml(e){
+  const scr = isScrambleEvent(e);
+  const known = scr || !e.format || /stableford|individual|indivdual/i.test(e.format);
+  const cur = scr ? 'scramble' : known ? 'individual' : 'keep';
+  const pct = e.team_hcp_pct != null ? e.team_hcp_pct : 10;
+  return `
+    <div>
+      <label>Format</label>
+      <select id="ef-formatsel-${e.id}" onchange="document.getElementById('ef-teamhcp-wrap-${e.id}').style.display = this.value==='scramble' ? 'block' : 'none'">
+        <option value="individual" ${cur==='individual'?'selected':''}>Individual Stableford</option>
+        <option value="scramble" ${cur==='scramble'?'selected':''}>Texas Scramble</option>
+        ${cur==='keep' ? `<option value="keep" selected>Keep: ${escapeHtml(e.format)}</option>` : ''}
+      </select>
+    </div>
+    <div id="ef-teamhcp-wrap-${e.id}" style="display:${scr ? 'block' : 'none'};">
+      <label>Team handicap <span style="font-family:var(--body); font-size:.7rem; color:var(--text-muted); font-weight:normal;">(% of the team's combined handicaps)</span></label>
+      <input type="number" min="0" max="100" step="0.5" id="ef-teamhcp-${e.id}" value="${pct}">
+    </div>`;
+}
+function eventFormatPayload(eventId){
+  const ev = events.find(x => x.id === eventId) || {};
+  const sel = gv('ef-formatsel-' + eventId);
+  if (sel === 'individual') return { format: 'Individual Stableford', format_preset: 'individual', scoring_format: 'stableford', team_hcp_pct: null };
+  if (sel === 'scramble'){
+    const raw = gv('ef-teamhcp-' + eventId), p = Number(raw);
+    return { format: 'Texas Scramble', format_preset: 'scramble', scoring_format: 'stableford', team_hcp_pct: raw === '' || isNaN(p) ? 10 : p };
+  }
+  return { format: ev.format || null, format_preset: ev.format_preset || null, scoring_format: ev.scoring_format || 'stableford', team_hcp_pct: ev.team_hcp_pct ?? null };
 }
 
 /* The edit form's tee + contest-hole selects. The tee select has a blank
