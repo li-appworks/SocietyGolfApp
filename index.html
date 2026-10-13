@@ -869,34 +869,6 @@
   .trophy-winners .committee-edit-btn:hover{border-color:var(--brass-light); color:var(--brass-light);}
   .trophy-winners .edit-form{background:var(--paper); color:var(--text);}
 
-  /* Season Standings (internally "oom", for order-of-merit — the original
-     working name before it was renamed for the public-facing UI) —
-     per-event summary cards + final standings, both
-     living inside the same dark .trophy-winners panel as everything else
-     in Hall of Fame. */
-  .oom-events{display:flex; flex-direction:column; gap:.7rem; max-width:520px; margin:0 auto;}
-  .oom-event-card{background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:.7rem; padding:.85rem 1rem;}
-  .oom-event-head{display:flex; align-items:baseline; justify-content:space-between; gap:.6rem; flex-wrap:wrap; margin-bottom:.55rem; padding-bottom:.5rem; border-bottom:1px solid rgba(255,255,255,.1);}
-  .oom-event-name{font-family:var(--display); font-weight:700; font-size:1rem; color:var(--paper);}
-  .oom-event-meta{font-size:.68rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap;}
-  .oom-event-stats{display:flex; flex-direction:column; gap:.4rem;}
-  .oom-stat{display:flex; align-items:center; gap:.5rem; font-size:.85rem;}
-  .oom-stat .ic{width:1.1rem; text-align:center; flex-shrink:0; font-size:.9rem;}
-  .oom-stat .lbl{color:rgba(255,255,255,.5); min-width:7rem; flex-shrink:0;}
-  .oom-stat .val{color:var(--paper); font-weight:600;}
-  .oom-events-count{font-size:.72rem; color:rgba(255,255,255,.45); margin-left:.5rem; font-weight:400;}
-  .oom-standings-title{
-    font-family:var(--body); font-size:.72rem; text-transform:uppercase; letter-spacing:.08em;
-    color:var(--brass-light); font-weight:700; text-align:center; margin:1.6rem 0 .7rem;
-  }
-  .oom-standings{list-style:none; margin:0; padding:0; max-width:440px; margin-left:auto; margin-right:auto;}
-  .oom-standings li{display:flex; align-items:center; gap:.8rem; padding:.55rem .2rem; border-bottom:1px solid rgba(255,255,255,.1);}
-  .oom-standings li:last-child{border-bottom:none;}
-  .oom-pos{width:2.4rem; font-weight:800; font-size:.85rem; color:var(--brass); text-align:center; flex-shrink:0;}
-  .oom-pos.medal{font-size:1.3rem;}
-  .oom-name{flex:1; font-weight:600; color:var(--paper);}
-  .oom-pts{font-weight:800; color:var(--brass-light); font-variant-numeric:tabular-nums; flex-shrink:0;}
-
   .captains-board{
     background:var(--ink); border:3px solid var(--brass); border-radius:var(--radius);
     padding:1.6rem 1.5rem; max-width:440px;
@@ -8455,7 +8427,6 @@ async function addRule(){
 const editingHonourIds = new Set();
 const expandedHonourScoreIds = new Set(); // honours rows with a winner_score, tapped to reveal it
 let expandedTrophy = null;
-let oomYear = null; // selected year for the Season Standings tile — set on first open
 
 /* Trophy silhouettes — brass on the card, keyed by competition */
 function trophySvg(baseName){
@@ -8539,79 +8510,6 @@ function trophySvg(baseName){
     <rect x="36" y="40" width="8" height="10" fill="${b}"/>
     <rect x="28" y="50" width="24" height="6" rx="1.5" fill="${d}"/>
     <rect x="23" y="56" width="34" height="8" rx="1.5" fill="${dd}"/></svg>`;
-}
-
-/* ===== Season Standings (season aggregation across trophy events) =====
-   Only ever includes events that were actually live-scored (real
-   hole_scores rows exist) — historical trophy winners recorded before live
-   scoring existed only ever captured the WINNER, not the full field, so
-   there's no way to reconstruct season standings for those years. Uses
-   allScorecards/allHoleScores (loaded once for every event regardless of
-   which one Live Scores currently has selected — see loadData()), not the
-   live-scoring-scoped scorecards/holeScores globals. A multi-round event's
-   contribution is its combined total across all its rounds, since
-   allScorecards already includes every round's rows for that event_id. */
-function oomAvailableYears(){
-  const years = new Set();
-  events.filter(e => e.trophy).forEach(e => {
-    const hasScores = allScorecards.some(sc => sc.event_id === e.id
-      && allHoleScores.some(h => h.scorecard_id === sc.id));
-    if (hasScores) years.add(new Date(e.date + 'T00:00:00').getFullYear());
-  });
-  return [...years].sort((a,b) => b - a);
-}
-
-/* Per-event winner is derived from the actual scores, not the `honours`
-   table — an event can be live-scored (so it counts here) without ever
-   having been Finalised (no honours row yet), and this stays accurate
-   either way rather than depending on that manual step. Nearest the Pin
-   is read straight off the event row, same as the Hall of Fame's own
-   NTP tiles. */
-function orderOfMeritSummary(year){
-  const trophyEvents = events.filter(e => e.trophy && new Date(e.date + 'T00:00:00').getFullYear() === year);
-  const totals = new Map(); // player_id -> { total, eventsPlayed }
-  const eventSummaries = [];
-
-  trophyEvents.forEach(e => {
-    const evScorecards = allScorecards.filter(sc => sc.event_id === e.id);
-    const byPlayer = new Map();
-    evScorecards.forEach(sc => {
-      const holes = allHoleScores.filter(h => h.scorecard_id === sc.id);
-      if (!sc.player_id) return; // a team (scramble) card isn't any one player's score
-      if (!holes.length) return; // no-show / never started — doesn't count
-      const pts = holes.reduce((s,h) => s + h.points, 0);
-      if (isGuestPlayer(players.find(p => p.id === sc.player_id))) return; // guests can't win or earn standings points
-      byPlayer.set(sc.player_id, (byPlayer.get(sc.player_id) || 0) + pts);
-    });
-    if (!byPlayer.size) return; // not actually live-scored — excluded entirely
-
-    byPlayer.forEach((pts, pid) => {
-      const cur = totals.get(pid) || { total: 0, eventsPlayed: 0 };
-      cur.total += pts;
-      cur.eventsPlayed += 1;
-      totals.set(pid, cur);
-    });
-
-    let winnerPid = null, winnerPts = -1;
-    byPlayer.forEach((pts, pid) => { if (pts > winnerPts){ winnerPts = pts; winnerPid = pid; } });
-    const winnerPlayer = players.find(p => p.id === winnerPid);
-
-    eventSummaries.push({
-      event: e,
-      winner: winnerPlayer ? { player: winnerPlayer, total: winnerPts } : null,
-      ntp1: e.nearest_pin_1 || null,
-      ntp2: e.nearest_pin_2 || null,
-    });
-  });
-
-  eventSummaries.sort((a,b) => new Date(a.event.date) - new Date(b.event.date));
-
-  const standings = [...totals.entries()]
-    .map(([pid, v]) => ({ player: players.find(p => p.id === pid), total: v.total, eventsPlayed: v.eventsPlayed }))
-    .filter(e => e.player)
-    .sort((a,b) => b.total - a.total);
-
-  return { events: eventSummaries, standings };
 }
 
 function honourBaseName(title){
@@ -8886,23 +8784,6 @@ function renderHonours(){
       <div class="trophy-count">${captains.filter(h => h.title.toLowerCase()==='captain').length} captains</div>
     </div>`;
 
-  /* Season Standings — only shown once at least one trophy event has real
-     live-scored results for some year (see oomAvailableYears()) */
-  const oomYears = oomAvailableYears();
-  const oomSelected = expandedTrophy === '__oom__';
-  if (oomYears.length){
-    if (!oomYear || !oomYears.includes(oomYear)) oomYear = oomYears[0];
-    shelf.innerHTML += `
-      <div class="trophy-card ${oomSelected ? 'selected' : ''}" role="button" tabindex="0"
-           onclick="toggleTrophy('__oom__')"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleTrophy('__oom__');}">
-        ${trophySvg('Season Standings')}
-        <h3>Season Standings</h3>
-        <div class="trophy-count">${oomYears.length} season${oomYears.length===1?'':'s'}</div>
-      </div>`;
-  }
-
-
   if (expandedTrophy === '__captains__'){
     /* group by year, show Captain + Vice-Captain together */
     const years = [...new Set(captains.map(h => h.year))].sort((a,b) => a - b);
@@ -8920,47 +8801,6 @@ function renderHonours(){
             </li>`;
           }).join('')}
         </ol>
-      </div>`;
-  } else if (expandedTrophy === '__oom__'){
-    const { events: oomEvents, standings } = orderOfMeritSummary(oomYear);
-    const ordinal = i => i===0?'st':i===1?'nd':i===2?'rd':'th';
-    const medal = i => i<3 ? ['🥇','🥈','🥉'][i] : null;
-    winnersPanel.innerHTML = `
-      <div class="trophy-winners">
-        <h3>Season Standings</h3>
-        <p style="font-size:.85rem; color:rgba(255,255,255,.55); margin:.3rem 0 1rem; max-width:44ch; line-height:1.6;">
-          Combined Stableford points across every trophy event scored via Live Scores in ${oomYear} — only includes events actually live-scored, so earlier years without live scoring aren't shown.
-        </p>
-        ${oomYears.length > 1 ? `
-          <div class="event-select-row" style="margin-bottom:1.2rem;">
-            <select onchange="oomYear=Number(this.value); renderHonours();">
-              ${oomYears.map(y => `<option value="${y}" ${y===oomYear?'selected':''}>${y}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${oomEvents.length ? `
-          <div class="oom-events">
-            ${oomEvents.map(es => `
-              <div class="oom-event-card">
-                <div class="oom-event-head">
-                  <span class="oom-event-name">${escapeHtml(es.event.name)}</span>
-                  <span class="oom-event-meta">${fmtDateShort(es.event.date)}${es.event.course ? ' · ' + escapeHtml(eventCourseDisplay(es.event)) : ''}</span>
-                </div>
-                <div class="oom-event-stats">
-                  ${es.winner ? `<div class="oom-stat"><span class="ic">🏆</span><span class="lbl">Winner</span><span class="val">${escapeHtml(es.winner.player.first_name)} ${escapeHtml(es.winner.player.last_name)}</span><span class="oom-events-count">${es.winner.total} pts</span></div>` : ''}
-                  ${es.ntp1 ? `<div class="oom-stat"><span class="ic">📍</span><span class="lbl">Nearest Pin (1)</span><span class="val">${escapeHtml(es.ntp1)}</span></div>` : ''}
-                  ${es.ntp2 ? `<div class="oom-stat"><span class="ic">📍</span><span class="lbl">Nearest Pin (2)</span><span class="val">${escapeHtml(es.ntp2)}</span></div>` : ''}
-                </div>
-              </div>`).join('')}
-          </div>
-          <div class="oom-standings-title">Final standings</div>
-          <ol class="oom-standings">
-            ${standings.map((s, i) => `
-              <li>
-                <span class="oom-pos ${medal(i)?'medal':''}">${medal(i) || (i+1) + ordinal(i)}</span>
-                <span class="oom-name">${escapeHtml(s.player.first_name)} ${escapeHtml(s.player.last_name)}<span class="oom-events-count">${s.eventsPlayed} event${s.eventsPlayed===1?'':'s'}</span></span>
-                <span class="oom-pts">${s.total} pts</span>
-              </li>`).join('')}
-          </ol>` : `<p class="muted">No live-scored trophy results for ${oomYear} yet.</p>`}
       </div>`;
   } else if (expandedTrophy && groups[expandedTrophy]){
     const list = [...groups[expandedTrophy]].sort((a,b) => a.year - b.year);
