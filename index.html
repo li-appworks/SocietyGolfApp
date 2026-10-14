@@ -1437,7 +1437,6 @@
   .hof-badges{display:flex; gap:.2rem; flex-shrink:0;}
   .hof-pill{display:inline-flex; align-items:center; gap:3px; font-weight:800; font-size:.85rem; min-width:2.1rem; color:#fff;}
   .hof-pill .hof-ic{flex:0 0 auto; width:14px; height:14px; margin:0;} .hof-pill .hof-ic.flag{width:18px;}
-  .hof-more{width:100%; padding:.6rem; background:none; border:1px dashed rgba(255,255,255,.22); border-radius:12px; color:rgba(255,255,255,.65); font:600 .85rem var(--body); cursor:pointer;}
   .hof-wrap .committee-edit-btn{margin-top:.4rem;}
   .hof-wrap .edit-form{background:var(--paper); color:var(--text); border-radius:var(--radius); padding:.8rem;}
   .hof-wrap .muted{color:rgba(255,255,255,.6);}
@@ -8707,11 +8706,9 @@ const TROPHY_ORDER = ['Winter Trophy','Spring Trophy','Summer Trophy','Autumn Tr
    a winner. Guests are never credited. */
 const hofOpenYears = new Set();
 const hofOpenPlayers = new Set();
-let hofShowAllPlayers = false;
 let hofYearsInit = false;
 let hofResetScroll = false;
 let hofView = 'p'; // phone: which list shows (players first)
-const HOF_PLAYERS_SHOWN = 12;
 
 const hofStar = c => `<svg class="hof-ic" viewBox="0 0 24 24" aria-hidden="true"><path fill="${c}" stroke="rgba(0,0,0,.25)" stroke-width="1" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>`;
 const HOF_GOLD = hofStar('#d49a1f');
@@ -8838,7 +8835,7 @@ function renderHofSplit(){
       <div class="hof-body">${y.entries.map(hofEntryHtml).join('')}</div>
     </div>`).join('');
 
-  const shown = hofShowAllPlayers ? ranked : ranked.slice(0, HOF_PLAYERS_SHOWN);
+  const shown = ranked;
   const playersHtml = shown.map((p, i) => {
     const items = [...p.items].sort((a, b) => b.ts - a.ts).map(it => {
       const what = it.kind === 's' ? ' <span class="hof-res-l">2nd</span>' : it.kind === 'f' ? ` <span class="hof-res-l">${it.what}</span>` : (it.team ? ' <span class="hof-team">TEAM</span>' : '');
@@ -8857,8 +8854,7 @@ function renderHofSplit(){
       <div class="hof-body">${items}</div>
     </div>`;
   }).join('');
-  const more = ranked.length > HOF_PLAYERS_SHOWN
-    ? `<button class="hof-more" onclick="hofShowAllPlayers=!hofShowAllPlayers; renderHofSplit();">${hofShowAllPlayers ? 'Show fewer ▴' : 'Show all ' + ranked.length + ' players ▾'}</button>` : '';
+  const more = '';
 
   const keepScroll = hofResetScroll ? [] : [...document.querySelectorAll('#hof-split .hof-col')].map(c => c.scrollTop);
   hofResetScroll = false;
