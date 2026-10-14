@@ -36,6 +36,7 @@
 
   :root{
     --ink:#4B1320;
+    --brand-ink:var(--ink);
     --ink-soft:#6B1F2C;
     --stone:#ECEBE1;
     --paper:#FAF8F2;
@@ -1125,6 +1126,53 @@
   .lp-screen .sync-indicator.synced{color:#9ad7a6; border-color:rgba(154,215,166,.3); background:rgba(154,215,166,.07);}
   .lp-screen .sync-indicator.offline{color:#e8c070; border-color:rgba(232,192,112,.35); background:rgba(232,192,112,.08);}
   .lp-screen .sync-indicator.syncing{color:rgba(250,248,242,.62);}
+
+  /* ---------- the standard dark panel for ordinary pages (Rules, About us, My Account, Admin, Platform) ----------
+     = the .lp-screen colour remap with the burgundy-to-black fade, a centred title and the gold rule. */
+  .lp-screen.dp{
+    background:linear-gradient(180deg, var(--brand-ink) 0%, color-mix(in srgb, var(--brand-ink) 55%, black) 45%, #050203 100%);
+    padding-top:1.3rem; margin-bottom:1.6rem;
+  }
+  .dp-head{text-align:center; padding:.1rem 1rem 1rem; margin:0 .4rem 1rem; border-bottom:2px solid var(--brass-light); position:relative;}
+  .dp-head::after{content:""; position:absolute; left:50%; bottom:-5px; width:8px; height:8px; background:var(--brass-light); transform:translateX(-50%) rotate(45deg);}
+  .dp-head .l{font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); font-weight:700;}
+  .dp-head .t{font-family:var(--display); font-size:1.4rem; font-weight:800; margin:.25rem 0 .1rem; color:#fff;}
+  .dp .card, .dp .about-card, .dp .memoriam-card{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07); border-radius:.8rem; max-width:none;}
+  .dp .about-card h3, .dp .memoriam-card h3{color:#fff;}
+  .dp .about-link{max-width:none; color:#fff; background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 36%, transparent), color-mix(in srgb, var(--brass) 14%, transparent)); border:1px solid rgba(227,193,115,.55); border-radius:.8rem;}
+  .dp .about-link .t{color:#fff;}
+  .dp .about-back{color:var(--brass-light);}
+  .dp .admin-sub-tabs{gap:.4rem;}
+  .dp .admin-sub-tab{flex:1; text-align:center; text-transform:none; letter-spacing:0; font-weight:700; font-size:.82rem; padding:.55rem .5rem; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:rgba(255,255,255,.75);}
+  .dp .admin-sub-tab.active{background:#e3c477; color:#3a0f1a; border-color:#e3c477;}
+  .dp .add-item-btn{border:1.5px dashed rgba(227,193,115,.5); color:var(--brass-light); border-radius:.8rem;}
+  .dp .add-item-btn:hover{background:rgba(227,193,115,.16); color:#fff;}
+  /* Rules */
+  .dp .rules-list, .dp .rule-chips, .dp .rule-tools{max-width:none;}
+  .dp .rules-list{gap:.5rem;}
+  .dp .rule-chip{background:rgba(250,248,242,.07); border-color:rgba(250,248,242,.14); color:rgba(250,248,242,.85);}
+  .dp .rule-chip b{color:var(--brass-light);}
+  .dp .rule-chip.active{background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 36%, transparent), color-mix(in srgb, var(--brass) 14%, transparent)); border-color:rgba(227,193,115,.55); color:#fff;}
+  .dp .rule-card{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07); border-radius:.8rem; padding:.85rem .9rem;}
+  .dp .rule-card.open{background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 30%, transparent), color-mix(in srgb, var(--brass) 10%, #2a0b13)); border-color:rgba(227,193,115,.55);}
+  .dp .rule-card.flash{border-color:var(--brass-light);}
+  .dp .rule-badge{background:#2a0b13; color:var(--brass-light); border:1px solid rgba(227,193,115,.5);}
+  .dp .rule-card h3{color:#fff;}
+  .dp .rule-chev{border-color:var(--brass-light);}
+  .dp .rule-card .rule-body{color:rgba(250,248,242,.84);}
+  .dp .rule-bullets li::before{background:var(--brass-light);}
+  .dp .rule-tools-btn{color:var(--brass-light);}
+  /* Admin → Accounts */
+  .dp .accounts-report{max-width:none;}
+  .dp .accounts-year-tab{text-transform:none; letter-spacing:0; font-weight:700; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:rgba(255,255,255,.75);}
+  .dp .accounts-year-tab.active{background:#e3c477; color:#3a0f1a; border-color:#e3c477;}
+  .dp .accounts-surplus{background:linear-gradient(100deg, #6d4c16 0%, #3a2a0e 55%, #1a1207 100%); border:1px solid rgba(227,193,115,.45); border-left:3px solid var(--brass-light); border-radius:.8rem; color:#fff;}
+  .dp .accounts-surplus .ar-label{color:#fff;}
+  /* small status pills (Paid, Not paid, handicap source) */
+  .dp .membership-pill{border:1px solid rgba(250,248,242,.18);}
+  .dp .membership-pill.paid{background:rgba(154,215,166,.14); color:#9ad7a6 !important; border-color:rgba(154,215,166,.35);}
+  .dp .membership-pill.unpaid{background:rgba(250,248,242,.08); color:rgba(250,248,242,.72);}
+  .dp .membership-pill:not(.paid):not(.unpaid){color:#f2a3ab !important;}
   .lp-screen .lb-panel{--paper:#FAF8F2; --ink:#4B1320; background:none; padding-top:.4rem; margin-top:.6rem;}
   /* leaderboard variant: black panel, wider tiles, each tile lit from the left (burgundy fading to dark),
      prize places warmer with a gold edge */
@@ -2159,12 +2207,14 @@
 
   <!-- ============ RULES ============ -->
   <section class="section" id="sec-rules" data-section="rules">
-    <p class="eyebrow">How we play</p>
-    <h2 class="section-title">Rules &amp; Regulations</h2>
-    <div id="add-rule-slot"></div>
-    <div class="rule-chips" id="rules-chips"></div>
-    <div class="rule-tools" id="rules-tools"></div>
-    <div class="rules-list" id="rules-list"></div>
+    <h2 class="section-title" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;">Rules &amp; Regulations</h2>
+    <div class="lp-screen dp">
+      <div class="dp-head"><div class="l">How we play</div><h2 class="t">Rules &amp; Regulations</h2></div>
+      <div id="add-rule-slot"></div>
+      <div class="rule-chips" id="rules-chips"></div>
+      <div class="rule-tools" id="rules-tools"></div>
+      <div class="rules-list" id="rules-list"></div>
+    </div>
   </section>
 
   <!-- ============ HALL OF FAME ============ -->
@@ -2180,31 +2230,38 @@
 
   <!-- ============ ABOUT ============ -->
   <section class="section" id="sec-about" data-section="about">
-    <p class="eyebrow">Who we are</p>
-    <h2 class="section-title">About us</h2>
-    <div id="about-content"></div>
+    <h2 class="section-title" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;">About us</h2>
+    <div class="lp-screen dp">
+      <div class="dp-head"><div class="l">Who we are</div><h2 class="t">About us</h2></div>
+      <div id="about-content"></div>
+    </div>
   </section>
 
   <!-- ============ ACCOUNTS ============ -->
   <section class="section" id="sec-accounts" data-section="accounts">
-    <p class="eyebrow">Admin only</p>
-    <h2 class="section-title">Admin</h2>
-    <div id="accounts-content"></div>
+    <h2 class="section-title" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;">Admin</h2>
+    <div class="lp-screen dp">
+      <div class="dp-head"><div class="l">Admin only</div><h2 class="t">Admin</h2></div>
+      <div id="accounts-content"></div>
+    </div>
   </section>
 
   <!-- ============ MY ACCOUNT ============ -->
   <section class="section" id="sec-myaccount" data-section="myaccount">
-    <p class="eyebrow">Your account</p>
-    <h2 class="section-title">My Account</h2>
-    <div id="myaccount-content"></div>
+    <h2 class="section-title" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;">My Account</h2>
+    <div class="lp-screen dp">
+      <div class="dp-head"><div class="l">Your account</div><h2 class="t">My Account</h2></div>
+      <div id="myaccount-content"></div>
+    </div>
   </section>
 
   <!-- ============ PLATFORM ADMIN ============ -->
   <section class="section" id="sec-platform" data-section="platform">
-    <p class="eyebrow">Platform admin only</p>
-    <h2 class="section-title">Platform</h2>
-    <p class="lede" style="margin-bottom:1.6rem;">Every society running on this platform - not scoped to any one club.</p>
-    <div id="platform-content"></div>
+    <h2 class="section-title" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;">Platform</h2>
+    <div class="lp-screen dp">
+      <div class="dp-head"><div class="l">Platform admin only</div><h2 class="t">Platform</h2></div>
+      <div id="platform-content"></div>
+    </div>
   </section>
 
   <!-- ============ GROUPINGS ============ -->
