@@ -767,18 +767,6 @@
      long title wraps inside its own column instead of around the number and
      button). Picked with the user from a mockup (option G = A + D). */
   .rules-list{display:flex; flex-direction:column; gap:1rem; max-width:720px;}
-  .rule-chips{display:flex; flex-wrap:wrap; gap:.45rem; max-width:720px; margin-bottom:1rem;}
-  .rule-chips.many{flex-wrap:nowrap; overflow-x:auto; padding-bottom:.4rem; -webkit-overflow-scrolling:touch;}
-  .rule-chips.many .rule-chip{flex-shrink:0;}
-  .rule-chip{
-    display:inline-flex; align-items:center; gap:.4rem; max-width:12.5rem;
-    font-family:var(--body); font-size:.74rem; font-weight:600; padding:.45rem .75rem;
-    border-radius:999px; border:1px solid var(--line); background:var(--paper); color:var(--text); cursor:pointer;
-  }
-  .rule-chip b{color:var(--claret); flex-shrink:0;}
-  .rule-chip span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .rule-chip.active{background:var(--ink); border-color:var(--ink); color:var(--paper);}
-  .rule-chip.active b{color:var(--brass-light);}
   .rule-card{
     background:var(--paper); border:1px solid var(--line); border-radius:8px;
     padding:.9rem 1.1rem; transition:border-color .3s, box-shadow .3s;
@@ -1148,11 +1136,8 @@
   .dp .add-item-btn{border:1.5px dashed rgba(227,193,115,.5); color:var(--brass-light); border-radius:.8rem;}
   .dp .add-item-btn:hover{background:rgba(227,193,115,.16); color:#fff;}
   /* Rules */
-  .dp .rules-list, .dp .rule-chips, .dp .rule-tools{max-width:none;}
+  .dp .rules-list, .dp .rule-tools{max-width:none;}
   .dp .rules-list{gap:.5rem;}
-  .dp .rule-chip{background:rgba(250,248,242,.07); border-color:rgba(250,248,242,.14); color:rgba(250,248,242,.85);}
-  .dp .rule-chip b{color:var(--brass-light);}
-  .dp .rule-chip.active{background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 36%, transparent), color-mix(in srgb, var(--brass) 14%, transparent)); border-color:rgba(227,193,115,.55); color:#fff;}
   .dp .rule-card{background:linear-gradient(100deg, #5a1626 0%, #2e0e17 55%, #160609 100%); border:1px solid rgba(250,248,242,.07); border-radius:.8rem; padding:.85rem .9rem;}
   .dp .rule-card.open{background:linear-gradient(180deg, color-mix(in srgb, var(--brass) 30%, transparent), color-mix(in srgb, var(--brass) 10%, #2a0b13)); border-color:rgba(227,193,115,.55);}
   .dp .rule-card.flash{border-color:var(--brass-light);}
@@ -1168,6 +1153,12 @@
   .dp .accounts-year-tab.active{background:#e3c477; color:#3a0f1a; border-color:#e3c477;}
   .dp .accounts-surplus{background:linear-gradient(100deg, #6d4c16 0%, #3a2a0e 55%, #1a1207 100%); border:1px solid rgba(227,193,115,.45); border-left:3px solid var(--brass-light); border-radius:.8rem; color:#fff;}
   .dp .accounts-surplus .ar-label{color:#fff;}
+  .exp-category-pill.recurring{background:var(--brass-light); color:#2a0b13; font-weight:700;}
+  .dp .exp-category-pill{background:rgba(250,248,242,.1); color:rgba(250,248,242,.75);}
+  .dp .exp-category-pill.recurring{background:var(--brass-light); color:#2a0b13;}
+  .dp .accounts-surplus.bal-up{background:linear-gradient(100deg, #1f5a34 0%, #12331f 55%, #0a1a10 100%); border:1px solid rgba(154,215,166,.4); border-left:3px solid #9ad7a6;}
+  .dp .accounts-surplus.bal-down{background:linear-gradient(100deg, #7a2430 0%, #3d1119 55%, #1c080c 100%); border:1px solid rgba(242,163,171,.4); border-left:3px solid #f2a3ab;}
+  .dp .status-pill{background:rgba(250,248,242,.1); color:rgba(250,248,242,.7);}
   /* small status pills (Paid, Not paid, handicap source) */
   .dp .membership-pill{border:1px solid rgba(250,248,242,.18);}
   .dp .membership-pill.paid{background:rgba(154,215,166,.14); color:#9ad7a6 !important; border-color:rgba(154,215,166,.35);}
@@ -2211,7 +2202,6 @@
     <div class="lp-screen dp">
       <div class="dp-head"><div class="l">How we play</div><h2 class="t">Rules &amp; Regulations</h2></div>
       <div id="add-rule-slot"></div>
-      <div class="rule-chips" id="rules-chips"></div>
       <div class="rule-tools" id="rules-tools"></div>
       <div class="rules-list" id="rules-list"></div>
     </div>
@@ -8453,7 +8443,6 @@ async function finaliseEventOverall(eventId){
 /* ===================== render: rules ===================== */
 const editingRuleIds = new Set();
 
-let activeRuleChipId = null;
 const openRuleIds = new Set(); // rules start collapsed; this is what the reader has opened
 
 /* Opens/closes a card by flipping its class directly rather than re-rendering,
@@ -8483,24 +8472,6 @@ function toggleAllRules(){
   updateRulesToolsLabel();
 }
 
-/* Opens a rule and scrolls to its card, clearing the sticky site header (it
-   stays pinned, so a plain scrollIntoView would tuck the card's title
-   underneath it), and briefly glows the card so it's obvious where you landed. */
-function jumpToRule(id){
-  const card = document.getElementById('rule-card-' + id);
-  if (!card) return;
-  setRuleOpen(id, true);
-  updateRulesToolsLabel();
-  activeRuleChipId = id;
-  document.querySelectorAll('#rules-chips .rule-chip').forEach(c => c.classList.toggle('active', Number(c.dataset.id) === id));
-  const headerH = document.querySelector('.site-head-wrap')?.offsetHeight || 0;
-  const top = card.getBoundingClientRect().top + window.scrollY - headerH - 12;
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  window.scrollTo({ top: Math.max(0, top), behavior: reduce ? 'auto' : 'smooth' });
-  card.classList.add('flash');
-  setTimeout(() => card.classList.remove('flash'), 1300);
-}
-
 /* A rule's text → HTML. A line starting "- " (or "•") is a bullet and
    neighbouring bullet lines form one list; consecutive plain lines stay
    together as one paragraph (a single newline is a line break, as before);
@@ -8524,14 +8495,6 @@ function ruleBodyHtml(text){
 function renderRules(){
   const listEl = document.getElementById('rules-list');
   if (!listEl) return;
-
-  const chipsEl = document.getElementById('rules-chips');
-  if (chipsEl){
-    chipsEl.classList.toggle('many', rules.length > 8);
-    chipsEl.innerHTML = rules.length < 2 ? '' : rules.map((r, i) =>
-      `<button type="button" class="rule-chip${r.id === activeRuleChipId ? ' active' : ''}" data-id="${r.id}" onclick="jumpToRule(${r.id})"><b>${i+1}</b><span>${escapeHtml(r.title || '')}</span></button>`
-    ).join('');
-  }
 
   const toolsEl = document.getElementById('rules-tools');
   if (toolsEl){
@@ -11076,7 +11039,7 @@ function renderAccounts(){
       </div>
 
       ${runningBalance !== null ? `
-      <div class="accounts-surplus" style="background:${runningBalance >= startingBalance ? 'var(--bracken)' : 'var(--claret)'}; margin-top:.7rem;">
+      <div class="accounts-surplus ${runningBalance >= startingBalance ? 'bal-up' : 'bal-down'}" style="margin-top:.7rem;">
         <span class="ar-label">Current balance &mdash; ${runningBalance >= startingBalance ? 'above' : 'below'} the £${startingBalance.toFixed(2)} starting balance</span>
         <span class="ar-amount">£${runningBalance.toFixed(2)}</span>
       </div>` : ''}
@@ -11098,7 +11061,7 @@ function renderAccounts(){
       ${yearExp.filter(x => x.id != null).map(x => {
         if (editingExpenditureIds.has(x.id)) return expenditureEditFormHtml(x);
         return `<div class="accounts-row">
-          <span class="ar-label">${x.description} <span class="exp-category-pill">${x.category}</span>${x.recurring_id ? ' <span class="exp-category-pill" style="background:var(--brass-light); color:var(--ink);" title="Generated by a recurring expenditure">&#8635; recurring</span>' : ''}${x.date?'<br><span class="ar-sub">'+fmtDate(x.date)+'</span>':''}</span>
+          <span class="ar-label">${x.description} <span class="exp-category-pill">${x.category}</span>${x.recurring_id ? ' <span class="exp-category-pill recurring" title="Generated by a recurring expenditure">&#8635; recurring</span>' : ''}${x.date?'<br><span class="ar-sub">'+fmtDate(x.date)+'</span>':''}</span>
           <span class="ar-amount expense" style="white-space:nowrap;">£${Number(x.amount).toFixed(2)}</span>
           <button class="committee-edit-btn" onclick="toggleExpenditureEdit(${x.id})">Edit</button>
         </div>`;
