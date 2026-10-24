@@ -2126,7 +2126,7 @@
           <button class="btn home-btn-primary" onclick="goTo('events')">See upcoming events</button>
           <button class="btn ghost home-btn-ghost" onclick="goTo('committee')">Meet the committee</button>
           <button class="btn ghost home-btn-ghost" onclick="goTo('shop')">Visit the shop</button>
-          <button class="btn ghost home-btn-ghost" onclick="goTo('rules')">New to the Gyttes?</button>
+          <button class="btn ghost home-btn-ghost" id="home-new-btn" onclick="goTo('rules')">New to the Gyttes?</button>
         </div>
       </div>
       <div id="next-fixture-slot"></div>
@@ -2211,8 +2211,8 @@
     <h2 class="section-title">Shop</h2>
     <div class="shop-banner">
       <h2>Visit the society shop</h2>
-      <p>Order your <span id="shop-society-name">Gytte Lane Golf Society</span> ties and tops — available online through our shop partner T Kings.</p>
-      <a class="btn brass" href="https://uniformcity.co.uk/shop/gytte-lane-golf-society" target="_blank" rel="noopener">Visit shop ↗</a>
+      <p id="shop-text">Order your <span id="shop-society-name">Gytte Lane Golf Society</span> ties and tops — available online through our shop partner T Kings.</p>
+      <a class="btn brass" id="shop-link" href="https://uniformcity.co.uk/shop/gytte-lane-golf-society" target="_blank" rel="noopener">Visit shop ↗</a>
     </div>
   </section>
 
@@ -2623,7 +2623,8 @@ function applyBranding(soc){
   if (taglineEl) taglineEl.textContent = tagline;
   const introEl = document.getElementById('hero-intro');
   if (introEl){
-    const foundedPart = soc.founded ? `Founded <span id="years-founded">${new Date().getFullYear()-soc.founded}</span> years ago${location ? ' in ' + escapeHtml(location) : ''}. ` : (location ? `Based in ${escapeHtml(location)}. ` : '');
+    const yrsOld = soc.founded ? new Date().getFullYear() - soc.founded : 0;
+    const foundedPart = soc.founded ? (yrsOld >= 1 ? `Founded <span id="years-founded">${yrsOld}</span> years ago${location ? ' in ' + escapeHtml(location) : ''}. ` : `Founded this year${location ? ' in ' + escapeHtml(location) : ''}. `) : (location ? `Based in ${escapeHtml(location)}. ` : '');
     introEl.innerHTML = foundedPart + escapeHtml(introText);
   }
   const footNameEl = document.getElementById('foot-society-name');
@@ -2632,6 +2633,22 @@ function applyBranding(soc){
   if (footLocEl) footLocEl.textContent = `${location}${soc.founded ? (location ? ' · ' : '') + 'Founded ' + soc.founded : ''}`;
   const shopNameEl = document.getElementById('shop-society-name');
   if (shopNameEl) shopNameEl.textContent = name;
+
+  /* What members call the society ("the Gyttes") and the society's own shop. A society with no shop link
+     (societies.shop_url) has the Shop page, its menu items and the Home button hidden. */
+  const newBtn = document.getElementById('home-new-btn');
+  if (newBtn) newBtn.textContent = `New to ${soc.nickname || name}?`;
+  const shopUrl = (soc.shop_url || '').trim();
+  const hasShop = /^https?:\/\//i.test(shopUrl);
+  document.querySelectorAll('.tab-btn[data-section="shop"], .md-item[onclick*="goTo(\'shop\')"], .home-btn-ghost[onclick*="goTo(\'shop\')"]')
+    .forEach(el => { el.style.display = hasShop ? '' : 'none'; });
+  if (newBtn) newBtn.style.gridColumn = hasShop ? '' : '1 / -1';
+  if (hasShop){
+    const shopLink = document.getElementById('shop-link');
+    if (shopLink) shopLink.href = shopUrl;
+    const shopText = document.getElementById('shop-text');
+    if (shopText) shopText.textContent = (soc.shop_text || '').trim() || `Order your ${name} kit online.`;
+  }
 
   const contactEmail = soc.contact_email || '';
   const emailEl = document.getElementById('foot-contact-email');
@@ -10549,6 +10566,9 @@ function renderBrandingForm(){
         <div class="full"><label>Homepage tagline</label><input id="brand-tagline" value="${escapeHtml(soc.tagline||'')}"></div>
         <div class="full"><label>About blurb (shown after "Founded X years ago in &lt;location&gt;.")</label><textarea id="brand-intro">${escapeHtml(soc.intro_text||'')}</textarea></div>
         <div class="full"><label>Contact email</label><input type="email" id="brand-contact-email" value="${escapeHtml(soc.contact_email||'')}"></div>
+        <div class="full"><label>What members call the society (e.g. "the Gyttes") — used in "New to …?" on the Home page</label><input id="brand-nickname" placeholder="leave blank to use the society name" value="${escapeHtml(soc.nickname||'')}"></div>
+        <div class="full"><label>Shop link (leave blank to hide the Shop page)</label><input id="brand-shop-url" placeholder="https://…" value="${escapeHtml(soc.shop_url||'')}"></div>
+        <div class="full"><label>Shop page wording (optional)</label><textarea id="brand-shop-text" placeholder="e.g. Order your ties and tops online.">${escapeHtml(soc.shop_text||'')}</textarea></div>
         ${colourPresetSelectHtml('brand-primary', 'brand-secondary', 'preview')}
         <div>
           <label>Primary colour</label>
@@ -10658,6 +10678,10 @@ async function saveSocietyBranding(){
   const tagline = document.getElementById('brand-tagline')?.value.trim() || null;
   const intro_text = document.getElementById('brand-intro')?.value.trim() || null;
   const contact_email = document.getElementById('brand-contact-email')?.value.trim() || null;
+  const nickname = document.getElementById('brand-nickname')?.value.trim() || null;
+  const shop_url = document.getElementById('brand-shop-url')?.value.trim() || null;
+  const shop_text = document.getElementById('brand-shop-text')?.value.trim() || null;
+  if (shop_url && !/^https?:\/\//i.test(shop_url)){ setStatus('The shop link must start with https://', 'error'); return; }
   const primary_colour = document.getElementById('brand-primary')?.value;
   const secondary_colour = document.getElementById('brand-secondary')?.value;
   const foundedRaw = document.getElementById('brand-founded')?.value;
@@ -10665,7 +10689,7 @@ async function saveSocietyBranding(){
   if (!name){ setStatus('Society name is required.', 'error'); return; }
   if (contact_email && !isValidEmail(contact_email)){ setStatus('Enter a valid contact email, or leave it blank.', 'error'); return; }
   setStatus('Saving…', 'loading');
-  const payload = { name, location, tagline, intro_text, contact_email, primary_colour, secondary_colour, founded };
+  const payload = { name, location, tagline, intro_text, contact_email, nickname, shop_url, shop_text, primary_colour, secondary_colour, founded };
   const { error } = await db.from('societies').update(payload).eq('id', societyId);
   if (error){ console.error(error); setStatus('Save failed.', 'error'); return; }
   if (currentSociety) Object.assign(currentSociety, payload);
@@ -10803,6 +10827,9 @@ function platformSocietyRowHtml(soc){
         <div><label>Custom domain</label><input id="ps-customdomain-${soc.id}" value="${escapeHtml(soc.custom_domain||'')}"></div>
         <div><label>Location</label><input id="ps-location-${soc.id}" value="${escapeHtml(soc.location||'')}"></div>
         <div><label>Contact email</label><input type="email" id="ps-contactemail-${soc.id}" value="${escapeHtml(soc.contact_email||'')}"></div>
+        <div><label>What members call it (e.g. "the Gyttes")</label><input id="ps-nickname-${soc.id}" value="${escapeHtml(soc.nickname||'')}"></div>
+        <div class="full"><label>Shop link (blank = no Shop page)</label><input id="ps-shopurl-${soc.id}" placeholder="https://…" value="${escapeHtml(soc.shop_url||'')}"></div>
+        <div class="full"><label>Shop page wording (optional)</label><textarea id="ps-shoptext-${soc.id}">${escapeHtml(soc.shop_text||'')}</textarea></div>
         <div class="full"><label>Homepage tagline</label><input id="ps-tagline-${soc.id}" value="${escapeHtml(soc.tagline||'')}"></div>
         <div class="full"><label>About blurb</label><textarea id="ps-intro-${soc.id}">${escapeHtml(soc.intro_text||'')}</textarea></div>
         ${colourPresetSelectHtml('ps-primary-' + soc.id, 'ps-secondary-' + soc.id)}
@@ -10865,6 +10892,10 @@ async function savePlatformSociety(id){
   const custom_domain = document.getElementById('ps-customdomain-'+id)?.value.trim().toLowerCase() || null;
   const location = document.getElementById('ps-location-'+id)?.value.trim() || null;
   const contact_email = document.getElementById('ps-contactemail-'+id)?.value.trim() || null;
+  const nickname = document.getElementById('ps-nickname-'+id)?.value.trim() || null;
+  const shop_url = document.getElementById('ps-shopurl-'+id)?.value.trim() || null;
+  const shop_text = document.getElementById('ps-shoptext-'+id)?.value.trim() || null;
+  if (shop_url && !/^https?:\/\//i.test(shop_url)){ setStatus('The shop link must start with https://', 'error'); return; }
   const tagline = document.getElementById('ps-tagline-'+id)?.value.trim() || null;
   const intro_text = document.getElementById('ps-intro-'+id)?.value.trim() || null;
   const primary_colour = document.getElementById('ps-primary-'+id)?.value;
@@ -10877,7 +10908,7 @@ async function savePlatformSociety(id){
   setStatus('Saving…', 'loading');
   const { error } = await db.from('societies').update({
     name, founded: founded ? Number(founded) : null, subdomain, custom_domain,
-    location, contact_email, tagline, intro_text, primary_colour, secondary_colour, stripe_enabled, gps_enabled, require_login
+    location, contact_email, nickname, shop_url, shop_text, tagline, intro_text, primary_colour, secondary_colour, stripe_enabled, gps_enabled, require_login
   }).eq('id', id);
   if (error){ console.error(error); setStatus('Save failed.', 'error'); return; }
   editingSocietyIds.delete(id);

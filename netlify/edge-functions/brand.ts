@@ -150,7 +150,20 @@ export default async (request, context) => {
       html = replaceInner(html, '<p id="site-location">', "</p>", esc(soc.location || ""));
       const foundedPart = soc.founded ? ` Founded ${soc.founded}.` : "";
       html = html.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(name)}${soc.location ? ", " + esc(soc.location) : ""}.${foundedPart} Events, results, committee, gallery and news.">`);
-      const style = `<style>:root{--ink:${primary};--brass:${secondary};}</style>`;
+      // The Home hero text, the "New to …?" button and (when a society has no shop) the Shop links:
+      // same wording rules as index.html's applyBranding(), done here so another society never
+      // sees Gytte Lane's words for a moment first.
+      const loc = soc.location ? esc(soc.location) : "";
+      const yrs = soc.founded ? new Date().getFullYear() - soc.founded : 0;
+      const heroFounded = soc.founded
+        ? (yrs >= 1 ? `Founded <span id="years-founded">${yrs}</span> years ago${loc ? " in " + loc : ""}. ` : `Founded this year${loc ? " in " + loc : ""}. `)
+        : (loc ? `Based in ${loc}. ` : "");
+      html = replaceInner(html, '<h1 id="hero-tagline">', "</h1>", esc(soc.tagline || `Welcome to ${name}`));
+      html = replaceInner(html, '<p class="intro" id="hero-intro">', "</p>", heroFounded + esc(soc.intro_text || ""));
+      html = replaceInner(html, '<button class="btn ghost home-btn-ghost" id="home-new-btn" onclick="goTo(\'rules\')">', "</button>", esc(`New to ${soc.nickname || name}?`));
+      const hasShop = /^https?:\/\//i.test((soc.shop_url || "").trim());
+      const shopCss = hasShop ? "" : `.tab-btn[data-section="shop"],.md-item[onclick*="goTo('shop')"],.home-btn-ghost[onclick*="goTo('shop')"]{display:none !important}#home-new-btn{grid-column:1 / -1}`;
+      const style = `<style>:root{--ink:${primary};--brass:${secondary};}${shopCss}</style>`;
       html = html.replace("</head>", `${style}</head>`);
     }
 
