@@ -20,7 +20,7 @@
 const SUPABASE_URL = "https://noldemdyjbwfqxkuxmvy.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pzqpKakNbZYprPW8XzGVNg_U9pL0Nsw";
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 60 * 1000; // short, so switching a society's "members only" setting takes effect within a minute
 // Per-hostname cache, module-scope so it survives across requests on a warm
 // edge instance. Not Netlify Blobs/KV — that would add a new import this
 // function can't be tested locally before deploying, for a cache that only
@@ -115,6 +115,12 @@ export default async (request, context) => {
     const primary = soc.primary_colour || "#4B1320";
     const secondary = soc.secondary_colour || "#B8862F";
     const isLogin = url.pathname.endsWith("/login.html");
+
+    // Members-only societies (societies.require_login): tell the page before it
+    // paints, so index.html can send anyone with no stored sign-in straight to the
+    // login page. Anything but an explicit true (a missing column, a failed
+    // lookup) leaves the page exactly as it was.
+    if (soc.require_login === true) html = html.replace("<head>", "<head><script>window.__GLGS_REQUIRE_LOGIN=true;</script>");
 
     const titleSuffix = isLogin ? "Sign in" : (soc.location || "");
     html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(name)}${titleSuffix ? " — " + esc(titleSuffix) : ""}</title>`);

@@ -1,6 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* Members-only societies (societies.require_login). The edge function adds window.__GLGS_REQUIRE_LOGIN
+   to this page for such a society and nothing else; for every other society this does nothing at all.
+   No stored sign-in -> the login page, before anything is drawn. A stored sign-in -> the site, hidden for
+   a moment until initAuth() has confirmed who it is (so the nav never flashes "Sign in"). It decides from
+   what is stored on the phone only, with no network wait, so it can't flicker or loop. */
+(function(){
+  if (!window.__GLGS_REQUIRE_LOGIN) return;
+  try {
+    var has = false;
+    for (var i = 0; i < localStorage.length; i++){
+      var k = localStorage.key(i);
+      if (/^sb-.*-auth-token$/.test(k)){
+        var v = JSON.parse(localStorage.getItem(k) || 'null');
+        if (v && (v.refresh_token || (v.currentSession && v.currentSession.refresh_token))){ has = true; break; }
+      }
+    }
+    document.documentElement.setAttribute('data-gate', 'on');
+    if (!has) location.replace('login.html?signin=1');
+    else setTimeout(function(){ document.documentElement.removeAttribute('data-gate'); }, 6000); // never leave the page hidden
+  } catch(e){ document.documentElement.removeAttribute('data-gate'); }
+})();
+</script>
+<style>html[data-gate]{visibility:hidden;}</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Gytte Lane Golf Society — Syresham</title>
@@ -4818,12 +4842,15 @@ function handleNavLock(){
   else window.location.href = 'login.html?signin=1';
 }
 
+let manualSignOut = false;
 async function memberSignOut(){
+  manualSignOut = true;
   if (db) await db.auth.signOut();
   isLoggedIn = false;
   isMember = false;
   isPlatformAdmin = false;
   currentUserEmail = null;
+  if (REQUIRE_LOGIN){ sendToLogin('signedout'); return; }
   updateNavLock();
   renderAll();
   goTo('home');
@@ -4846,16 +4873,14 @@ function renderAll(){
   if (isPlatformAdmin) renderPlatformAdmin();
 }
 
-/* Supabase's own server-enforced session timeout (sessions_timebox) needs
-   a Pro plan — this project is on the free tier, so this is the
-   client-side equivalent: force a sign-out once 24 hours have passed
+/* Client-side session limit: force a sign-out once 90 days have passed
    since the session's actual sign-in time (session.user.last_sign_in_at,
    not the short-lived access token's own expiry, which the SDK silently
    refreshes forever in the background and so never naturally lapses).
    Not a hard security boundary the way the real Pro-plan setting would
    be — a determined user could tamper with their own client to skip this
    — but that only ever affects their own session, never anyone else's. */
-const SESSION_TIMEBOX_MS = 24 * 60 * 60 * 1000;
+const SESSION_TIMEBOX_MS = 90 * 24 * 60 * 60 * 1000; // 90 days (was 24 hours until 2026-10-24)
 
 function sessionAgeExceeded(session){
   const signedInAt = session?.user?.last_sign_in_at;
@@ -4874,8 +4899,17 @@ async function enforceSessionTimebox(session){
   return false;
 }
 
+/* Members-only societies: see the gate script at the top of <head>. */
+const REQUIRE_LOGIN = !!window.__GLGS_REQUIRE_LOGIN;
+let signingOutOnPurpose = false;
+function releaseGate(){ document.documentElement.removeAttribute('data-gate'); }
+function sendToLogin(reason){
+  document.documentElement.setAttribute('data-gate', 'on');
+  window.location.replace('login.html?signin=1' + (reason ? '&' + reason + '=1' : ''));
+}
+
 async function initAuth(){
-  if (!db) { updateNavLock(); renderAll(); return; }
+  if (!db) { updateNavLock(); renderAll(); releaseGate(); return; }
 
   /* Check Supabase session — works for passkey, magic link and password */
   const { data: { session } } = await db.auth.getSession();
@@ -4888,6 +4922,19 @@ async function initAuth(){
     if (isActivePlayer && player.is_committee) isLoggedIn = true;
     const { data: pa } = await db.rpc('is_platform_admin');
     isPlatformAdmin = !!pa;
+  }
+
+  /* Members-only: no valid sign-in, or the email isn't an active player here, means the login page.
+     The "not a player" check only runs once the player list has really loaded and we're online, so a
+     phone with no signal never signs someone out by mistake. */
+  if (REQUIRE_LOGIN){
+    if (!session?.user){ sendToLogin('expired'); return; }
+    if (!isMember && !isPlatformAdmin && players.length > 0 && navigator.onLine){
+      signingOutOnPurpose = true;
+      await db.auth.signOut();
+      sendToLogin('notmember');
+      return;
+    }
   }
 
   /* Listen for auth state changes (magic link callback, sign out etc) */
@@ -4911,11 +4958,12 @@ async function initAuth(){
       isLoggedIn = false;
       isPlatformAdmin = false;
     }
+    if (REQUIRE_LOGIN && event === 'SIGNED_OUT' && !signingOutOnPurpose){ sendToLogin(manualSignOut ? 'signedout' : 'expired'); return; }
     updateNavLock();
     renderAll();
   });
 
-  /* Catches the case where a tab is just left open past the 24-hour mark
+  /* Catches the case where a tab is just left open past the 90-day mark
      mid-session — the checks above only run on load/sign-in, not while
      idle, since a refreshed access token alone never triggers either. */
   setInterval(async () => {
@@ -4925,6 +4973,7 @@ async function initAuth(){
 
   updateNavLock();
   renderAll();
+  releaseGate();
 }
 
 async function uploadCommitteePhoto(memberId, inputEl){
@@ -10500,6 +10549,7 @@ function renderBrandingForm(){
         <div class="full"><label>Homepage tagline</label><input id="brand-tagline" value="${escapeHtml(soc.tagline||'')}"></div>
         <div class="full"><label>About blurb (shown after "Founded X years ago in &lt;location&gt;.")</label><textarea id="brand-intro">${escapeHtml(soc.intro_text||'')}</textarea></div>
         <div class="full"><label>Contact email</label><input type="email" id="brand-contact-email" value="${escapeHtml(soc.contact_email||'')}"></div>
+        ${colourPresetSelectHtml('brand-primary', 'brand-secondary', 'preview')}
         <div>
           <label>Primary colour</label>
           <input type="color" id="brand-primary" value="${soc.primary_colour || '#4B1320'}" oninput="previewBranding()">
@@ -10523,6 +10573,34 @@ function renderBrandingForm(){
 }
 
 /* Live preview as the colour pickers change, before Save is clicked. */
+/* Ready-made colour schemes (primary = the dark colour the panels fade from, secondary = the accent).
+   The dropdown just fills the two colour boxes next to it — the boxes can still be set by hand. */
+const COLOUR_PRESETS = [
+  { name: 'Fairway green & gold',     p: '#14452f', s: '#c9a227' },
+  { name: 'Navy & copper',            p: '#14274e', s: '#d9822b' },
+  { name: 'Racing green & champagne', p: '#0b3d2e', s: '#d8c27a' },
+  { name: 'Deep teal & coral',        p: '#0f4c5c', s: '#e36414' },
+  { name: 'Plum & brass',             p: '#3b1c4a', s: '#c8a35b' },
+  { name: 'Charcoal & lime',          p: '#1f2933', s: '#9bc53d' },
+  { name: 'Navy & sky blue',          p: '#1b3a5c', s: '#3e8ed0' },
+  { name: 'Burgundy & brass (Gytte Lane)', p: '#4b1320', s: '#b8862f' },
+];
+function colourPresetSelectHtml(primaryId, secondaryId, after){
+  return `<div class="full"><label>Colour scheme</label>
+    <select onchange="applyColourPreset(this, '${primaryId}', '${secondaryId}', '${after || ''}')">
+      <option value="">Pick a ready-made scheme… or set your own colours below</option>
+      ${COLOUR_PRESETS.map((c, i) => `<option value="${i}">${c.name}  (${c.p} · ${c.s})</option>`).join('')}
+    </select></div>`;
+}
+function applyColourPreset(sel, primaryId, secondaryId, after){
+  const c = COLOUR_PRESETS[Number(sel.value)];
+  if (!c) return;
+  const p = document.getElementById(primaryId), q = document.getElementById(secondaryId);
+  if (p) p.value = c.p;
+  if (q) q.value = c.s;
+  if (after === 'preview') previewBranding();
+}
+
 function previewBranding(){
   applyBranding({
     ...currentSociety,
@@ -10727,6 +10805,7 @@ function platformSocietyRowHtml(soc){
         <div><label>Contact email</label><input type="email" id="ps-contactemail-${soc.id}" value="${escapeHtml(soc.contact_email||'')}"></div>
         <div class="full"><label>Homepage tagline</label><input id="ps-tagline-${soc.id}" value="${escapeHtml(soc.tagline||'')}"></div>
         <div class="full"><label>About blurb</label><textarea id="ps-intro-${soc.id}">${escapeHtml(soc.intro_text||'')}</textarea></div>
+        ${colourPresetSelectHtml('ps-primary-' + soc.id, 'ps-secondary-' + soc.id)}
         <div><label>Primary colour</label><input type="color" id="ps-primary-${soc.id}" value="${soc.primary_colour||'#4B1320'}"></div>
         <div><label>Secondary colour</label><input type="color" id="ps-secondary-${soc.id}" value="${soc.secondary_colour||'#B8862F'}"></div>
         <div class="full">
@@ -10735,6 +10814,13 @@ function platformSocietyRowHtml(soc){
             Card payments (Stripe) enabled
           </label>
           <p class="muted" style="font-size:.78rem; margin-top:.3rem;">Shows "Pay now" on this society's events. Card payments go into the platform's single Stripe account, so only switch this on for a society that account belongs to.</p>
+        </div>
+        <div class="full">
+          <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer;">
+            <input type="checkbox" id="ps-reqlogin-${soc.id}" ${soc.require_login ? 'checked' : ''} style="width:auto;">
+            Members only (sign-in required)
+          </label>
+          <p class="muted" style="font-size:.78rem; margin-top:.3rem;">Everyone is taken to the sign-in page first, and only registered players can get in — the public pages (Hall of Fame, news, events) and sign-up without an account are no longer open. Takes effect within a minute. Untick to go back to an open site.</p>
         </div>
         <div class="full">
           <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer;">
@@ -10785,12 +10871,13 @@ async function savePlatformSociety(id){
   const secondary_colour = document.getElementById('ps-secondary-'+id)?.value;
   const stripe_enabled = !!document.getElementById('ps-stripe-'+id)?.checked;
   const gps_enabled = !!document.getElementById('ps-gps-'+id)?.checked;
+  const require_login = !!document.getElementById('ps-reqlogin-'+id)?.checked;
   if (!name){ setStatus('Name is required.', 'error'); return; }
   if (contact_email && !isValidEmail(contact_email)){ setStatus('Enter a valid contact email, or leave it blank.', 'error'); return; }
   setStatus('Saving…', 'loading');
   const { error } = await db.from('societies').update({
     name, founded: founded ? Number(founded) : null, subdomain, custom_domain,
-    location, contact_email, tagline, intro_text, primary_colour, secondary_colour, stripe_enabled, gps_enabled
+    location, contact_email, tagline, intro_text, primary_colour, secondary_colour, stripe_enabled, gps_enabled, require_login
   }).eq('id', id);
   if (error){ console.error(error); setStatus('Save failed.', 'error'); return; }
   editingSocietyIds.delete(id);
@@ -10813,6 +10900,9 @@ function newSocietyFormHtml(){
         <div><label>Founded (year)</label><input type="number" id="ns-founded"></div>
         <div><label>Subdomain</label><input id="ns-subdomain" placeholder="e.g. riverside"></div>
         <div><label>Custom domain</label><input id="ns-customdomain" placeholder="optional, e.g. riversidegolf.co.uk"></div>
+        ${colourPresetSelectHtml('ns-primary', 'ns-secondary')}
+        <div><label>Primary colour</label><input type="color" id="ns-primary" value="${COLOUR_PRESETS[0].p}"></div>
+        <div><label>Secondary colour</label><input type="color" id="ns-secondary" value="${COLOUR_PRESETS[0].s}"></div>
       </div>
       <h4 style="margin-top:1rem;">First admin</h4>
       <p style="font-size:.78rem; color:var(--text-muted); margin:0 0 .6rem;">Seeds their first committee admin so someone can sign in and take it from here.</p>
@@ -10844,6 +10934,8 @@ async function saveNewSociety(){
   // 2026-09-06 creating a real second society for the first time.
   const subdomain = document.getElementById('ns-subdomain')?.value.trim().toLowerCase() || null;
   const custom_domain = document.getElementById('ns-customdomain')?.value.trim().toLowerCase() || null;
+  const primary_colour = document.getElementById('ns-primary')?.value || COLOUR_PRESETS[0].p;
+  const secondary_colour = document.getElementById('ns-secondary')?.value || COLOUR_PRESETS[0].s;
   const adminFirst = document.getElementById('ns-admin-fname')?.value.trim();
   const adminLast = document.getElementById('ns-admin-lname')?.value.trim();
   const adminEmail = document.getElementById('ns-admin-email')?.value.trim();
@@ -10854,7 +10946,7 @@ async function saveNewSociety(){
   setStatus('Creating…', 'loading');
 
   const { data: soc, error: socErr } = await db.from('societies')
-    .insert({ name, founded: founded ? Number(founded) : null, subdomain, custom_domain })
+    .insert({ name, founded: founded ? Number(founded) : null, subdomain, custom_domain, primary_colour, secondary_colour })
     .select().single();
   if (socErr){ console.error(socErr); setStatus('Could not create society.', 'error'); return; }
 

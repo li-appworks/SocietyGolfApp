@@ -12,12 +12,20 @@
 (function(){
   try {
     var q = location.search, h = location.hash;
+    /* Sent here because the sign-in ended, or the email isn't a player here: drop the dead stored
+       session first, otherwise the page below would just send them straight back to the site. */
+    if (/[?&](expired|notmember|signedout)=1/.test(q)){
+      for (var j = localStorage.length - 1; j >= 0; j--){
+        var kk = localStorage.key(j);
+        if (/^sb-.*-auth-token$/.test(kk)) localStorage.removeItem(kk);
+      }
+    }
     if (/[?&](signin|setup|code|token_hash|type)=?/.test(q) || /access_token|refresh_token|type=|error/.test(h)) return;
     for (var i = 0; i < localStorage.length; i++){
       var k = localStorage.key(i);
       if (/^sb-.*-auth-token$/.test(k)){
         var v = JSON.parse(localStorage.getItem(k) || 'null');
-        if (v && (v.refresh_token || (v.currentSession && v.currentSession.refresh_token))){ location.replace('/'); return; }
+        if (v && (v.refresh_token || (v.currentSession && v.currentSession.refresh_token))){ document.documentElement.style.visibility = 'hidden'; location.replace('/'); return; }
       }
     }
   } catch(e){}
@@ -716,6 +724,17 @@ async function maybeHandleSetup(user){
    becomes available (INITIAL_SESSION covers "already signed in when the
    page loaded", SIGNED_IN covers "just arrived via a link"), so there's
    no timing race to get wrong. */
+/* Why we were sent here (set by index.html on a members-only site) */
+(function(){
+  const q = new URLSearchParams(window.location.search);
+  const msg = q.get('expired') === '1' ? 'Your sign-in has ended. Please sign in again.'
+    : q.get('notmember') === '1' ? 'That email isn’t registered here. Contact your captain.' : '';
+  if (msg){
+    setStatus(msg, q.get('notmember') === '1' ? 'error' : '');
+    window.history.replaceState({}, '', window.location.pathname + '?signin=1');
+  }
+})();
+
 sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'PASSWORD_RECOVERY'){
     isPasswordRecovery = true;
