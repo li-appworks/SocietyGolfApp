@@ -61,7 +61,7 @@ function emailHtml(opts: { firstName: string; society: string; location: string 
           <p style="font-size:14px; line-height:1.6; margin:0; color:#5B5A52;">Or just visit <a href="${siteUrl}" style="color:${primary};">${esc(siteUrl.replace(/^https:\/\//, ""))}</a>.</p>
         </td></tr>
         <tr><td style="padding:16px 28px; border-top:1px solid #D8D5C6; font-size:12px; color:#5B5A52;">
-          You're receiving this because the ${esc(society)} committee added you as a member.${contact ? ` Questions? Reply to this email or contact <a href="mailto:${esc(contact)}" style="color:${primary};">${esc(contact)}</a>.` : ""}
+          You're receiving this because you were added as a member of ${esc(society)}.${contact ? ` Questions? Reply to this email or contact <a href="mailto:${esc(contact)}" style="color:${primary};">${esc(contact)}</a>.` : ""}
         </td></tr>
       </table>
     </td></tr>
