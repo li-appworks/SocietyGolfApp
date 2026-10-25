@@ -1560,6 +1560,11 @@
     font-family:var(--body);
   }
   body.scoring-focus #live-scores-content button{font-family:inherit;}
+  /* Fast repeat taps (a missed + or − button) were being read as a double-tap and zooming the page.
+     touch-action:manipulation turns off double-tap zoom but keeps scrolling and pinch-zoom;
+     no text selection or callout on the scoring controls either. */
+  #sec-scores, body.scoring-focus #live-scores-content{touch-action:manipulation;}
+  #sec-scores button, body.scoring-focus #live-scores-content button{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;}
 
   .focus-top{
     display:flex; align-items:center; justify-content:space-between; gap:.5rem;
