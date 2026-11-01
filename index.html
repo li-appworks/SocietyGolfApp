@@ -739,16 +739,19 @@
     padding:.25rem .55rem; border-radius:999px; white-space:nowrap;
   }
   .course-card-body{padding:.85rem 1rem 1rem; display:flex; flex-direction:column; gap:.45rem; flex:1;}
-  /* scorecard on a course card: tee chips + front/back nine tables */
-  .sc-chips{display:flex; flex-wrap:wrap; gap:.35rem; margin:.35rem 0 .1rem;}
-  .sc-chip{font:inherit; font-size:.8rem; font-weight:700; padding:.3rem .65rem; border-radius:999px; border:1px solid var(--line); background:var(--paper); color:var(--text-muted); cursor:pointer; display:inline-flex; align-items:center; gap:.35rem;}
-  .sc-chip.on{background:var(--ink); border-color:var(--ink); color:var(--paper);}
-  .sc-dot{width:.7rem; height:.7rem; border-radius:50%; border:1px solid rgba(0,0,0,.25); display:inline-block;}
-  .sc-nine{width:100%; border-collapse:collapse; table-layout:fixed; font-size:.75rem; margin:.4rem 0 .2rem; font-variant-numeric:tabular-nums;}
-  .sc-nine th,.sc-nine td{text-align:center; padding:.22rem 0; border-bottom:1px solid var(--line); overflow:hidden;}
-  .sc-nine th{color:var(--text-muted); font-weight:700;}
-  .sc-nine .l{text-align:left; width:2.3rem; color:var(--text-muted); font-weight:700; padding-left:.15rem;}
-  .sc-nine .t{width:2.4rem; font-weight:800; background:rgba(0,0,0,.05);}
+  /* scorecard on a course card, same look as the finalise-scores card */
+  .scd{background:linear-gradient(180deg,var(--ink) 0%,color-mix(in srgb,var(--ink) 55%,black) 55%,var(--ink-02) 100%); border-radius:.9rem; padding:.55rem; color:var(--paper); display:flex; flex-direction:column; gap:.5rem; margin-top:.45rem;}
+  .scd-seg{display:flex; gap:.35rem;}
+  .scd-seg button,.scd-chip{font:inherit; font-weight:700; font-size:.9rem; padding:.45rem .8rem; border-radius:999px; border:1px solid rgba(250,248,242,.1); background:rgba(250,248,242,.06); color:rgba(250,248,242,.62); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:.4rem;}
+  .scd-seg button{flex:1;}
+  .scd-seg button[aria-pressed="true"],.scd-chip[aria-pressed="true"]{background:#e3c477; color:var(--ink-02); border-color:#e3c477;}
+  .scd-chips{display:flex; flex-wrap:wrap; gap:.35rem;}
+  .scd-dot{width:.7rem; height:.7rem; border-radius:50%; border:1px solid rgba(255,255,255,.4); display:inline-block;}
+  .scd{padding:.45rem;}
+  .scd .fin-card{padding:.5rem .2rem .35rem;}
+  .scd .fin-grid .yd{font-size:.7rem; font-weight:600;}
+  .scd .fin-grid{grid-template-columns:1.9rem repeat(var(--n,9),minmax(0,1fr)) 2.3rem;}
+  .scd-foot{font-size:.85rem; color:rgba(250,248,242,.62); text-align:center;}
   .course-card-name{
     font-family:var(--display); font-size:1.05rem; font-weight:800; color:var(--ink);
     text-decoration:none; line-height:1.25;
@@ -10138,9 +10141,10 @@ function teesForCourse(course){
     : [];
 }
 
-/* The scorecard on a course card: tee chips (with a Men / Women switch when the course has both), then
-   the card laid out like a real one: front nine and back nine, each with hole, par, yards and index and
-   an Out / In total. Yards and index come from the chosen tee; par is the course's. */
+/* The scorecard on a course card, drawn like the card at the end of live scoring (the finalise page):
+   a dark panel, tee pills (with a Men / Women switch when a course has both), then the front nine and
+   back nine, each with hole, par, index and yards and an Out / In total. Yards and index come from the
+   chosen tee; par is the course's. */
 const TEE_DOT = { white:'#f4f4f4', yellow:'#f2d144', blue:'#4a86d8', red:'#d9534f', gold:'#d4af37', silver:'#c0c0c0', cobalt:'#0047ab', bronze:'#cd7f32', black:'#222', green:'#3f9b4f', orange:'#e8893a' };
 function teeBaseName(t){ return (t.name || '').replace(/\s*\((men|women)\)\s*$/i, '').trim(); }
 function selectScorecardTee(courseId, teeId){ selectedTeeForCourse[courseId] = teeId; renderCoursesPanel(); }
@@ -10156,17 +10160,21 @@ function selectScorecardGender(courseId, gender){
 function scNineHtml(holes, teeHoles, f, t){
   const part = holes.slice(f, t);
   if (!part.length) return '';
-  const yd = h => { const th = teeHoles.find(x => x.hole_number === h.hole_number); return th && th.yardage != null ? th.yardage : null; };
-  const ix = h => { const th = teeHoles.find(x => x.hole_number === h.hole_number); return th && th.stroke_index != null ? th.stroke_index : null; };
-  const sumOf = (fn) => part.reduce((a, h) => a + (fn(h) || 0), 0);
-  const cell = v => `<td>${v == null ? '–' : v}</td>`;
+  const th = h => teeHoles.find(x => x.hole_number === h.hole_number);
+  const yd = h => { const x = th(h); return x && x.yardage != null ? x.yardage : null; };
+  const ix = h => { const x = th(h); return x && x.stroke_index != null ? x.stroke_index : null; };
+  const sum = fn => part.reduce((a, h) => a + (fn(h) || 0), 0);
+  const parTot = sum(h => h.par);
   const anyYd = part.some(h => yd(h) != null);
-  return `<table class="sc-nine"><thead><tr><th class="l">${f === 0 ? 'Front' : 'Back'}</th>${part.map(h => `<th>${h.hole_number}</th>`).join('')}<th class="t">${f === 0 ? 'Out' : 'In'}</th></tr></thead>
-    <tbody>
-      <tr><td class="l">Par</td>${part.map(h => cell(h.par)).join('')}<td class="t">${sumOf(h => h.par)}</td></tr>
-      <tr><td class="l">Yds</td>${part.map(h => cell(yd(h))).join('')}<td class="t">${anyYd ? sumOf(yd) : '–'}</td></tr>
-      <tr><td class="l">Idx</td>${part.map(h => cell(ix(h))).join('')}<td class="t"></td></tr>
-    </tbody></table>`;
+  const cells = (fn, cls) => part.map(h => { const v = fn(h); return `<div class="${cls}">${v == null ? '–' : v}</div>`; }).join('');
+  return `<div class="fin-card">
+    <h3><span>${f === 0 ? 'Front nine' : 'Back nine'}</span><span>Par ${parTot}</span></h3>
+    <div class="fin-grid" style="--n:${part.length}">
+      <div class="rl">Hole</div>${part.map(h => `<div class="hole">${h.hole_number}</div>`).join('')}<div class="tot lab">${f === 0 ? 'Out' : 'In'}</div>
+      <div class="rl">Par</div>${cells(h => h.par, 'par')}<div class="tot par">${parTot}</div>
+      <div class="rl">Idx</div>${cells(ix, 'si')}<div class="tot"></div>
+      <div class="rl">Yds</div>${cells(yd, 'yd')}<div class="tot yd">${anyYd ? sum(yd).toLocaleString('en-GB') : '–'}</div>
+    </div></div>`;
 }
 function scorecardSummaryHtml(course){
   const holes = scorecardHolesFor(course);
@@ -10185,16 +10193,18 @@ function scorecardSummaryHtml(course){
     const curGender = selTee && selTee.gender === 'women' ? 'women' : 'men';
     const shown = tees.filter(t => !both || t.gender === curGender || t.gender === 'open');
     chips = `
-      ${both ? `<div class="sc-chips"><button class="sc-chip ${curGender==='men'?'on':''}" onclick="selectScorecardGender(${course.id}, 'men')">Men</button><button class="sc-chip ${curGender==='women'?'on':''}" onclick="selectScorecardGender(${course.id}, 'women')">Women</button></div>` : ''}
-      <div class="sc-chips">${shown.map(t => { const dot = TEE_DOT[teeBaseName(t).toLowerCase()]; return `<button class="sc-chip ${selTee && t.id === selTee.id ? 'on' : ''}" onclick="selectScorecardTee(${course.id}, ${t.id})">${dot ? `<span class="sc-dot" style="background:${dot}"></span>` : ''}${escapeHtml(teeBaseName(t))}</button>`; }).join('')}</div>`;
+      ${both ? `<div class="scd-seg"><button aria-pressed="${curGender==='men'}" onclick="selectScorecardGender(${course.id}, 'men')">Men</button><button aria-pressed="${curGender==='women'}" onclick="selectScorecardGender(${course.id}, 'women')">Women</button></div>` : ''}
+      <div class="scd-chips">${shown.map(t => { const dot = TEE_DOT[teeBaseName(t).toLowerCase()]; return `<button class="scd-chip" aria-pressed="${!!selTee && t.id === selTee.id}" onclick="selectScorecardTee(${course.id}, ${t.id})">${dot ? `<span class="scd-dot" style="background:${dot}"></span>` : ''}${escapeHtml(teeBaseName(t))}</button>`; }).join('')}</div>`;
   }
 
-  const ratingLine = selTee && selTee.rating != null && selTee.slope != null ? `<p class="muted" style="font-size:.78rem; margin:.1rem 0 .3rem;">Course rating ${fmtRating(selTee.rating)} · Slope ${selTee.slope}</p>` : '';
+  const ratingBit = selTee && selTee.rating != null && selTee.slope != null ? ` · Rating ${fmtRating(selTee.rating)} / Slope ${selTee.slope}` : '';
   const split = holes.length > 9 ? 9 : holes.length;
   const body = open ? `
-    ${chips}${ratingLine}
-    ${scNineHtml(holes, teeHoles, 0, split)}${holes.length > 9 ? scNineHtml(holes, teeHoles, 9, holes.length) : ''}
-    <p class="muted" style="font-size:.78rem; margin:.2rem 0 0;">Total par ${totalPar}${totalYards ? ' · ' + totalYards.toLocaleString('en-GB') + ' yds' : ''}${selTee ? ' · ' + escapeHtml(selTee.name) : ''}</p>` : '';
+    <div class="scd">
+      ${chips}
+      ${scNineHtml(holes, teeHoles, 0, split)}${holes.length > 9 ? scNineHtml(holes, teeHoles, 9, holes.length) : ''}
+      <div class="scd-foot">Par ${totalPar}${totalYards ? ' · ' + totalYards.toLocaleString('en-GB') + ' yds' : ''}${selTee ? ' · ' + escapeHtml(selTee.name) : ''}${ratingBit}</div>
+    </div>` : '';
   return `
     <button class="committee-edit-btn" style="margin-top:.4rem;" onclick="expandedScorecardCourseId=(expandedScorecardCourseId===${course.id}?null:${course.id}); renderCoursesPanel();">
       ${open ? 'Scorecard ▴' : `Scorecard — Par ${totalPar}${totalYards ? ', ' + totalYards.toLocaleString('en-GB') + ' yds' : ''} ▾`}
