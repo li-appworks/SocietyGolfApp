@@ -1704,6 +1704,21 @@
   .sx-tmstats b{display:block; font-size:3rem; font-weight:800; line-height:1; color:var(--brass-light); font-variant-numeric:tabular-nums;}
   .sx-tmstats span{display:block; font-size:.9rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,242,.62); margin-top:.2rem;}
   .sx-team .sx-blob{min-height:3.1rem; font-size:1rem;}
+  /* ===== Round timer pill (2026-11-01) — subtle, in the scoring card's top row ===== */
+  .rtm{font:inherit; display:inline-flex; align-items:center; gap:.4rem; min-height:2.2rem; padding:0 .65rem; border-radius:999px; flex-shrink:0; white-space:nowrap; font-size:.9rem; font-weight:700; color:rgba(250,248,242,.62); background:transparent; border:1px solid rgba(250,248,242,.14); cursor:default;}
+  .rtm .t{font-variant-numeric:tabular-nums; letter-spacing:.01em;}
+  button.rtm{cursor:pointer;}
+  .rtm.idle{border-style:dashed; border-color:rgba(250,248,242,.35); color:var(--paper);}
+  .rtm.run{color:var(--paper);}
+  .rtm.run .d{width:.45rem; height:.45rem; border-radius:50%; background:var(--brass-light); animation:focus-pulse 2s ease-in-out infinite;}
+  .rtm.end{color:var(--paper); border-color:var(--brass-light); background:color-mix(in srgb,var(--brass) 22%,transparent);}
+  .rtm.end .sq{width:.6rem; height:.6rem; border-radius:2px; background:var(--brass-light); display:inline-block;}
+  .rtm.done{color:var(--brass-light); border-color:transparent;}
+  @media (prefers-reduced-motion:reduce){ .rtm.run .d{animation:none;} }
+  .fin-rt{display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.65rem .8rem; border-radius:.8rem; background:linear-gradient(100deg,var(--ink-lift),var(--ink-12) 55%,var(--ink-05)); border:1px solid rgba(250,248,242,.1);}
+  .fin-rt .k{font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:rgba(250,248,242,.62); font-weight:700;}
+  .fin-rt .v{font-size:1.7rem; font-weight:800; color:var(--brass-light); line-height:1.1; font-variant-numeric:tabular-nums;}
+  .fin-rt .m{font-size:.9rem; color:rgba(250,248,242,.62); text-align:right;}
   /* ===== Finalise scores page (2026-11-01) — classic scorecard, dark-panel style ===== */
   .fin-root{width:100%; max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:.75rem; padding:calc(env(safe-area-inset-top) + .5rem) .6rem calc(env(safe-area-inset-bottom) + .9rem); color:var(--paper);}
   .fin-head{text-align:center; padding:0 .5rem .85rem; border-bottom:2px solid var(--brass-light); position:relative;}
@@ -6705,6 +6720,10 @@ async function loadLiveScoresData(eventId){
     } else {
       holeScores = [];
     }
+    try {
+      const rtRes = await db.from('round_times').select('*').eq('event_id', eventId);
+      if (!rtRes.error) roundTimes = rtRes.data || [];
+    } catch(e){ /* the timer is optional; scoring never waits on it */ }
     liveScoresReady = true;
     /* cache for offline use */
     try {
@@ -6864,10 +6883,12 @@ function renderLiveScores(){
     updateSyncIndicator();
     manageLeaderboardPoll();
     manageFocusGpsWatch();
+    manageRoundTimerTick();
     syncScoringFocusClass();
     return;
   }
   manageFocusGpsWatch();
+  manageRoundTimerTick();
   clearFocusSession();
 
   const shortCourse = c => (c || '').replace(/\s+golf\s+club\s*$/i, '').replace(/\s+GC\s*$/i, '').trim();
@@ -7291,6 +7312,7 @@ function renderTeamEntry(){
   return `<div class="sx-root">
     <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
       <div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div>
+      ${roundTimerPillHtml()}
       <button class="sx-back" ${n <= 1 ? 'disabled' : ''} onclick="changeHole(${n - 1})">‹ Previous hole</button></div>
     <div class="sx-hole"><div class="sx-hn"><small>Hole</small><b>${n}</b></div>
       <div class="sx-hs"><div class="par"><b>${f.par}</b><span>Par</span></div><div><b>${f.si ?? '–'}</b><span>Index</span></div><div><b>${f.yards ?? '–'}</b><span>Yards</span></div></div></div>
@@ -7858,6 +7880,7 @@ function focusTopBarHtml(mode, liveLabel){
     <div class="focus-top">
       <button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
       <div class="focus-live"><span class="live-dot"></span> ${liveLabel || '<span id="sync-indicator" class="sync-indicator"></span>'}</div>
+      ${mode === 'entry' ? roundTimerPillHtml() : ''}
       ${other}
     </div>
     <div class="focus-banner">${FOCUS_BANNER_ICON}<span>Live Scoring</span></div>
@@ -7983,6 +8006,7 @@ function renderStrokesEntry(){
   return `<div class="sx-root">
     <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
       <div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div>
+      ${roundTimerPillHtml()}
       <button class="sx-back" ${n <= 1 ? 'disabled' : ''} onclick="changeHole(${n - 1})">‹ Previous hole</button></div>
     <div class="sx-hole"><div class="sx-hn"><small>Hole</small><b>${n}</b></div>
       <div class="sx-hs"><div class="par"><b>${fm.par}</b><span>Par</span></div>${cell(fm.si, 'Index', fl && fl.si, 'Index M/L')}${cell(fm.yards, 'Yards', fl && fl.yards, 'Yards M/L')}</div></div>
@@ -7991,6 +8015,82 @@ function renderStrokesEntry(){
     <div class="sx-bottom"><button class="lb" onclick="setLiveSubView('leaderboard')">🏆 View live leaderboard</button>
       <button class="nxt" ${missing ? 'disabled' : ''} onclick="sxNext()">${missing ? 'Confirm ' + missing + ' more' : (last ? 'Review scorecard →' : 'Next hole →')}</button></div>
   </div>`;
+}
+
+/* ===== Round timer (2026-11-01) =====
+   A small pill on the scoring card: "Start timer" until someone taps it, then a quiet running clock,
+   an "End" button on the last hole, and the round time on the finalise page. Tapping Submit scores
+   stops it for them if it is still running (ended_by = 'auto'). The start/finish times are the
+   phone's clock, kept in localStorage first (so it survives a sleep or an offline start) and
+   upserted to round_times (one row per event + round + group) whenever there is signal. */
+const ROUND_TIMER_KEY = 'glgs-round-timer';
+let roundTimer = null;     // the timer this device is running: { key, societyId, eventId, roundId, groupId, startedAt, finishedAt, endedBy, dirty }
+let roundTimes = [];       // round_times rows loaded for the live event (other devices / earlier sessions)
+let roundTimerTick = null;
+function rtKey(){ return `${liveEventId}|${liveRoundId || 0}|${scoringTeamGroupId() || 0}`; }
+function fmtRoundTime(ms){
+  const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h + ':' + String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0');
+}
+function rtClock(ms){ return new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function currentRoundTimer(){
+  if (!roundTimer){
+    try { const r = JSON.parse(localStorage.getItem(ROUND_TIMER_KEY) || 'null'); if (r && r.societyId === societyId) roundTimer = r; } catch(e){}
+  }
+  const key = rtKey();
+  if (roundTimer && roundTimer.key === key) return roundTimer;
+  const row = roundTimes.find(r => r.key === key);
+  return row ? { key, societyId, eventId: row.event_id, roundId: row.round_id, groupId: row.group_id, startedAt: Date.parse(row.started_at), finishedAt: row.finished_at ? Date.parse(row.finished_at) : null, endedBy: row.ended_by, dirty: false } : null;
+}
+function saveRoundTimerLocal(){ try { localStorage.setItem(ROUND_TIMER_KEY, JSON.stringify(roundTimer)); } catch(e){} }
+function startRoundTimer(){
+  if (currentRoundTimer()) return;
+  roundTimer = { key: rtKey(), societyId, eventId: liveEventId, roundId: liveRoundId || null, groupId: scoringTeamGroupId() || null, startedAt: Date.now(), finishedAt: null, endedBy: null, dirty: true };
+  saveRoundTimerLocal();
+  syncRoundTimer();
+  renderLiveScores();
+}
+function endRoundTimer(by){
+  const t = currentRoundTimer();
+  if (!t || t.finishedAt) return;
+  roundTimer = { ...t, societyId, finishedAt: Date.now(), endedBy: by, dirty: true };
+  saveRoundTimerLocal();
+  syncRoundTimer();
+}
+function endRoundTimerManual(){ endRoundTimer('manual'); renderLiveScores(); }
+async function syncRoundTimer(){
+  const t = roundTimer;
+  if (!t || !t.dirty || !db || !navigator.onLine) return;
+  try {
+    const { error } = await db.from('round_times').upsert({
+      key: t.key, society_id: t.societyId, event_id: t.eventId, round_id: t.roundId, group_id: t.groupId,
+      started_at: new Date(t.startedAt).toISOString(), finished_at: t.finishedAt ? new Date(t.finishedAt).toISOString() : null,
+      ended_by: t.endedBy, updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
+    if (error) throw error;
+    if (roundTimer && roundTimer.key === t.key && roundTimer.finishedAt === t.finishedAt){ roundTimer.dirty = false; saveRoundTimerLocal(); }
+  } catch(e){ console.warn('Round time not saved yet, will retry:', e); }
+}
+function roundTimerPillHtml(){
+  const t = currentRoundTimer();
+  if (t && t.finishedAt) return `<span class="rtm done" title="Round time"><span aria-hidden="true">✓</span><span class="t">${fmtRoundTime(t.finishedAt - t.startedAt)}</span></span>`;
+  if (!t) return `<button class="rtm idle" onclick="startRoundTimer()" aria-label="Start round timer"><span aria-hidden="true">⏱</span>Start timer</button>`;
+  const ev = eventById(liveEventId);
+  const holes = roundHoles(liveRoundId ? rounds.find(r => r.id === liveRoundId) : null, ev);
+  const live = `<span class="t" data-rt-live>${fmtRoundTime(Date.now() - t.startedAt)}</span>`;
+  if (currentHole >= holes) return `<button class="rtm end" onclick="endRoundTimerManual()" aria-label="End round timer"><span class="sq"></span>${live}<span>End</span></button>`;
+  return `<span class="rtm run" role="timer" aria-label="Round time"><span class="d"></span>${live}</span>`;
+}
+function manageRoundTimerTick(){
+  const need = !!document.querySelector('[data-rt-live]');
+  if (need && !roundTimerTick){
+    roundTimerTick = setInterval(() => {
+      const els = document.querySelectorAll('[data-rt-live]');
+      if (!els.length){ clearInterval(roundTimerTick); roundTimerTick = null; return; }
+      const t = currentRoundTimer();
+      if (t && !t.finishedAt) els.forEach(e => { e.textContent = fmtRoundTime(Date.now() - t.startedAt); });
+    }, 1000);
+  } else if (!need && roundTimerTick){ clearInterval(roundTimerTick); roundTimerTick = null; }
 }
 
 /* ===== Finalise scores page (2026-11-01) =====
@@ -8090,6 +8190,7 @@ function renderFinaliseView(){
     <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
       <div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div></div>
     <div class="fin-head"><div class="l">All ${holes} holes played</div><div class="t">Finalise scores</div><p class="s">${escapeHtml(sub)}</p></div>
+    ${(() => { const rt = currentRoundTimer(); return rt ? `<div class="fin-rt"><div><div class="k">Round time</div><div class="v" ${rt.finishedAt ? '' : 'data-rt-live'}>${fmtRoundTime((rt.finishedAt || Date.now()) - rt.startedAt)}</div></div><div class="m">Started ${rtClock(rt.startedAt)}<br>${rt.finishedAt ? 'Finished ' + rtClock(rt.finishedAt) : 'Stops when you submit'}</div></div>` : ''; })()}
     ${seg}
     ${nines.map(([f, t]) => finNineHtml(items, ev, round, f, t, mode, hasStrokes)).join('')}
     ${legend}
@@ -8115,6 +8216,8 @@ function backFromFinalise(){
 async function submitFinalise(){
   const items = finaliseItems();
   if (items.some(it => !finaliseAgreed.has(it.key))) return;
+  endRoundTimer('auto'); // stops it for them if they didn't press End
+  await syncRoundTimer();
   await processScorecardQueue();
   await processScoreQueue();
   finaliseAgreed = new Set();
@@ -8592,6 +8695,7 @@ async function setHoleScore(scorecardId, hole, points, strokes = null, pickedUp 
 }
 
 async function processScoreQueue(){
+  syncRoundTimer();
   if (queueProcessing && Date.now() - queueProcessingSince > 45000) queueProcessing = false; // hung request (e.g. phone slept mid-sync)
   if (queueProcessing || !db || !scoreQueue.length){ updateSyncIndicator(); return; }
   if (!navigator.onLine){ updateSyncIndicator(); return; }
