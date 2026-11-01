@@ -1664,7 +1664,8 @@
   .sx-ribbon .t b{display:block; font-size:.95rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase;}
   .sx-ribbon .t span{display:block; font-size:.9rem; font-weight:600; color:color-mix(in srgb, var(--brand-ink) 85%, transparent);}
   .sx-body{flex:1; min-height:0; display:flex; flex-direction:column; gap:.45rem;}
-  .sx-prow{flex:1 1 0; min-height:6rem; max-height:9.5rem; display:grid; grid-template-columns:5.6rem 1fr 5.2rem; gap:.4rem; align-items:center; background:rgba(250,248,242,.07); border:1px solid rgba(250,248,242,.12); border-radius:16px; padding:.4rem .5rem;}
+  .sx-prow{flex:1 1 0; min-height:6rem; max-height:9.5rem; display:grid; grid-template-columns:6.5rem 1fr 4.3rem; gap:.4rem; align-items:center; background:rgba(250,248,242,.07); border:1px solid rgba(250,248,242,.12); border-radius:16px; padding:.4rem .5rem;}
+  .sx-pn{min-width:0;}
   .sx-pn b{display:block; font-size:1.05rem; font-weight:700; line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .sx-shots{display:flex; gap:3px; align-items:center; font-size:.9rem; color:rgba(250,248,242,.62); font-weight:600; white-space:nowrap; margin:.1rem 0 .3rem;}
   .sx-shots i{width:9px; height:9px; border-radius:50%; background:var(--brass-light); display:inline-block;}
@@ -1678,7 +1679,7 @@
   .sx-unconf .sx-val{border-color:rgba(250,248,242,.35);} .sx-unconf .sx-val .n{opacity:.5;}
   .sx-sc{display:flex; flex-direction:column; text-align:right;}
   .sx-sc div{line-height:1;} .sx-sc b{font-size:2.15rem; font-weight:800; font-variant-numeric:tabular-nums; color:var(--brass-light);} .sx-sc div+div b{color:var(--paper);}
-  .sx-sc span{font-size:.9rem; font-weight:700; color:rgba(250,248,242,.62); margin-left:.2rem;}
+  .sx-sc span{font-size:.9rem; font-weight:700; color:rgba(250,248,242,.62); margin-left:.1rem;}
   .sx-eagle{--c:var(--brass-light);} .sx-birdie{--c:#5CC17A;} .sx-par{--c:#FAF8F2;} .sx-bogey{--c:#E0A33B;} .sx-dbl{--c:#E0707A;} .sx-pu{--c:rgba(250,248,242,.62);}
   .sx-bottom{display:flex; gap:.5rem; flex-shrink:0;}
   .sx-bottom button{font:inherit; font-weight:800; border-radius:16px; min-height:3.4rem; cursor:pointer; font-size:1rem; padding:.5rem .7rem; line-height:1.15;}
@@ -7861,6 +7862,13 @@ function sxNext(){
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
   if (currentHole >= roundHoles(activeRound, ev)) finishRound(); else changeHole(currentHole + 1);
 }
+/* "Laurence I." — the font shrinks a little for long names (floor .875rem = 14px) instead of cutting them off */
+function sxNameHtml(p){
+  const txt = `${p.first_name} ${(p.last_name || '')[0] || ''}.`;
+  const size = Math.max(0.875, Math.min(1.05, 1.05 * 11 / Math.max(txt.length, 1)));
+  return `<b style="font-size:${size.toFixed(3)}rem" title="${escapeHtml(p.first_name + ' ' + (p.last_name || ''))}">${escapeHtml(txt)}</b>`;
+}
+
 function renderStrokesEntry(){
   const ev = eventById(liveEventId);
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
@@ -7890,7 +7898,7 @@ function renderStrokesEntry(){
     const [cls, label] = pu ? ['sx-pu', 'Blob'] : un ? sxRel(f.par, f.par) : (strokes != null ? sxRel(strokes, f.par) : ['sx-par', '']);
     const arg = `${JSON.stringify(sc.id).replace(/"/g,'&quot;')}, ${n}, ${f.par}, ${f.si == null ? 'null' : f.si}, ${p.handicap == null ? 'null' : p.handicap}`;
     return `<div class="sx-prow ${un ? 'sx-unconf' : ''} ${cls}">
-      <div class="sx-pn"><b>${escapeHtml(p.first_name)} ${escapeHtml((p.last_name || '')[0] || '')}.</b>${shotsHtml}<button class="sx-blob ${pu ? 'on' : ''}" onclick="sxPickUp(${arg})">${pu ? 'Undo' : 'Pick up'}</button></div>
+      <div class="sx-pn">${sxNameHtml(p)}${shotsHtml}<button class="sx-blob ${pu ? 'on' : ''}" onclick="sxPickUp(${arg})">${pu ? 'Undo' : 'Pick up'}</button></div>
       <div class="sx-ctl"><button class="sx-stp" onclick="sxStep(${arg}, -1)" aria-label="One less">−</button><button class="sx-val" onclick="sxConfirm(${arg})" aria-label="Confirm"><span class="n">${pu ? '–' : (un ? f.par : (strokes ?? '?'))}</span><span class="l">${pu ? 'Blob' : un ? 'Par' : label}</span></button><button class="sx-stp" onclick="sxStep(${arg}, 1)" aria-label="One more">+</button></div>
       <div class="sx-sc"><div><b>${un ? '–' : hs.points}</b><span>pts</span></div><div><b>${getRunningTotal(sc.id)}</b><span>tot</span></div></div>
     </div>`;
