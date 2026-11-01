@@ -733,6 +733,10 @@
   .crs .star-btn.lit{color:var(--brass-light);}
   .crs select{background:rgba(250,248,242,.08); border:1px solid rgba(250,248,242,.16); color:#fff; border-radius:.6rem;}
   .crs select option{color:#2b2220; background:#fff;}
+  .cp-row{display:flex; align-items:center; gap:.7rem;}
+  .cp-row select{flex:1; min-width:0;}
+  .cp-dots{display:inline-flex; gap:.3rem; flex-shrink:0;}
+  .cp-dots i{width:1.7rem; height:1.7rem; border-radius:50%; border:2px solid rgba(250,248,242,.45); display:inline-block;}
   .crs-empty{text-align:center; color:rgba(250,248,242,.62); margin:.5rem 0 1rem;}
   /* the scorecard block sits inside the remapped panel, so give it its own colours */
   .scd{--paper:#faf8f2; --ink:var(--brand-ink); border:1px solid rgba(250,248,242,.08);}
@@ -10799,15 +10803,7 @@ function renderBrandingForm(){
         <div class="full"><label>What members call the society (e.g. "the Gyttes") — used in "New to …?" on the Home page</label><input id="brand-nickname" placeholder="leave blank to use the society name" value="${escapeHtml(soc.nickname||'')}"></div>
         <div class="full"><label>Shop link (leave blank to hide the Shop page)</label><input id="brand-shop-url" placeholder="https://…" value="${escapeHtml(soc.shop_url||'')}"></div>
         <div class="full"><label>Shop page wording (optional)</label><textarea id="brand-shop-text" placeholder="e.g. Order your ties and tops online.">${escapeHtml(soc.shop_text||'')}</textarea></div>
-        ${colourPresetSelectHtml('brand-primary', 'brand-secondary', 'preview')}
-        <div>
-          <label>Primary colour</label>
-          <input type="color" id="brand-primary" value="${soc.primary_colour || '#4B1320'}" oninput="previewBranding()">
-        </div>
-        <div>
-          <label>Secondary colour</label>
-          <input type="color" id="brand-secondary" value="${soc.secondary_colour || '#B8862F'}" oninput="previewBranding()">
-        </div>
+        ${colourPresetSelectHtml('brand-primary', 'brand-secondary', soc.primary_colour || '#4B1320', soc.secondary_colour || '#B8862F', 'preview')}
         <div class="full">
           <label>Logo</label><br>
           <input type="file" accept="image/*" id="brand-logo-input" onchange="uploadSocietyLogo(this)">
@@ -10822,32 +10818,45 @@ function renderBrandingForm(){
     </div>`;
 }
 
-/* Live preview as the colour pickers change, before Save is clicked. */
-/* Ready-made colour schemes (primary = the dark colour the panels fade from, secondary = the accent).
-   The dropdown just fills the two colour boxes next to it — the boxes can still be set by hand. */
+/* Colour schemes. There is no free colour picker any more: an admin chooses one of these ready-made pairs
+   (primary = the dark colour the panels fade from, secondary = the accent) and every other shade is worked
+   out from the pair by applyBranding(). The first two are the societies already on the platform. */
 const COLOUR_PRESETS = [
+  { name: 'Burgundy & brass (Gytte Lane)',        p: '#4b1320', s: '#b8862f' },
+  { name: 'Charcoal & lime (The Mulligan Club)',  p: '#1f2933', s: '#9bc53d' },
   { name: 'Fairway green & gold',     p: '#14452f', s: '#c9a227' },
   { name: 'Navy & copper',            p: '#14274e', s: '#d9822b' },
   { name: 'Racing green & champagne', p: '#0b3d2e', s: '#d8c27a' },
   { name: 'Deep teal & coral',        p: '#0f4c5c', s: '#e36414' },
   { name: 'Plum & brass',             p: '#3b1c4a', s: '#c8a35b' },
-  { name: 'Charcoal & lime',          p: '#1f2933', s: '#9bc53d' },
   { name: 'Navy & sky blue',          p: '#1b3a5c', s: '#3e8ed0' },
-  { name: 'Burgundy & brass (Gytte Lane)', p: '#4b1320', s: '#b8862f' },
 ];
-function colourPresetSelectHtml(primaryId, secondaryId, after){
+const DEFAULT_COLOUR_PRESET = COLOUR_PRESETS[2];   // what a brand-new society starts on
+/* The dropdown, with two swatches beside it and the chosen colours kept in two hidden inputs (primaryId /
+   secondaryId) that the save and live-preview code read. A society whose current colours aren't one of the
+   presets (an older custom pair) sees "Current colours (custom)" first, so saving never changes them by accident. */
+function colourPresetSelectHtml(primaryId, secondaryId, curP, curS, after){
+  const norm = v => String(v || '').toLowerCase();
+  const idx = COLOUR_PRESETS.findIndex(c => norm(c.p) === norm(curP) && norm(c.s) === norm(curS));
   return `<div class="full"><label>Colour scheme</label>
-    <select onchange="applyColourPreset(this, '${primaryId}', '${secondaryId}', '${after || ''}')">
-      <option value="">Pick a ready-made scheme… or set your own colours below</option>
-      ${COLOUR_PRESETS.map((c, i) => `<option value="${i}">${c.name}  (${c.p} · ${c.s})</option>`).join('')}
-    </select></div>`;
+    <div class="cp-row">
+      <select id="${primaryId}-sel" onchange="applyColourPreset(this, '${primaryId}', '${secondaryId}', '${after || ''}')">
+        ${idx < 0 ? '<option value="current" selected>Current colours (custom)</option>' : ''}
+        ${COLOUR_PRESETS.map((c, i) => `<option value="${i}" ${i === idx ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+      </select>
+      <span class="cp-dots" id="${primaryId}-dots" aria-hidden="true"><i style="background:${curP}"></i><i style="background:${curS}"></i></span>
+    </div>
+    <input type="hidden" id="${primaryId}" value="${curP}"><input type="hidden" id="${secondaryId}" value="${curS}">
+  </div>`;
 }
 function applyColourPreset(sel, primaryId, secondaryId, after){
   const c = COLOUR_PRESETS[Number(sel.value)];
-  if (!c) return;
+  if (!c) return;   // "Current colours (custom)" leaves everything as it is
   const p = document.getElementById(primaryId), q = document.getElementById(secondaryId);
   if (p) p.value = c.p;
   if (q) q.value = c.s;
+  const dots = document.getElementById(primaryId + '-dots');
+  if (dots && dots.children.length === 2){ dots.children[0].style.background = c.p; dots.children[1].style.background = c.s; }
   if (after === 'preview') previewBranding();
 }
 
@@ -11062,9 +11071,7 @@ function platformSocietyRowHtml(soc){
         <div class="full"><label>Shop page wording (optional)</label><textarea id="ps-shoptext-${soc.id}">${escapeHtml(soc.shop_text||'')}</textarea></div>
         <div class="full"><label>Homepage tagline</label><input id="ps-tagline-${soc.id}" value="${escapeHtml(soc.tagline||'')}"></div>
         <div class="full"><label>About blurb</label><textarea id="ps-intro-${soc.id}">${escapeHtml(soc.intro_text||'')}</textarea></div>
-        ${colourPresetSelectHtml('ps-primary-' + soc.id, 'ps-secondary-' + soc.id)}
-        <div><label>Primary colour</label><input type="color" id="ps-primary-${soc.id}" value="${soc.primary_colour||'#4B1320'}"></div>
-        <div><label>Secondary colour</label><input type="color" id="ps-secondary-${soc.id}" value="${soc.secondary_colour||'#B8862F'}"></div>
+        ${colourPresetSelectHtml('ps-primary-' + soc.id, 'ps-secondary-' + soc.id, soc.primary_colour || '#4B1320', soc.secondary_colour || '#B8862F')}
         <div class="full">
           <label style="display:flex; align-items:center; gap:.5rem; cursor:pointer;">
             <input type="checkbox" id="ps-stripe-${soc.id}" ${soc.stripe_enabled ? 'checked' : ''} style="width:auto;">
@@ -11161,9 +11168,7 @@ function newSocietyFormHtml(){
         <div><label>Founded (year)</label><input type="number" id="ns-founded"></div>
         <div><label>Subdomain</label><input id="ns-subdomain" placeholder="e.g. riverside"></div>
         <div><label>Custom domain</label><input id="ns-customdomain" placeholder="optional, e.g. riversidegolf.co.uk"></div>
-        ${colourPresetSelectHtml('ns-primary', 'ns-secondary')}
-        <div><label>Primary colour</label><input type="color" id="ns-primary" value="${COLOUR_PRESETS[0].p}"></div>
-        <div><label>Secondary colour</label><input type="color" id="ns-secondary" value="${COLOUR_PRESETS[0].s}"></div>
+        ${colourPresetSelectHtml('ns-primary', 'ns-secondary', DEFAULT_COLOUR_PRESET.p, DEFAULT_COLOUR_PRESET.s)}
       </div>
       <h4 style="margin-top:1rem;">First admin</h4>
       <p style="font-size:.78rem; color:var(--text-muted); margin:0 0 .6rem;">Seeds their first committee admin so someone can sign in and take it from here.</p>
@@ -11195,8 +11200,8 @@ async function saveNewSociety(){
   // 2026-09-06 creating a real second society for the first time.
   const subdomain = document.getElementById('ns-subdomain')?.value.trim().toLowerCase() || null;
   const custom_domain = document.getElementById('ns-customdomain')?.value.trim().toLowerCase() || null;
-  const primary_colour = document.getElementById('ns-primary')?.value || COLOUR_PRESETS[0].p;
-  const secondary_colour = document.getElementById('ns-secondary')?.value || COLOUR_PRESETS[0].s;
+  const primary_colour = document.getElementById('ns-primary')?.value || DEFAULT_COLOUR_PRESET.p;
+  const secondary_colour = document.getElementById('ns-secondary')?.value || DEFAULT_COLOUR_PRESET.s;
   const adminFirst = document.getElementById('ns-admin-fname')?.value.trim();
   const adminLast = document.getElementById('ns-admin-lname')?.value.trim();
   const adminEmail = document.getElementById('ns-admin-email')?.value.trim();
