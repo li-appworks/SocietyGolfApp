@@ -739,6 +739,16 @@
     padding:.25rem .55rem; border-radius:999px; white-space:nowrap;
   }
   .course-card-body{padding:.85rem 1rem 1rem; display:flex; flex-direction:column; gap:.45rem; flex:1;}
+  /* scorecard on a course card: tee chips + front/back nine tables */
+  .sc-chips{display:flex; flex-wrap:wrap; gap:.35rem; margin:.35rem 0 .1rem;}
+  .sc-chip{font:inherit; font-size:.8rem; font-weight:700; padding:.3rem .65rem; border-radius:999px; border:1px solid var(--line); background:var(--paper); color:var(--text-muted); cursor:pointer; display:inline-flex; align-items:center; gap:.35rem;}
+  .sc-chip.on{background:var(--ink); border-color:var(--ink); color:var(--paper);}
+  .sc-dot{width:.7rem; height:.7rem; border-radius:50%; border:1px solid rgba(0,0,0,.25); display:inline-block;}
+  .sc-nine{width:100%; border-collapse:collapse; table-layout:fixed; font-size:.75rem; margin:.4rem 0 .2rem; font-variant-numeric:tabular-nums;}
+  .sc-nine th,.sc-nine td{text-align:center; padding:.22rem 0; border-bottom:1px solid var(--line); overflow:hidden;}
+  .sc-nine th{color:var(--text-muted); font-weight:700;}
+  .sc-nine .l{text-align:left; width:2.3rem; color:var(--text-muted); font-weight:700; padding-left:.15rem;}
+  .sc-nine .t{width:2.4rem; font-weight:800; background:rgba(0,0,0,.05);}
   .course-card-name{
     font-family:var(--display); font-size:1.05rem; font-weight:800; color:var(--ink);
     text-decoration:none; line-height:1.25;
@@ -10128,44 +10138,68 @@ function teesForCourse(course){
     : [];
 }
 
+/* The scorecard on a course card: tee chips (with a Men / Women switch when the course has both), then
+   the card laid out like a real one: front nine and back nine, each with hole, par, yards and index and
+   an Out / In total. Yards and index come from the chosen tee; par is the course's. */
+const TEE_DOT = { white:'#f4f4f4', yellow:'#f2d144', blue:'#4a86d8', red:'#d9534f', gold:'#d4af37', silver:'#c0c0c0', cobalt:'#0047ab', bronze:'#cd7f32', black:'#222', green:'#3f9b4f', orange:'#e8893a' };
+function teeBaseName(t){ return (t.name || '').replace(/\s*\((men|women)\)\s*$/i, '').trim(); }
+function selectScorecardTee(courseId, teeId){ selectedTeeForCourse[courseId] = teeId; renderCoursesPanel(); }
+function selectScorecardGender(courseId, gender){
+  const course = courses.find(c => c.id === courseId); if (!course) return;
+  const tees = teesForCourse(course);
+  const cur = tees.find(t => t.id === selectedTeeForCourse[courseId]) || tees[0];
+  const same = cur ? tees.find(t => t.gender === gender && teeBaseName(t).toLowerCase() === teeBaseName(cur).toLowerCase()) : null;
+  const pick = same || tees.find(t => t.gender === gender);
+  if (pick) selectedTeeForCourse[courseId] = pick.id;
+  renderCoursesPanel();
+}
+function scNineHtml(holes, teeHoles, f, t){
+  const part = holes.slice(f, t);
+  if (!part.length) return '';
+  const yd = h => { const th = teeHoles.find(x => x.hole_number === h.hole_number); return th && th.yardage != null ? th.yardage : null; };
+  const ix = h => { const th = teeHoles.find(x => x.hole_number === h.hole_number); return th && th.stroke_index != null ? th.stroke_index : null; };
+  const sumOf = (fn) => part.reduce((a, h) => a + (fn(h) || 0), 0);
+  const cell = v => `<td>${v == null ? '–' : v}</td>`;
+  const anyYd = part.some(h => yd(h) != null);
+  return `<table class="sc-nine"><thead><tr><th class="l">${f === 0 ? 'Front' : 'Back'}</th>${part.map(h => `<th>${h.hole_number}</th>`).join('')}<th class="t">${f === 0 ? 'Out' : 'In'}</th></tr></thead>
+    <tbody>
+      <tr><td class="l">Par</td>${part.map(h => cell(h.par)).join('')}<td class="t">${sumOf(h => h.par)}</td></tr>
+      <tr><td class="l">Yds</td>${part.map(h => cell(yd(h))).join('')}<td class="t">${anyYd ? sumOf(yd) : '–'}</td></tr>
+      <tr><td class="l">Idx</td>${part.map(h => cell(ix(h))).join('')}<td class="t"></td></tr>
+    </tbody></table>`;
+}
 function scorecardSummaryHtml(course){
   const holes = scorecardHolesFor(course);
   if (!holes.length) return '<div class="course-card-none" style="margin-top:.3rem;">No scorecard yet.</div>';
   const totalPar = holes.reduce((s,h) => s + (h.par||0), 0);
   const tees = teesForCourse(course);
-  const selectedTeeId = selectedTeeForCourse[course.id] ?? (tees[0] && tees[0].id) ?? null;
-  const teeHoles = selectedTeeId ? gpsTeeHoles.filter(h => h.gps_tee_id === selectedTeeId) : [];
+  const selTee = tees.find(t => t.id === selectedTeeForCourse[course.id]) || tees[0] || null;
+  const teeHoles = selTee ? gpsTeeHoles.filter(h => h.gps_tee_id === selTee.id) : [];
   const totalYards = teeHoles.reduce((s,h) => s + (h.yardage||0), 0);
   const open = expandedScorecardCourseId === course.id;
 
-  const teeSelector = tees.length ? `
-    <select style="margin:.4rem 0; font-size:.78rem;" onchange="selectedTeeForCourse[${course.id}]=Number(this.value); renderCoursesPanel();">
-      ${tees.map(t => `<option value="${t.id}" ${t.id===selectedTeeId?'selected':''}>${escapeHtml(t.name)} tees</option>`).join('')}
-    </select>` : '';
+  let chips = '';
+  if (tees.length){
+    const genders = [...new Set(tees.filter(t => t.gender === 'men' || t.gender === 'women').map(t => t.gender))];
+    const both = genders.length > 1;
+    const curGender = selTee && selTee.gender === 'women' ? 'women' : 'men';
+    const shown = tees.filter(t => !both || t.gender === curGender || t.gender === 'open');
+    chips = `
+      ${both ? `<div class="sc-chips"><button class="sc-chip ${curGender==='men'?'on':''}" onclick="selectScorecardGender(${course.id}, 'men')">Men</button><button class="sc-chip ${curGender==='women'?'on':''}" onclick="selectScorecardGender(${course.id}, 'women')">Women</button></div>` : ''}
+      <div class="sc-chips">${shown.map(t => { const dot = TEE_DOT[teeBaseName(t).toLowerCase()]; return `<button class="sc-chip ${selTee && t.id === selTee.id ? 'on' : ''}" onclick="selectScorecardTee(${course.id}, ${t.id})">${dot ? `<span class="sc-dot" style="background:${dot}"></span>` : ''}${escapeHtml(teeBaseName(t))}</button>`; }).join('')}</div>`;
+  }
 
-  const selTee = tees.find(t => t.id === selectedTeeId);
   const ratingLine = selTee && selTee.rating != null && selTee.slope != null ? `<p class="muted" style="font-size:.78rem; margin:.1rem 0 .3rem;">Course rating ${fmtRating(selTee.rating)} · Slope ${selTee.slope}</p>` : '';
-  const table = open ? `
-    ${teeSelector}${ratingLine}
-    <div style="overflow-x:auto; margin-top:.3rem;">
-      <table style="width:100%; border-collapse:collapse; font-size:.78rem;">
-        <thead><tr style="color:var(--text-muted); text-align:right;">
-          <th style="text-align:left; padding:.2rem .4rem;">Hole</th>
-          ${holes.map(h => `<th style="padding:.2rem .4rem;">${h.hole_number}</th>`).join('')}
-          <th style="padding:.2rem .4rem; font-weight:800;">Tot</th>
-        </tr></thead>
-        <tbody>
-          <tr><td style="text-align:left; padding:.2rem .4rem; color:var(--text-muted);">Par</td>${holes.map(h => `<td style="padding:.2rem .4rem; text-align:right;">${h.par ?? '–'}</td>`).join('')}<td style="padding:.2rem .4rem; text-align:right; font-weight:800;">${totalPar}</td></tr>
-          <tr><td style="text-align:left; padding:.2rem .4rem; color:var(--text-muted);">Yards</td>${holes.map(h => { const th = teeHoles.find(x=>x.hole_number===h.hole_number); return `<td style="padding:.2rem .4rem; text-align:right;">${th && th.yardage!=null ? th.yardage : '–'}</td>`; }).join('')}<td style="padding:.2rem .4rem; text-align:right; font-weight:800;">${totalYards||'–'}</td></tr>
-          <tr><td style="text-align:left; padding:.2rem .4rem; color:var(--text-muted);">Index</td>${holes.map(h => { const th = teeHoles.find(x=>x.hole_number===h.hole_number); return `<td style="padding:.2rem .4rem; text-align:right;">${th && th.stroke_index!=null ? th.stroke_index : '–'}</td>`; }).join('')}<td></td></tr>
-        </tbody>
-      </table>
-    </div>` : '';
+  const split = holes.length > 9 ? 9 : holes.length;
+  const body = open ? `
+    ${chips}${ratingLine}
+    ${scNineHtml(holes, teeHoles, 0, split)}${holes.length > 9 ? scNineHtml(holes, teeHoles, 9, holes.length) : ''}
+    <p class="muted" style="font-size:.78rem; margin:.2rem 0 0;">Total par ${totalPar}${totalYards ? ' · ' + totalYards.toLocaleString('en-GB') + ' yds' : ''}${selTee ? ' · ' + escapeHtml(selTee.name) : ''}</p>` : '';
   return `
     <button class="committee-edit-btn" style="margin-top:.4rem;" onclick="expandedScorecardCourseId=(expandedScorecardCourseId===${course.id}?null:${course.id}); renderCoursesPanel();">
-      ${open ? 'Scorecard ▴' : `Scorecard — Par ${totalPar}${totalYards ? ', ' + totalYards + ' yds' : ''} ▾`}
+      ${open ? 'Scorecard ▴' : `Scorecard — Par ${totalPar}${totalYards ? ', ' + totalYards.toLocaleString('en-GB') + ' yds' : ''} ▾`}
     </button>
-    ${table}`;
+    ${body}`;
 }
 
 function renderCoursesPanel(){
