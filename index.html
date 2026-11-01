@@ -3532,6 +3532,7 @@ function eventDetailHtml(e){
             <input id="ef-ntp2-${e.id}" placeholder="Winner's name" value="${escapeHtml(e.nearest_pin_2||'')}">
           </div>
           ${eventTeeFieldsHtml(e)}
+          ${eventFreezeFieldHtml(e)}
           <div>
             <label>Meeting time</label>
             <input type="time" id="ef-meeting-${e.id}" value="${escapeHtml(e.meeting_time||'')}">
@@ -4074,6 +4075,7 @@ async function saveEvent(eventId){
     nearest_pin_1: gv('ef-ntp1-' + eventId) || null,
     nearest_pin_2: gv('ef-ntp2-' + eventId) || null,
     ...eventTeePayload(eventId),
+    ...eventFreezePayload(eventId),
     meeting_time: gv('ef-meeting-' + eventId) || null,
     tee_time: gv('ef-tee-' + eventId) || null,
     cost: gv('ef-cost-' + eventId) || null,
@@ -4212,7 +4214,7 @@ function evwBlankState(){
     courseId: null, courseName: '', postcode: '',
     formatPreset: 'individual', formatCustom: '', scoringMethod: 'stableford', scoringTouched: true, teamHcpPct: 10, holes: 18, holesTouched: false,
     multiRound: false, rounds: [],
-    hasTrophy: false, trophy: '',
+    hasTrophy: false, trophy: '', freezeHoles: 'auto',
     hasNtp1: false, hasNtp2: false, ntpHole: null, ntp2Hole: null, teeId: null, ladiesTeeId: null,
     meetingTime: '09:00', teeTime: '10:00', meetAt: '', maxPlayers: '',
     cost: '', signupBy: '', payBy: '', included: '',
@@ -4238,6 +4240,13 @@ function closeEventWizard(){
   document.getElementById('event-wizard-overlay').style.display = 'none';
 }
 
+/* how many holes the leaderboard is held back for, once "Automatic" is resolved */
+function evwFreezeN(){ return evwState.freezeHoles === 'auto' ? (evwState.hasTrophy ? 2 : 0) : Number(evwState.freezeHoles); }
+function evwFreezeHint(){
+  const n = evwFreezeN();
+  if (evwState.freezeHoles === 'auto') return n ? 'Automatic: this is a trophy event, so everyone except admins sees the leaderboard held back for the last 2 holes, to keep the finish a surprise.' : 'Automatic: no trophy, so the leaderboard stays fully live all round.';
+  return n ? 'Everyone except admins sees the leaderboard held back for ' + freezeWords(n) + ', to keep the finish a surprise.' : 'Everyone sees the live leaderboard all round.';
+}
 function evwFld(labelText, inner){
   return `<div class="evw-field"><label>${labelText}</label>${inner}</div>`;
 }
@@ -4417,6 +4426,11 @@ function evwRenderStep(){
       ` : ''}
       ${evwNtpBlockHtml('hasNtp1', 'ntpHole', 'ntp1', 'Nearest the Pin', "A par 3 prize hole. The winner's name gets added later via this event's own edit form")}
       ${evwNtpBlockHtml('hasNtp2', 'ntp2Hole', 'ntp2', 'Nearest the Pin in 2', 'A par 4 or 5 prize hole: closest after two shots')}
+      ${evwFld('Leaderboard freeze', `
+        <div class="evw-chip-row">
+          ${[['auto','Automatic'],['0','Fully live'],['1','Last hole'],['2','Last 2'],['3','Last 3'],['4','Last 4'],['5','Last 5']].map(([v,l]) => `<button class="evw-chip ${evwState.freezeHoles===v?'sel':''}" onclick="evwState.freezeHoles='${v}'; evwRenderStep();">${l}</button>`).join('')}
+        </div>
+        <div style="font-size:.7rem; color:rgba(250,248,242,.5); margin-top:.45rem;">${evwFreezeHint()}</div>`)}
     `;
   } else if (s === 'logistics'){
     body = `
@@ -4442,6 +4456,7 @@ function evwRenderStep(){
         <div class="evw-rev-row"><span class="k">Trophy</span><span class="v">${evwState.hasTrophy ? (evwEsc(evwState.trophy)||'—') : 'No'}</span></div>
         ${evwState.hasNtp1 ? `<div class="evw-rev-row"><span class="k">Nearest the pin</span><span class="v">${evwState.ntpHole ? 'Hole ' + evwState.ntpHole : 'Hole to be set'}</span></div>` : ''}
         ${evwState.hasNtp2 ? `<div class="evw-rev-row"><span class="k">Nearest the pin in 2</span><span class="v">${evwState.ntp2Hole ? 'Hole ' + evwState.ntp2Hole : 'Hole to be set'}</span></div>` : ''}
+        <div class="evw-rev-row"><span class="k">Leaderboard</span><span class="v">${evwFreezeN() ? 'Frozen for ' + freezeWords(evwFreezeN()) : 'Fully live'}</span></div>
         <div class="evw-rev-row"><span class="k">Cost</span><span class="v">${evwState.cost ? evwEsc(fmtCost(evwState.cost)) : '—'}</span></div>
         <div class="evw-rev-row"><span class="k">Tee time</span><span class="v">${evwState.teeTime || '—'}</span></div>
       </div>
@@ -4732,6 +4747,7 @@ async function evwCreateEvent(){
     // to remember intent for whenever editing reuses this wizard.
     nearest_pin_1: evwState.hasNtp1 ? '' : null,
     nearest_pin_2: evwState.hasNtp2 ? '' : null,
+    freeze_holes: evwState.freezeHoles === 'auto' ? null : Number(evwState.freezeHoles),
     tee_id: evwState.teeId || null, ladies_tee_id: evwState.ladiesTeeId || null,
     ntp_hole: evwState.hasNtp1 ? (evwState.ntpHole || null) : null,
     ntp2_hole: evwState.hasNtp2 ? (evwState.ntp2Hole || null) : null,
@@ -7203,7 +7219,16 @@ function switchLiveRound(roundId){
 /* Scores are visible up to and including this hole for non-committee —
    scaled to the round's own hole count (18-hole rounds freeze with 2 to
    play, so a 9-hole round freezes with 2 to play too). */
-function blackoutHoleFor(holes){ return Math.max(1, holes - 2); }
+/* Leaderboard freeze, per event (events.freeze_holes, set in the event wizard / edit form):
+   null = automatic (a trophy event hides the last 2 holes, anything else stays fully live),
+   0 = fully live all round, N = the leaderboard is held back for the last N holes (non-admins only). */
+function freezeHolesFor(ev){
+  if (!ev) return 0;
+  if (ev.freeze_holes != null && ev.freeze_holes !== '') return Number(ev.freeze_holes);
+  return ev.trophy ? 2 : 0;
+}
+function freezeWords(n){ return n === 1 ? 'the last hole' : 'the last ' + n + ' holes'; }
+function blackoutHoleFor(holes, ev){ return Math.max(1, holes - (ev ? freezeHolesFor(ev) : 2)); }
 
 /* ===== Texas Scramble (2026-10-13) =====
    A scramble is scored per TEAM: one ball, one strokes entry per hole. A team
@@ -7424,7 +7449,7 @@ function renderLeaderboardView(){
   const ev = eventById(liveEventId);
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
   const holes = roundHoles(activeRound, ev);
-  const blackoutHole = blackoutHoleFor(holes);
+  const blackoutHole = blackoutHoleFor(holes, ev);
 
   // Nothing meaningful to show — and every signed-up player listed as
   // "Not started" reads as broken, not just empty — until groups have
@@ -8425,7 +8450,7 @@ function renderFocusLeaderboardInner(chrome = true){
 
   const activeRound = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
   const holes = roundHoles(activeRound, ev);
-  const blackoutHole = blackoutHoleFor(holes);
+  const blackoutHole = blackoutHoleFor(holes, ev);
   const fullLb = getLeaderboard(liveEventId, holes, liveRoundId);
   const title = `<div class="focus-lb-title"><div class="label">Leaderboard</div><div class="ev">${escapeHtml(ev ? ev.name : '')}</div></div>`;
 
@@ -8437,7 +8462,11 @@ function renderFocusLeaderboardInner(chrome = true){
   const started = fullLb.filter(e => e.started);
   const allFinished = started.length > 0 && started.every(e => e.actualThru === holes);
   const isTrophyEvent = !!(ev && ev.trophy);
-  const pastBlackout = isTrophyEvent && maxHoleAnyone > blackoutHole;
+  const freezeN = freezeHolesFor(ev);
+  const freezeOn = freezeN > 0;
+  // A frozen event with no trophy has no result to reveal, so once everyone has finished it simply goes live.
+  const holdBack = freezeOn && !(allFinished && !isTrophyEvent);
+  const pastBlackout = holdBack && maxHoleAnyone > blackoutHole;
 
   // Admin: bypasses the blackout entirely, same as the normal chrome view
   if (isLoggedIn){
@@ -8458,7 +8487,7 @@ function renderFocusLeaderboardInner(chrome = true){
 
   // Non-admin, everyone finished → the reveal once finalised, generic "sealed" message before that.
   // A non-trophy event has nothing to "reveal" — falls straight through to the plain live view below instead.
-  if (isTrophyEvent && allFinished){
+  if (freezeOn && isTrophyEvent && allFinished){
     const honour = honours.find(h => h.event_id === liveEventId && (liveRoundId ? h.round_id === liveRoundId : !h.round_id));
     if (honour){
       return topBar + `
@@ -8488,7 +8517,7 @@ function renderFocusLeaderboardInner(chrome = true){
         <span class="lock">🔒</span>
         <div>
           <div class="t">Scores frozen at hole ${blackoutHole}</div>
-          <div class="d">Standings are held back for the last two holes so the finish stays a surprise. Full leaderboard returns once the captain announces the result.</div>
+          <div class="d">Standings are held back for ${freezeWords(freezeN)} so the finish stays a surprise. Full leaderboard returns once the captain announces the result.</div>
         </div>
       </div>
       <div class="focus-lb-list">${rows}</div>
@@ -8497,7 +8526,7 @@ function renderFocusLeaderboardInner(chrome = true){
 
   // Normal live view: full board for a non-trophy event, or before the
   // blackout hole on a trophy one.
-  const lb = isTrophyEvent ? getLeaderboard(liveEventId, blackoutHole, liveRoundId) : fullLb;
+  const lb = holdBack ? getLeaderboard(liveEventId, blackoutHole, liveRoundId) : fullLb;
   const pz = lbExtras(lb);
   const rows = lb.map((e,i) => focusLbRowHtml(e,i,false,pz)).join('');
   return topBar + title + `<div class="focus-lb-list">${rows}</div>` + focusLbFootHtml();
@@ -9905,6 +9934,17 @@ function eventTeeFieldsHtml(e){
     <div><label>Ladies' tee</label><select id="ef-ladiestee-${e.id}">${opt(womenTeesOf(tees), e.ladies_tee_id, 'None')}</select></div>
     <div><label>Nearest the Pin hole</label><select id="ef-ntphole-${e.id}">${holeOpts(true, e.ntp_hole)}</select></div>
     <div><label>Nearest the Pin in 2 hole</label><select id="ef-ntp2hole-${e.id}">${holeOpts(false, e.ntp2_hole)}</select></div>`;
+}
+/* Leaderboard freeze on the edit form: blank = automatic (trophy events hide the last 2 holes, others stay live). */
+function eventFreezeFieldHtml(e){
+  const cur = e.freeze_holes == null ? '' : String(e.freeze_holes);
+  const o = (v, l) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${l}</option>`;
+  return `<div class="full"><label>Leaderboard freeze (everyone except admins)</label><select id="ef-freeze-${e.id}">${o('', 'Automatic (trophy events: last 2 holes; others live)')}${o('0', 'Fully live all round')}${o('1', 'Hold back the last hole')}${[2,3,4,5].map(n => o(String(n), 'Hold back the last ' + n + ' holes')).join('')}</select></div>`;
+}
+function eventFreezePayload(eventId){
+  const el = document.getElementById('ef-freeze-' + eventId);
+  if (!el) return {};
+  return { freeze_holes: el.value === '' ? null : Number(el.value) };
 }
 function eventTeePayload(eventId){
   const gvn = id => { const el = document.getElementById(id); const v = el ? el.value : ''; return v === '' ? null : Number(v); };
