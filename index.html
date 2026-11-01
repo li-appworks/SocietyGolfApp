@@ -4665,10 +4665,10 @@ function evwBrowseCoursesHtml(){
   `;
 }
 
-/* ---- new club & course: creates a real courses row for this society,
-   then runs the same automatic GPS/scorecard lookup the Courses admin
-   page uses (autoSetupGpsForCourse) — same shared infrastructure, just
-   reachable without leaving the wizard. ---- */
+/* ---- new club & course: creates a real courses row for this society and,
+   if the platform already holds a scorecard for a club of that name,
+   links it (autoLinkSharedCourse) — same shared infrastructure as the
+   Courses page, just reachable without leaving the wizard. ---- */
 function evwOpenNewCourseClub(){
   evwSubView = 'newCourseClub';
   evwNewClub = { name: evwState.courseName, postcode: '', status: null };
@@ -4695,7 +4695,7 @@ async function evwLookUpNewClub(){
     courses.push(data);
     courses.sort((a,b) => a.name.localeCompare(b.name));
     evwNewClub.createdCourse = data;
-    await autoSetupGpsForCourse(data);
+    await autoLinkSharedCourse(data);
     evwNewClub.status = data.gps_course_id ? 'found' : 'none';
   } catch(err){
     console.error(err);
@@ -4709,10 +4709,10 @@ function evwNewCourseClubHtml(){
       <p style="font-size:.76rem; color:rgba(250,248,242,.6); margin:0 0 10px;">This is the same club/course setup used across the app — once added here, it's available to pick for every future event too.</p>
       ${evwFld('Club name', `<input type="text" placeholder="e.g. Woburn Golf Club" value="${evwEsc(evwNewClub.name)}" oninput="evwNewClub.name=this.value" ${evwNewClub.createdCourse?'disabled':''}>`)}
       ${evwFld('Postcode', `<input type="text" placeholder="e.g. MK17 9LJ" value="${evwEsc(evwNewClub.postcode)}" oninput="evwNewClub.postcode=this.value" ${evwNewClub.createdCourse?'disabled':''}>`)}
-      ${!evwNewClub.createdCourse ? `<button class="evw-chip" style="margin-top:10px;" onclick="evwLookUpNewClub()">🔍 Look up course data</button>` : ''}
-      ${evwNewClub.status==='looking' ? `<p style="font-size:.78rem; color:rgba(250,248,242,.6); margin-top:10px;">⏳ Checking OpenStreetMap…</p>` : ''}
-      ${evwNewClub.status==='found' ? `<p style="font-size:.78rem; color:#8FE3A9; margin-top:10px;">✓ Found it — scorecard${gpsEnabled() ? ' and GPS pins are' : ' is'} ready to use.</p>` : ''}
-      ${evwNewClub.status==='none' ? `<p style="font-size:.78rem; color:var(--brass-light); margin-top:10px;">No data found automatically — that's fine, add the scorecard${gpsEnabled() ? ' and GPS pins' : ''} by hand later from the Courses page.</p>` : ''}
+      ${!evwNewClub.createdCourse ? `<button class="evw-chip" style="margin-top:10px;" onclick="evwLookUpNewClub()">＋ Add this course</button>` : ''}
+      ${evwNewClub.status==='looking' ? `<p style="font-size:.78rem; color:rgba(250,248,242,.6); margin-top:10px;">⏳ Adding the course…</p>` : ''}
+      ${evwNewClub.status==='found' ? `<p style="font-size:.78rem; color:#8FE3A9; margin-top:10px;">✓ Added. This club already has a scorecard on the platform, ready to use.</p>` : ''}
+      ${evwNewClub.status==='none' ? `<p style="font-size:.78rem; color:var(--brass-light); margin-top:10px;">Added. There is no scorecard for it yet; an admin can add one from the Courses page.</p>` : ''}
     </div>
     <div class="evw-nav" style="padding:0;">
       <button onclick="evwCloseNewCourseClub(false)">Cancel</button>
@@ -6528,12 +6528,12 @@ function metersToYards(m){ return Math.round(m / M_PER_YARD); }
 
 /* Front/center/back distance from a player's live position to a hole's
    green. Center is a straight haversine distance to the stored centre
-   point. Front/back use the green's full boundary polygon (from OSM) when
-   present — project every vertex onto the player→centre line via a flat
+   point. Front/back use the green's boundary polygon when one is stored —
+   project every vertex onto the player→centre line via a flat
    local-equirectangular approximation (accurate at golf-course scale) and
    take the nearest/farthest projected point as front/back. No polygon
-   (manual pin, or a hole OSM didn't map fully) → front/back both collapse
-   to the same center distance. */
+   (a hand-typed pin) → front/back both collapse to the same center
+   distance. */
 function gpsDistancesFor(hole, playerLat, playerLng){
   if (!hole || hole.green_lat == null || hole.green_lng == null) return null;
   const centerM = haversineM(playerLat, playerLng, hole.green_lat, hole.green_lng);
@@ -6574,30 +6574,6 @@ function netStablefordPoints(strokes, par, strokeIndex, handicap){
   if (strokes == null || par == null) return null;
   const net = strokes - holeAllowance(handicap, strokeIndex);
   return Math.max(0, 2 + (par - net));
-}
-
-/* ===================== postcode geocoding =====================
-   Was originally paired with a Leaflet "Where we play" map on Home
-   (removed 2026-09-15 to shorten the page) — geocodePostcode() itself
-   is kept, since GPS course setup (importGpsCourseFromOsm()) still
-   relies on it to resolve a course's postcode to coordinates. */
-const postcodeCache = {}; // postcode -> {lat, lng} | null, kept in memory for this page load
-
-async function geocodePostcode(postcode){
-  const key = postcode.trim().toUpperCase();
-  if (key in postcodeCache) return postcodeCache[key];
-  try {
-    const res = await fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(key));
-    if (!res.ok) throw new Error('postcode lookup failed: ' + res.status);
-    const json = await res.json();
-    const coords = { lat: json.result.latitude, lng: json.result.longitude };
-    postcodeCache[key] = coords;
-    return coords;
-  } catch (err){
-    console.warn('Could not geocode postcode "' + postcode + '":', err);
-    postcodeCache[key] = null;
-    return null;
-  }
 }
 
 /* ===================== live scores ===================== */
@@ -9878,7 +9854,7 @@ async function saveNewCourseFromEvent(eventId){
   if (newCourseForm) newCourseForm.style.display = 'none';
   setStatus('');
   renderCoursesPanel();
-  autoSetupGpsForCourse(data);
+  autoLinkSharedCourse(data);
 }
 
 /* ---- event format (2026-10-13): only two real formats, Individual Stableford and
@@ -10069,73 +10045,32 @@ function collapseCourseCard(courseId){
   renderCoursesPanel();
 }
 
-/* Transient per-course auto-import status ('checking'|'importing'|'done'|
-   'no_data'|'error') — only tracked while a lookup is actually in flight or
-   just finished this session; the steady-state badge below is otherwise
-   derived straight from the data (does this course have real GPS pins?). */
-let courseGpsAutoStatus = {};
-
-/* Runs automatically the moment a course gets a postcode with no shared
-   GPS/scorecard record linked yet — no admin needs to visit "Manage course
-   data" for the common case. Looks for an existing shared match by name
-   first (no point re-importing a course another society already has),
-   otherwise imports fresh from OpenStreetMap. Best-effort and silent on
-   failure beyond the status badge — "Manage course data" is always there
-   as the fallback for a course OSM has nothing for. */
-/* Which gps_club a course's auto-lookup matched, when that club turns out
-   to have more than one course — OSM has no way to tell us which one is
-   "this" society's course, so this parks it for an admin to pick manually
-   in "Manage course data" rather than guessing or creating a duplicate. */
+/* When a course is added or its details saved, look for a scorecard the platform already holds for a
+   club of the same name (shared gps_clubs / gps_courses, matched by name; no network call) and link it,
+   so a card one society has added shows for every society that plays there. A club with more than one
+   course can't be matched by name alone, so it is parked in pendingClubMatch for an admin to pick in
+   "Manage course data". Anything else is left for an admin to add by hand. */
 let pendingClubMatch = {};
 
-async function autoSetupGpsForCourse(course){
-  if (!db || !course.postcode || course.gps_course_id) return;
-  courseGpsAutoStatus[course.id] = 'checking';
-  renderCoursesPanel();
-
+async function autoLinkSharedCourse(course){
+  if (!db || course.gps_course_id) return;
   const nameLower = course.name.trim().toLowerCase();
   const club = gpsClubs.find(cl => cl.name.trim().toLowerCase() === nameLower);
-  if (club){
-    const clubCourses = gpsCourses.filter(g => g.gps_club_id === club.id);
-    if (clubCourses.length === 1){
-      await linkGpsCourse(course.id, clubCourses[0].id);
-      courseGpsAutoStatus[course.id] = 'done';
-      renderCoursesPanel();
-      return;
-    }
-    if (clubCourses.length > 1){
-      // A known multi-course club — needs a human to say which course this is.
-      pendingClubMatch[course.id] = club.id;
-      courseGpsAutoStatus[course.id] = 'needs_pick';
-      renderCoursesPanel();
-      return;
-    }
-    // Club exists with zero courses somehow — fall through to import, which
-    // will create the first course under it.
+  if (!club) return;
+  const clubCourses = gpsCourses.filter(g => g.gps_club_id === club.id);
+  if (clubCourses.length === 1){
+    await linkGpsCourse(course.id, clubCourses[0].id);
+  } else if (clubCourses.length > 1){
+    pendingClubMatch[course.id] = club.id;
   }
-
-  courseGpsAutoStatus[course.id] = 'importing';
-  renderCoursesPanel();
-  await importGpsCourseFromOsm(course.id);
-  const c = courses.find(x => x.id === course.id);
-  courseGpsAutoStatus[course.id] = (c && c.gps_course_id) ? 'done' : 'no_data';
   renderCoursesPanel();
 }
 
 function courseGpsStatusBadgeHtml(course){
   if (!gpsEnabled()) return '';
-  const status = courseGpsAutoStatus[course.id];
-  if (status === 'checking' || status === 'importing'){
-    return `<div class="course-card-none">⏳ ${status === 'checking' ? 'Checking for existing GPS data…' : 'Importing GPS data from OpenStreetMap…'}</div>`;
-  }
-  if (status === 'needs_pick' && !course.gps_course_id){
-    return `<div class="course-card-none">⚠️ Found a club with multiple courses — pick the right one under "Manage course data".</div>`;
-  }
   const holes = course.gps_course_id ? courseHoles.filter(h => h.gps_course_id === course.gps_course_id) : [];
-  const hasGps = holes.some(h => h.green_lat != null);
-  if (hasGps) return `<div class="course-card-none" style="color:#4a7a3c;">📍 GPS distances available (${holes.filter(h=>h.green_lat!=null).length}/${holes.length||18} holes)</div>`;
-  if (status === 'no_data') return `<div class="course-card-none">⚠️ No GPS data found automatically — add pins under "Manage course data".</div>`;
-  if (status === 'error') return `<div class="course-card-none">⚠️ GPS lookup failed — try again under "Manage course data".</div>`;
+  const withPins = holes.filter(h => h.green_lat != null).length;
+  if (withPins) return `<div class="course-card-none" style="color:#4a7a3c;">📍 GPS distances available (${withPins}/${holes.length || 18} holes)</div>`;
   if (course.gps_course_id) return `<div class="course-card-none">No GPS pins yet.</div>`;
   return '';
 }
@@ -10350,20 +10285,19 @@ function toggleCourseEdit(id){
   renderCoursesPanel();
 }
 
-/* ===== GPS & scorecard setup (shared gps_courses/course_holes data) =====
-   Reachable from each course row in this admin panel. Three paths, in
-   order: link to an existing gps_courses row (another society may already
-   have imported this same physical course), import fresh from OpenStreetMap,
-   or edit hole-by-hole by hand — see the plan this was built from for the
-   full reasoning. All three write to the same shared, non-tenant-scoped
-   tables, so a correction one society makes benefits every society linked
-   to the same gps_course_id. */
+/* ===== Scorecard setup (shared gps_courses/course_holes data) =====
+   Reachable from each course row in this admin panel. Two paths: link to an
+   existing gps_courses row (another society may already have added this same
+   physical course; done automatically by name, see autoLinkSharedCourse), or
+   enter it hole-by-hole by hand. Both write to the same shared,
+   non-tenant-scoped tables, so a correction one society makes benefits every
+   society linked to the same gps_course_id. */
 let gpsSetupCourseId = null;
-let gpsImportStatus = '';
+let courseSetupStatus = '';
 
 function toggleGpsSetup(courseId){
   gpsSetupCourseId = gpsSetupCourseId === courseId ? null : courseId;
-  gpsImportStatus = '';
+  courseSetupStatus = '';
   renderCoursesPanel();
 }
 
@@ -10385,7 +10319,7 @@ function gpsSetupPanelHtml(course){
 
         ${gpsEnabled() ? `
         <h5 style="margin:1rem 0 .2rem;">GPS pins</h5>
-        <p class="muted" style="font-size:.76rem; margin:0 0 .4rem;">Green location per hole — only used for the live distance readout while scoring. Import gets you most of the way; fix anything by hand below.</p>
+        <p class="muted" style="font-size:.76rem; margin:0 0 .4rem;">Green location per hole — only used for the live distance readout while scoring. Type each hole's latitude and longitude below.</p>
         ${gpsPinsEditorHtml(course.gps_course_id)}` : ''}
 
         <button class="delete-btn" style="margin-top:.6rem;" onclick="unlinkGpsCourse(${course.id})">Unlink this course's data</button>
@@ -10393,7 +10327,7 @@ function gpsSetupPanelHtml(course){
   }
 
   // A club-name match came back but that club has more than one course
-  // (e.g. Duke's/Duchess's) — OSM has no way to say which one this society
+  // (e.g. Duke's/Duchess's) — the name can't say which one this society
   // actually plays, so a human picks here rather than guessing.
   const clubId = pendingClubMatch[course.id];
   if (clubId != null){
@@ -10412,24 +10346,13 @@ function gpsSetupPanelHtml(course){
       </div>`;
   }
 
-  // No search box here on purpose — this only ever reaches an admin once
-  // autoSetupGpsForCourse() has already tried (and failed to find or
-  // import) a match using the postcode automatically the moment it was
-  // added. This is the retry/fallback path, not the primary one.
+  // No scorecard linked yet and no shared match by name: add it by hand.
   return `
     <div class="edit-form" style="margin:.5rem 0;">
       <h4>Manage course data</h4>
-      <p class="muted" style="font-size:.8rem; margin:0 0 .6rem;">Scorecard (par/stroke index)${gpsEnabled() ? ', tee yardages, and GPS pins (green location) are' : ' and tee yardages are'} all shared across every society on the platform. This runs automatically when a postcode is added — use this if that didn't find anything, or to make a correction by hand.</p>
-
-      ${course.postcode
-        ? `<div style="display:flex; gap:.6rem; align-items:center; flex-wrap:wrap;">
-             <button class="btn brass" onclick="importGpsCourseFromOsm(${course.id})">Import course data</button>
-             <button class="committee-edit-btn" onclick="createManualGpsCourse(${course.id})">Add manually instead</button>
-           </div>
-           <p class="muted" style="font-size:.72rem; margin:.4rem 0 0;">Uses this course's postcode (${escapeHtml(course.postcode)}) to search OpenStreetMap.</p>`
-        : `<p class="muted" style="font-size:.82rem;">Add a postcode to this course first (under Edit) — that's what the automatic lookup searches with.</p>
-           <button class="committee-edit-btn" style="margin-top:.4rem;" onclick="createManualGpsCourse(${course.id})">Add manually instead</button>`}
-      <div class="edit-status ${gpsImportStatus.startsWith('Error') ? 'error' : ''}" style="margin-top:.4rem;">${escapeHtml(gpsImportStatus)}</div>
+      <p class="muted" style="font-size:.8rem; margin:0 0 .6rem;">This course has no scorecard yet. Par, stroke index and tee yardages are shared across every society on the platform, so once it is added every society that plays here sees it.</p>
+      <button class="btn brass" onclick="createManualGpsCourse(${course.id})">Add the scorecard by hand</button>
+      <div class="edit-status ${courseSetupStatus.startsWith('Error') ? 'error' : ''}" style="margin-top:.4rem;">${escapeHtml(courseSetupStatus)}</div>
     </div>`;
 }
 
@@ -10471,7 +10394,7 @@ async function createManualGpsCourse(courseId){
   if (!db) return;
   const c = courses.find(x => x.id === courseId);
   if (!c) return;
-  gpsImportStatus = 'Creating…';
+  courseSetupStatus = 'Creating…';
   renderCoursesPanel();
   try {
     const club = await findOrCreateGpsClub(c.name, c.postcode, null);
@@ -10481,145 +10404,12 @@ async function createManualGpsCourse(courseId){
     await linkGpsCourse(courseId, data.id);
   } catch(err){
     console.error(err);
-    gpsImportStatus = 'Error: could not create.';
+    courseSetupStatus = 'Error: could not create.';
     renderCoursesPanel();
   }
 }
 
 const TEE_SORT_ORDER = { gold: 1, black: 1, championship: 1, white: 2, blue: 2, yellow: 3, silver: 3, red: 4, bronze: 4, green: 5 };
-
-/* Best-effort import: geocode the course's postcode, then ask Overpass for
-   every golf=hole way (carries ref + par directly), golf=green way (full
-   boundary — what makes front/back distances possible), golf=pin node, and
-   golf=tee way (carries a colour, sometimes several e.g. "gold;silver" for
-   a shared teeing ground) in a ~1.2km box around it. Greens/pins match to
-   the nearest hole way's far end, tees to the nearest hole way's near end
-   (tee-side vs green-side of the hole line) — then each tee's yardage is
-   simply the haversine distance from that tee's own coordinate to the
-   hole's now-known green coordinate, no paid yardage data needed at all.
-   Always followed by the manual editor below so anything missed or wrong
-   is fixable by hand — never a dead end. */
-async function importGpsCourseFromOsm(courseId){
-  if (!db) return;
-  const c = courses.find(x => x.id === courseId);
-  if (!c || !c.postcode){ gpsImportStatus = 'Error: this course needs a postcode set first.'; renderCoursesPanel(); return; }
-  gpsImportStatus = 'Geocoding postcode…';
-  renderCoursesPanel();
-  try {
-    const coords = await geocodePostcode(c.postcode);
-    if (!coords) throw new Error('Could not geocode postcode');
-    const d = 0.011; // roughly 1.2km — comfortably covers a course from one postcode
-    const bbox = `${coords.lat-d},${coords.lng-d},${coords.lat+d},${coords.lng+d}`;
-
-    gpsImportStatus = 'Querying OpenStreetMap…';
-    renderCoursesPanel();
-    const query = `[out:json][timeout:25];(way["golf"="hole"](${bbox});way["golf"="green"](${bbox});node["golf"="pin"](${bbox});way["golf"="tee"](${bbox}););out geom;`;
-    const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) });
-    if (!res.ok) throw new Error('Overpass request failed: ' + res.status);
-    const json = await res.json();
-    const elements = json.elements || [];
-    const holeWays = elements.filter(e => e.type === 'way' && e.tags && e.tags.golf === 'hole');
-    const greenWays = elements.filter(e => e.type === 'way' && e.tags && e.tags.golf === 'green');
-    const pinNodes = elements.filter(e => e.type === 'node' && e.tags && e.tags.golf === 'pin');
-    const teeWays = elements.filter(e => e.type === 'way' && e.tags && e.tags.golf === 'tee');
-    if (!holeWays.length) throw new Error('OpenStreetMap has no mapped holes for this course yet — try "Add manually instead".');
-
-    const centroid = geom => {
-      const pts = geom || [];
-      return pts.length ? { lat: pts.reduce((s,p)=>s+p.lat,0)/pts.length, lng: pts.reduce((s,p)=>s+p.lon,0)/pts.length } : null;
-    };
-    const dist2 = (a,b) => (a.lat-b.lat)**2 + (a.lng-b.lng)**2;
-    const nearest = (anchors, point) => {
-      let best = null, bestD = Infinity;
-      anchors.forEach((a, i) => { const dd = dist2(a, point); if (dd < bestD){ bestD = dd; best = i; } });
-      return best;
-    };
-
-    const holeMeta = holeWays.map(w => {
-      const geom = w.geometry || [];
-      return {
-        ref: parseInt(w.tags.ref, 10) || null,
-        par: parseInt(w.tags.par, 10) || null,
-        startAnchor: geom.length ? { lat: geom[0].lat, lng: geom[0].lon } : null,
-        endAnchor: geom.length ? { lat: geom[geom.length-1].lat, lng: geom[geom.length-1].lon } : null,
-      };
-    }).filter(h => h.ref && h.startAnchor && h.endAnchor);
-
-    const holesOut = holeMeta.map(h => ({ hole_number: h.ref, par: h.par, green_lat: null, green_lng: null, green_polygon: null, source: 'osm' }));
-    const endAnchors = holeMeta.map(h => h.endAnchor);
-    const startAnchors = holeMeta.map(h => h.startAnchor);
-
-    greenWays.forEach(w => {
-      const cen = centroid(w.geometry);
-      if (!cen) return;
-      const i = nearest(endAnchors, cen);
-      if (i === null) return;
-      holesOut[i].green_lat = cen.lat;
-      holesOut[i].green_lng = cen.lng;
-      holesOut[i].green_polygon = (w.geometry || []).map(p => ({ lat: p.lat, lng: p.lon }));
-    });
-    pinNodes.forEach(n => {
-      const pt = { lat: n.lat, lng: n.lon };
-      const i = nearest(endAnchors, pt);
-      if (i === null || holesOut[i].green_lat != null) return; // prefer the green polygon's centroid when we have one
-      holesOut[i].green_lat = pt.lat;
-      holesOut[i].green_lng = pt.lng;
-    });
-
-    gpsImportStatus = 'Saving…';
-    renderCoursesPanel();
-    const club = await findOrCreateGpsClub(c.name, c.postcode, coords);
-    const { data: gc, error: gcErr } = await db.from('gps_courses').insert({ name: c.name, gps_club_id: club.id }).select().single();
-    if (gcErr) throw gcErr;
-    gpsCourses.push(gc);
-
-    const rows = holesOut.map(h => ({ ...h, gps_course_id: gc.id }));
-    const { data: chData, error: chErr } = await db.from('course_holes').insert(rows).select();
-    if (chErr) throw chErr;
-    courseHoles.push(...(chData || []));
-
-    // Tees: match each tee-box polygon to its hole's near end, split any
-    // combined colour tag ("gold;silver") into one entry per colour, and
-    // derive yardage as the distance to that hole's now-known green.
-    const teeColourHoles = new Map(); // colour name -> [{hole_number, tee_lat, tee_lng, yardage}]
-    teeWays.forEach(w => {
-      const cen = centroid(w.geometry);
-      const tagVal = w.tags.tee;
-      if (!cen || !tagVal) return;
-      const i = nearest(startAnchors, cen);
-      if (i === null) return;
-      const hole = chData.find(h => h.hole_number === holesOut[i].hole_number);
-      if (!hole || hole.green_lat == null) return;
-      const yards = metersToYards(haversineM(cen.lat, cen.lng, hole.green_lat, hole.green_lng));
-      tagVal.split(';').map(s => s.trim()).filter(Boolean).forEach(colour => {
-        const name = colour.charAt(0).toUpperCase() + colour.slice(1);
-        if (!teeColourHoles.has(name)) teeColourHoles.set(name, []);
-        teeColourHoles.get(name).push({ hole_number: hole.hole_number, tee_lat: cen.lat, tee_lng: cen.lng, yardage: yards });
-      });
-    });
-
-    let teesImported = 0;
-    for (const [name, holeRows] of teeColourHoles){
-      const sortOrder = TEE_SORT_ORDER[name.toLowerCase()] ?? 50;
-      const { data: teeRow, error: teeErr } = await db.from('gps_tees').insert({ gps_course_id: gc.id, name, sort_order: sortOrder }).select().single();
-      if (teeErr){ console.warn('Could not create tee', name, teeErr); continue; }
-      gpsTees.push(teeRow);
-      const teeHoleRows = holeRows.map(r => ({ gps_tee_id: teeRow.id, hole_number: r.hole_number, tee_lat: r.tee_lat, tee_lng: r.tee_lng, yardage: r.yardage }));
-      const { data: thData, error: thErr } = await db.from('gps_tee_holes').insert(teeHoleRows).select();
-      if (thErr){ console.warn('Could not save tee holes for', name, thErr); continue; }
-      gpsTeeHoles.push(...(thData || []));
-      teesImported++;
-    }
-
-    await linkGpsCourse(courseId, gc.id);
-    gpsImportStatus = `Imported ${holesOut.length} hole${holesOut.length===1?'':'s'}${teesImported ? ` and ${teesImported} tee${teesImported===1?'':'s'}` : ''} from OpenStreetMap. Check them below and fix anything that looks off.`;
-    renderCoursesPanel();
-  } catch(err){
-    console.error(err);
-    gpsImportStatus = 'Error: ' + (err.message || 'import failed — try "Add manually instead".');
-    renderCoursesPanel();
-  }
-}
 
 /* Base payload for a course_holes upsert that preserves every field this
    particular editor doesn't own — the scorecard editor never touches GPS
@@ -10805,7 +10595,7 @@ function gpsPinsEditorHtml(gpsCourseId){
       </div>`;
   }).join('');
   return `<div style="max-height:18rem; overflow-y:auto; margin:.5rem 0;">${rows}</div>
-    <p class="muted" style="font-size:.7rem; margin:.2rem 0 0;">📍 = has a full green boundary from OpenStreetMap (front/back distances). Typing a new lat/lng here always replaces it with a single point.</p>
+    <p class="muted" style="font-size:.7rem; margin:.2rem 0 0;">📍 = has a full green boundary (front/back distances). Typing a new lat/lng here always replaces it with a single point.</p>
     <div class="edit-status" id="gp-status-${gpsCourseId}"></div>`;
 }
 
@@ -10819,7 +10609,7 @@ async function saveGpsPin(gpsCourseId, holeNumber){
   payload.green_lng = green_lng;
   payload.source = 'manual';
   // A hand-typed lat/lng is always a single point, never a full boundary —
-  // keep the imported polygon only if this save didn't actually move the pin.
+  // keep an existing polygon only if this save didn't actually move the pin.
   payload.green_polygon = (existing && existing.green_polygon && green_lat === existing.green_lat && green_lng === existing.green_lng)
     ? existing.green_polygon : null;
   await upsertCourseHole(payload, existing, document.getElementById(`gp-status-${gpsCourseId}`));
@@ -10835,7 +10625,7 @@ async function saveCourse(id){
   const c = courses.find(x => x.id===id); if(c) Object.assign(c, payload);
   editingCourseIds.delete(id);
   renderCoursesPanel(); renderEvents();
-  if (c) autoSetupGpsForCourse(c);
+  if (c) autoLinkSharedCourse(c);
 }
 async function deleteCourse(id){
   if (!confirm('Delete this course from the library? Events linked to it will keep their course name but lose the library link.')) return;
@@ -10875,7 +10665,7 @@ async function saveNewCourseLibrary(){
   if (error){ console.error(error); setStatus('Save failed.','error'); return; }
   courses.push(data); courses.sort((a,b) => a.name.localeCompare(b.name));
   renderCoursesPanel();
-  autoSetupGpsForCourse(data);
+  autoLinkSharedCourse(data);
 }
 
 /* ===================== payments ===================== */

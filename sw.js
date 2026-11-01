@@ -30,8 +30,6 @@ self.addEventListener('fetch', event => {
 
   // Never intercept live data services — these must always hit the network
   if (url.hostname.endsWith('supabase.co')) return;
-  if (url.hostname === 'api.postcodes.io') return;
-  if (url.hostname.endsWith('tile.openstreetmap.org')) return;
 
   // Page loads: network first (so updates come through), cached copy if offline.
   // Cached under the request's own URL — was previously always cached (and
@@ -53,7 +51,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Everything else (fonts, Leaflet, Supabase JS library from CDNs):
+  // Everything else (fonts, Supabase JS library from CDNs):
   // cache first for speed and offline, fetch and store if not cached yet
   event.respondWith(
     caches.match(req).then(cached => {
