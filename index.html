@@ -4092,7 +4092,6 @@ async function saveEvent(eventId){
   if (error){ console.error(error); setStatus('Save failed. Please try again.', 'error'); return; }
   const ev = events.find(e => e.id === eventId);
   if (ev) Object.assign(ev, payload);
-  postcodeCache[payload.postcode?.toUpperCase()] = undefined; // bust cache so map re-geocodes if postcode changed
   renderEvents();
   renderHome();
   setTimeout(() => {
