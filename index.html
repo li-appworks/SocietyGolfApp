@@ -1704,6 +1704,74 @@
   .sx-tmstats b{display:block; font-size:3rem; font-weight:800; line-height:1; color:var(--brass-light); font-variant-numeric:tabular-nums;}
   .sx-tmstats span{display:block; font-size:.9rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,242,.62); margin-top:.2rem;}
   .sx-team .sx-blob{min-height:3.1rem; font-size:1rem;}
+  /* ===== Finalise scores page (2026-11-01) — classic scorecard, dark-panel style ===== */
+  .fin-root{width:100%; max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:.75rem; padding:calc(env(safe-area-inset-top) + .5rem) .6rem calc(env(safe-area-inset-bottom) + .9rem); color:var(--paper);}
+  .fin-head{text-align:center; padding:0 .5rem .85rem; border-bottom:2px solid var(--brass-light); position:relative;}
+  .fin-head::after{content:""; position:absolute; left:50%; bottom:-5px; width:8px; height:8px; background:var(--brass-light); transform:translateX(-50%) rotate(45deg);}
+  .fin-head .l{font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--brass-light);}
+  .fin-head .t{font-size:1.4rem; font-weight:800; margin:.15rem 0 .1rem;}
+  .fin-head .s{font-size:.9rem; color:rgba(250,248,242,.62); margin:0;}
+  .fin-seg{display:flex; gap:.35rem; margin-top:.2rem;}
+  .fin-seg button{flex:1; font:inherit; font-weight:700; font-size:.95rem; padding:.5rem; border-radius:999px; border:1px solid rgba(250,248,242,.1); background:rgba(250,248,242,.06); color:rgba(250,248,242,.62); cursor:pointer;}
+  .fin-seg button[aria-pressed="true"]{background:#e3c477; color:var(--ink-02); border-color:#e3c477;}
+  .fin-card{background:linear-gradient(180deg,rgba(250,248,242,.09),rgba(250,248,242,.04)); border:1px solid rgba(250,248,242,.1); border-radius:.8rem; padding:.55rem .4rem .4rem;}
+  .fin-card h3{margin:.05rem .25rem .4rem; font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; color:var(--brass-light); font-weight:700; display:flex; justify-content:space-between;}
+  .fin-grid{display:grid; grid-template-columns:2.35rem repeat(var(--n,9),minmax(0,1fr)) 2.5rem; align-items:stretch;}
+  .fin-grid>*{display:flex; align-items:center; justify-content:center; min-height:2.2rem; font-weight:600; font-size:.9rem; font-variant-numeric:tabular-nums; border-bottom:1px solid rgba(250,248,242,.1);}
+  .fin-grid .rl{justify-content:flex-start; font-size:.78rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,242,.62); padding-left:.2rem;}
+  .fin-grid .hole{font-weight:800; color:var(--paper); min-height:2rem;}
+  .fin-grid .par{color:var(--brass-light);}
+  .fin-grid .si{color:rgba(250,248,242,.62);}
+  .fin-grid .tot{font-weight:800; color:var(--paper); background:rgba(250,248,242,.07);}
+  .fin-grid .tot.lab{font-size:.78rem; letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,242,.62);}
+  .fin-chip{width:1.7rem; height:1.7rem; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font:800 .78rem var(--body); color:#050709; flex-shrink:0;}
+  .fin-chip.c1{background:#bde05f}.fin-chip.c2{background:#8fd3e6}.fin-chip.c3{background:#f0b36a}.fin-chip.c4{background:#d9a6e8}
+  button.fin-cell{font:inherit; font-weight:700; font-size:1rem; color:var(--paper); background:none; border:0; border-bottom:1px solid rgba(250,248,242,.1); cursor:pointer; padding:0; min-height:2.2rem; display:flex; align-items:center; justify-content:center;}
+  button.fin-cell span{display:inline-flex; align-items:center; justify-content:center; min-width:1.65rem; height:1.65rem;}
+  .fin-cell.m-birdie span{border:1.5px solid #5CC17A; border-radius:50%; color:#5CC17A;}
+  .fin-cell.m-eagle span{border:1.5px solid var(--brass-light); border-radius:50%; color:var(--brass-light); box-shadow:0 0 0 2px var(--ink-12),0 0 0 3.5px var(--brass-light);}
+  .fin-cell.m-bogey span{border:1.5px solid #E0A33B; border-radius:3px; color:#E0A33B;}
+  .fin-cell.m-dbl span{border:1.5px solid #E0707A; border-radius:3px; color:#E0707A; box-shadow:0 0 0 2px var(--ink-12),0 0 0 3.5px #E0707A;}
+  .fin-cell.m-pu span{color:rgba(250,248,242,.62);}
+  button.fin-cell.edited{background:color-mix(in srgb,var(--brass) 28%,transparent); border-radius:6px;}
+  .fin-legend{display:flex; flex-wrap:wrap; gap:.3rem .8rem; justify-content:center; font-size:.9rem; color:rgba(250,248,242,.62);}
+  .fin-legend i{font-style:normal; display:inline-flex; align-items:center; gap:.3rem;}
+  .fin-legend .sw{width:.9rem; height:.9rem; display:inline-block;}
+  .fin-legend .sw.b{border:1.5px solid #5CC17A; border-radius:50%;}
+  .fin-legend .sw.g{border:1.5px solid #E0A33B; border-radius:3px;}
+  .fin-legend .sw.d{border:1.5px solid #E0707A; border-radius:3px; box-shadow:0 0 0 1.5px var(--ink-12),0 0 0 3px #E0707A;}
+  .fin-hint{font-size:.9rem; color:rgba(250,248,242,.62); text-align:center; margin:0;}
+  .fin-res{display:flex; flex-direction:column; gap:.45rem;}
+  .fin-row{display:grid; grid-template-columns:1.9rem 1fr auto; gap:.6rem; align-items:center; padding:.6rem .65rem; border-radius:.8rem; background:linear-gradient(100deg,var(--ink-lift) 0%,var(--ink-12) 55%,var(--ink-05) 100%); border:1px solid rgba(250,248,242,.1);}
+  .fin-row .nm{min-width:0;}
+  .fin-row .nm b{display:block; font-size:1.05rem; font-weight:700; line-height:1.15;}
+  .fin-row .nm span{display:block; font-size:.9rem; color:rgba(250,248,242,.62);}
+  .fin-row .pt{font-size:1.9rem; font-weight:800; color:var(--brass-light); line-height:1; text-align:right; font-variant-numeric:tabular-nums;}
+  .fin-row .pt small{display:block; font-size:.78rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:rgba(250,248,242,.62); margin-top:.15rem;}
+  .fin-sign{grid-column:1 / -1; display:flex; align-items:center; gap:.6rem; font:inherit; font-weight:700; font-size:1rem; color:var(--paper); background:rgba(250,248,242,.07); border:1px dashed rgba(250,248,242,.35); border-radius:12px; padding:.6rem .8rem; min-height:2.9rem; cursor:pointer; text-align:left;}
+  .fin-sign .box{width:1.5rem; height:1.5rem; border-radius:6px; border:2px solid rgba(250,248,242,.5); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1rem; color:transparent;}
+  .fin-sign[aria-pressed="true"]{border-style:solid; border-color:var(--brass-light); background:color-mix(in srgb,var(--brass) 26%,transparent);}
+  .fin-sign[aria-pressed="true"] .box{background:var(--brass-light); border-color:var(--brass-light); color:#050709;}
+  .fin-bar{display:flex; gap:.5rem;}
+  .fin-bar button{font:inherit; font-weight:800; font-size:1rem; border-radius:16px; min-height:3.4rem; cursor:pointer; padding:.5rem .7rem; line-height:1.15;}
+  .fin-bar .back{flex:1; background:transparent; color:var(--paper); border:2px solid var(--brass-light);}
+  .fin-bar .go{flex:1.25; background:var(--brass); color:var(--ink-02); border:2px solid var(--brass);}
+  .fin-bar .go:disabled{opacity:.4; cursor:default;}
+  .fin-wait{font-size:.9rem; color:rgba(250,248,242,.62); text-align:center; margin:0;}
+  .fin-sheet-bg{position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; z-index:700;}
+  .fin-sheet{width:100%; max-width:520px; border-radius:20px 20px 0 0; background:linear-gradient(180deg,var(--ink-lift),var(--ink-12)); color:var(--paper); padding:1.1rem 1rem calc(1rem + env(safe-area-inset-bottom)); border:1px solid rgba(250,248,242,.1); border-bottom:0;}
+  .fin-sheet h4{margin:0 0 .15rem; font-size:1.15rem;}
+  .fin-sheet p{margin:0 0 .8rem; color:rgba(250,248,242,.62); font-size:.95rem;}
+  .fin-sheet .stp{display:flex; align-items:center; justify-content:center; gap:1rem; margin:.4rem 0 .9rem;}
+  .fin-sheet .stp button{width:4rem; height:4rem; border-radius:16px; border:1px solid rgba(250,248,242,.12); background:rgba(250,248,242,.12); color:var(--paper); font-size:2rem; cursor:pointer;}
+  .fin-sheet .stp .v{font-size:3.2rem; font-weight:800; min-width:4rem; text-align:center; font-variant-numeric:tabular-nums;}
+  .fin-pts{display:flex; gap:.4rem; margin:.4rem 0 .9rem;}
+  .fin-pts button{flex:1; min-height:3.4rem; border-radius:14px; border:1px solid rgba(250,248,242,.12); background:rgba(250,248,242,.12); color:var(--paper); font:800 1.5rem var(--body); cursor:pointer;}
+  .fin-pts button.sel{background:var(--brass); color:var(--ink-02); border-color:var(--brass);}
+  .fin-sheet .two{display:flex; gap:.5rem;}
+  .fin-sheet .two button{flex:1; font:inherit; font-weight:800; font-size:1rem; min-height:3.2rem; border-radius:14px; cursor:pointer;}
+  .fin-sheet .pu{background:transparent; border:1px dashed rgba(250,248,242,.45); color:var(--paper);}
+  .fin-sheet .ok{background:var(--brass); border:2px solid var(--brass); color:var(--ink-02);}
   .done-banner{
     margin:0 1rem .8rem; padding:.65rem .8rem; border-radius:.85rem;
     background:rgba(92,193,122,.14); border:1px solid rgba(92,193,122,.35);
@@ -6519,7 +6587,10 @@ let liveRoundId = null;
 let scoringFocusMode = false;
 let scoringPlayerIds = [];
 let currentHole = 1;
-let liveSubView = 'landing'; // 'landing' | 'setup' | 'entry' | 'leaderboard' | 'groupings'
+let liveSubView = 'landing'; // 'landing' | 'setup' | 'entry' | 'leaderboard' | 'groupings' | 'finalise'
+let finaliseAgreed = new Set(); // keys of the players/teams who have agreed their card (finalise page)
+let finaliseEdit = null;        // { idx, hole } while the correction sheet is open
+let finaliseMode = 'strokes';   // 'strokes' | 'points'
 let liveShowPast = false;    // landing page: the "Past results" event list is open
 let liveEventPage = false;   // true = an event's page (Scorecard/Leaderboard/Groups); false = the quiet "nothing on" page
 
@@ -6560,7 +6631,7 @@ function saveFocusSession(){
   try {
     localStorage.setItem(FOCUS_SESSION_KEY, JSON.stringify({
       societyId, eventId: liveEventId, roundId: liveRoundId, playerIds: scoringPlayerIds,
-      hole: currentHole, view: liveSubView, savedAt: Date.now()
+      hole: currentHole, view: liveSubView, agreed: [...finaliseAgreed], savedAt: Date.now()
     }));
   } catch(e){}
 }
@@ -6578,7 +6649,9 @@ function readFocusSession(){
 function applyFocusSession(fr){
   scoringPlayerIds = fr.playerIds;
   currentHole = fr.hole || 1;
-  liveSubView = (fr.view === 'leaderboard') ? 'leaderboard' : 'entry';
+  liveSubView = (fr.view === 'leaderboard') ? 'leaderboard' : (fr.view === 'finalise') ? 'finalise' : 'entry';
+  finaliseAgreed = new Set(fr.agreed || []);
+  finaliseEdit = null;
   scoringFocusMode = true;
   handicapConfirmQueue = []; // already confirmed before the reload
   const ev = eventById(fr.eventId);
@@ -6587,7 +6660,7 @@ function applyFocusSession(fr){
 
 async function manageWakeLock(){
   const secActive = document.getElementById('sec-scores')?.classList.contains('active');
-  const want = scoringFocusMode && !!secActive && (liveSubView === 'entry' || liveSubView === 'leaderboard') && document.visibilityState === 'visible';
+  const want = scoringFocusMode && !!secActive && (liveSubView === 'entry' || liveSubView === 'leaderboard' || liveSubView === 'finalise') && document.visibilityState === 'visible';
   if (want && !wakeLockSentinel && 'wakeLock' in navigator){
     try {
       wakeLockSentinel = await navigator.wakeLock.request('screen');
@@ -6785,7 +6858,7 @@ function renderLiveScores(){
     return;
   }
 
-  if (scoringFocusMode && (liveSubView === 'entry' || liveSubView === 'leaderboard')){
+  if (scoringFocusMode && (liveSubView === 'entry' || liveSubView === 'leaderboard' || liveSubView === 'finalise')){
     saveFocusSession();
     el.innerHTML = renderScoringFocus();
     updateSyncIndicator();
@@ -7056,7 +7129,7 @@ function renderLiveQuietView(){
    hidden (or focus mode's dark background) behind on an unrelated page. */
 function syncScoringFocusClass(){
   const secActive = document.getElementById('sec-scores')?.classList.contains('active');
-  const active = scoringFocusMode && (liveSubView === 'entry' || liveSubView === 'leaderboard') && !!secActive;
+  const active = scoringFocusMode && (liveSubView === 'entry' || liveSubView === 'leaderboard' || liveSubView === 'finalise') && !!secActive;
   document.body.classList.toggle('scoring-focus', active);
   manageWakeLock();
 }
@@ -7066,7 +7139,7 @@ function setLiveSubView(view){
   // Focus mode only makes sense for Entry/Leaderboard — picking Setup or
   // Groupings (only reachable from the normal chrome, not from inside
   // focus mode itself) always means leaving it.
-  if (view !== 'entry' && view !== 'leaderboard') scoringFocusMode = false;
+  if (view !== 'entry' && view !== 'leaderboard' && view !== 'finalise') scoringFocusMode = false;
   renderLiveScores();
 }
 
@@ -7230,7 +7303,7 @@ function renderTeamEntry(){
       <button class="sx-blob ${pu ? 'on' : ''}" onclick="sxPickUp(${arg})">${pu ? 'Undo' : 'Pick up (blob)'}</button>
     </div>
     <div class="sx-bottom"><button class="lb" onclick="setLiveSubView('leaderboard')">🏆 View live leaderboard</button>
-      <button class="nxt" ${un ? 'disabled' : ''} onclick="sxNext()">${un ? 'Confirm the score' : (last ? 'Finish round ✓' : 'Next hole →')}</button></div>
+      <button class="nxt" ${un ? 'disabled' : ''} onclick="sxNext()">${un ? 'Confirm the score' : (last ? 'Review scorecard →' : 'Next hole →')}</button></div>
   </div>`;
 }
 
@@ -7286,7 +7359,9 @@ async function finishRound(){
   await processScorecardQueue();
   await processScoreQueue();
   scoringFocusMode = true;
-  setLiveSubView('leaderboard');
+  finaliseAgreed = new Set();
+  finaliseEdit = null;
+  setLiveSubView('finalise');
 }
 
 function getLeaderboard(eventId, maxHole = 18, roundId = null){
@@ -7712,6 +7787,7 @@ function handicapConfirmKey(pid){ return `${liveEventId}-${liveRoundId}-${pid}`;
    currently being scored on this device" (scoringPlayerIds), not a real
    identity check. */
 function renderScoringFocus(){
+  if (liveSubView === 'finalise') return renderFinaliseView();
   if (liveSubView === 'leaderboard') return renderFocusLeaderboard();
   if (handicapConfirmQueue.length) return renderHandicapConfirm();
   return renderFocusEntry();
@@ -7913,8 +7989,180 @@ function renderStrokesEntry(){
     ${ribbon}
     <div class="sx-body">${rows}</div>
     <div class="sx-bottom"><button class="lb" onclick="setLiveSubView('leaderboard')">🏆 View live leaderboard</button>
-      <button class="nxt" ${missing ? 'disabled' : ''} onclick="sxNext()">${missing ? 'Confirm ' + missing + ' more' : (last ? 'Finish round ✓' : 'Next hole →')}</button></div>
+      <button class="nxt" ${missing ? 'disabled' : ''} onclick="sxNext()">${missing ? 'Confirm ' + missing + ' more' : (last ? 'Review scorecard →' : 'Next hole →')}</button></div>
   </div>`;
+}
+
+/* ===== Finalise scores page (2026-11-01) =====
+   After the last hole, "Review scorecard" opens this page instead of going straight to the
+   leaderboard: the whole round as a classic scorecard (front nine / back nine, marks for birdies
+   and bogeys), a correction sheet, and a "tap when X agrees the card" line for every player
+   (replaces signing the paper card). Submit stays disabled until everyone has agreed.
+   Scores were already syncing hole by hole, so Submit only flushes the queues and opens the
+   leaderboard. A Texas Scramble shows ONE row for the team and ONE agreement.
+   The agreements are held on this device only (focus session), not stored in the database. */
+function finaliseItems(){
+  const ev = eventById(liveEventId);
+  if (isScrambleEvent(ev)){
+    const gid = scoringTeamGroupId();
+    const members = gid ? groupMemberPlayers(gid) : [];
+    const sc = gid ? teamCardFor(liveEventId, liveRoundId, gid) : null;
+    const gNum = gid ? eventGroupsFor(liveEventId, liveRoundId).findIndex(g => g.id === gid) + 1 : 0;
+    const th = teamHandicapInfo(ev, members);
+    return [{ key: 'team', isTeam: true, name: 'Group ' + (gNum || ''), initials: 'G' + (gNum || ''), chip: 'c1', sc, hcp: th.hcp,
+      sub: 'Team handicap ' + th.hcp + ' · ' + teamNames(members), who: 'the team' }];
+  }
+  return scoringPlayerIds.map((pid, i) => {
+    const p = players.find(x => x.id === pid);
+    if (!p) return null;
+    return { key: 'p' + pid, isTeam: false, name: p.first_name + ' ' + (p.last_name || ''), initials: ((p.first_name || '')[0] || '') + ((p.last_name || '')[0] || ''),
+      chip: 'c' + ((i % 4) + 1), sc: scorecardFor(liveEventId, liveRoundId, pid), hcp: p.handicap, sub: p.handicap != null ? 'Hcp ' + p.handicap : 'No handicap', who: p.first_name };
+  }).filter(Boolean);
+}
+const finEdited = new Set();
+function finMark(d){ return d <= -2 ? 'm-eagle' : d === -1 ? 'm-birdie' : d === 1 ? 'm-bogey' : d >= 2 ? 'm-dbl' : ''; }
+function finCellHtml(idx, it, h, par, mode){
+  const hs = it.sc ? sxExisting(it.sc.id, h) : null;
+  const pu = !!(hs && hs.picked_up);
+  let txt, cls = '';
+  if (!hs){ txt = '·'; }
+  else if (pu){ txt = '–'; cls = 'm-pu'; }
+  else if (mode === 'strokes' && hs.strokes != null){ txt = hs.strokes; if (par != null) cls = finMark(hs.strokes - par); }
+  else { txt = hs.points; }
+  const aria = `${it.name} hole ${h}: ${!hs ? 'no score' : pu ? 'picked up' : (mode === 'strokes' && hs.strokes != null ? hs.strokes + ' strokes' : hs.points + ' points')}. Tap to correct`;
+  return `<button class="fin-cell ${cls} ${finEdited.has(it.key + '-' + h) ? 'edited' : ''}" onclick="openFinEdit(${idx}, ${h})" aria-label="${escapeHtml(aria)}"><span>${txt}</span></button>`;
+}
+function finNineHtml(items, ev, round, f, t, mode, showPar){
+  const hd = [], par = [], si = [];
+  for (let h = f + 1; h <= t; h++){
+    const facts = sxHoleFacts(ev, round, h, null);
+    hd.push(`<div class="hole">${h}</div>`);
+    par.push(`<div class="par">${facts.par}</div>`);
+    si.push(`<div class="si">${facts.si ?? ''}</div>`);
+  }
+  const n = t - f;
+  const parTot = showPar ? Array.from({ length: n }, (_, k) => sxHoleFacts(ev, round, f + k + 1, null).par).reduce((a, b) => a + b, 0) : null;
+  const rows = items.map((it, idx) => {
+    let tot = 0;
+    const cells = Array.from({ length: n }, (_, k) => {
+      const h = f + k + 1, hs = it.sc ? sxExisting(it.sc.id, h) : null;
+      if (hs && !hs.picked_up) tot += (mode === 'strokes' && hs.strokes != null) ? hs.strokes : hs.points;
+      return finCellHtml(idx, it, h, showPar ? sxHoleFacts(ev, round, h, null).par : null, mode);
+    }).join('');
+    return `<div class="pl"><span class="fin-chip ${it.chip}">${escapeHtml(it.initials)}</span></div>${cells}<div class="tot">${tot}</div>`;
+  }).join('');
+  return `<div class="fin-card ${mode === 'points' ? 'pts' : ''}">
+    <h3><span>${f === 0 ? 'Front nine' : 'Back nine'}</span>${showPar ? `<span>Par ${parTot}</span>` : ''}</h3>
+    <div class="fin-grid" style="--n:${n}">
+      <div class="rl">Hole</div>${hd.join('')}<div class="tot lab">${f === 0 ? 'Out' : 'In'}</div>
+      ${showPar ? `<div class="rl">Par</div>${par.join('')}<div class="tot par">${parTot}</div><div class="rl">Idx</div>${si.join('')}<div class="tot"></div>` : ''}
+      ${rows}
+    </div></div>`;
+}
+function renderFinaliseView(){
+  const ev = eventById(liveEventId);
+  const round = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  const holes = roundHoles(round, ev);
+  const items = finaliseItems();
+  const hasStrokes = strokesModeFor(ev);
+  const mode = hasStrokes ? finaliseMode : 'points';
+  const tee = hasStrokes ? teeById(ev.tee_id) : null;
+  const course = round ? round.course : eventCourseDisplay(ev);
+  const dateTxt = ev.date ? new Date(ev.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' }) : '';
+  const sub = [course, tee ? tee.name + ' tees' : '', dateTxt].filter(Boolean).join(' · ');
+  const nines = holes > 9 ? [[0, 9], [9, holes]] : [[0, holes]];
+  const left = items.filter(it => !finaliseAgreed.has(it.key)).length;
+  const seg = hasStrokes ? `<div class="fin-seg"><button aria-pressed="${mode === 'strokes'}" onclick="setFinaliseMode('strokes')">Strokes</button><button aria-pressed="${mode === 'points'}" onclick="setFinaliseMode('points')">Stableford points</button></div>` : '';
+  const legend = mode === 'strokes'
+    ? `<div class="fin-legend"><i><span class="sw b"></span>Birdie</i><i><span class="sw"></span>Par</i><i><span class="sw g"></span>Bogey</i><i><span class="sw d"></span>Double+</i><i>– Blob</i></div>`
+    : `<div class="fin-legend"><i>Stableford points per hole</i></div>`;
+  const tiles = items.map((it, idx) => {
+    let pts = 0, gross = 0, pu = 0;
+    if (it.sc) holeScores.filter(h => h.scorecard_id === it.sc.id).forEach(h => { pts += h.points; if (h.picked_up) pu++; else if (h.strokes != null) gross += h.strokes; });
+    const agreed = finaliseAgreed.has(it.key);
+    const verb = it.isTeam ? 'agrees' : 'agrees';
+    return `<div class="fin-row"><span class="fin-chip ${it.chip}">${escapeHtml(it.initials)}</span>
+      <div class="nm"><b>${escapeHtml(it.name)}</b><span>${escapeHtml(it.sub)}${hasStrokes ? ' · Gross ' + gross : ''}${pu ? ' · ' + pu + ' blob' : ''}</span></div>
+      <div class="pt">${pts}<small>pts</small></div>
+      <button class="fin-sign" aria-pressed="${agreed}" onclick="toggleFinAgree('${it.key}')"><span class="box">✓</span><span>${agreed ? escapeHtml(it.who) + ' ' + (it.isTeam ? 'have' : 'has') + ' checked and ' + (it.isTeam ? 'agree' : 'agrees') : 'Tap when ' + escapeHtml(it.who) + ' ' + (it.isTeam ? 'agree' : 'agrees') + ' the card'}</span></button></div>`;
+  }).join('');
+  return `<div class="fin-root">
+    <div class="sx-top"><button class="focus-exit" onclick="exitScoringFocus()" aria-label="Exit focus mode">✕</button>
+      <div class="sx-live"><span class="live-dot"></span><span id="sync-indicator" class="sync-indicator"></span></div></div>
+    <div class="fin-head"><div class="l">All ${holes} holes played</div><div class="t">Finalise scores</div><p class="s">${escapeHtml(sub)}</p></div>
+    ${seg}
+    ${nines.map(([f, t]) => finNineHtml(items, ev, round, f, t, mode, hasStrokes)).join('')}
+    ${legend}
+    <p class="fin-hint">Tap any score to correct it</p>
+    <div class="fin-res">${tiles}</div>
+    <div class="fin-bar"><button class="back" onclick="backFromFinalise()">‹ Back to hole ${holes}</button>
+      <button class="go" ${left ? 'disabled' : ''} onclick="submitFinalise()">${left ? 'Agree ' + left + ' more' : 'Submit scores ✓'}</button></div>
+    ${left ? '<p class="fin-wait">Each player checks their line, then taps to agree. This replaces signing the paper card.</p>' : ''}
+    ${finaliseEdit ? finEditSheetHtml(items, ev, round) : ''}
+  </div>`;
+}
+function setFinaliseMode(m){ finaliseMode = m; renderLiveScores(); }
+function toggleFinAgree(key){
+  if (finaliseAgreed.has(key)) finaliseAgreed.delete(key); else finaliseAgreed.add(key);
+  renderLiveScores();
+}
+function backFromFinalise(){
+  finaliseEdit = null;
+  const ev = eventById(liveEventId);
+  currentHole = roundHoles(liveRoundId ? rounds.find(r => r.id === liveRoundId) : null, ev);
+  setLiveSubView('entry');
+}
+async function submitFinalise(){
+  const items = finaliseItems();
+  if (items.some(it => !finaliseAgreed.has(it.key))) return;
+  await processScorecardQueue();
+  await processScoreQueue();
+  finaliseAgreed = new Set();
+  finaliseEdit = null;
+  setLiveSubView('leaderboard');
+}
+function openFinEdit(idx, hole){ finaliseEdit = { idx, hole }; renderLiveScores(); }
+function closeFinEdit(){ finaliseEdit = null; renderLiveScores(); }
+function finEditCtx(){
+  const ev = eventById(liveEventId);
+  const round = liveRoundId ? rounds.find(r => r.id === liveRoundId) : null;
+  const items = finaliseItems();
+  const it = finaliseEdit ? items[finaliseEdit.idx] : null;
+  if (!it || !it.sc) return null;
+  const f = sxHoleFacts(ev, round, finaliseEdit.hole, null);
+  return { ev, it, f, h: finaliseEdit.hole, hs: sxExisting(it.sc.id, finaliseEdit.hole) };
+}
+function finEditSheetHtml(items, ev, round){
+  const c = finEditCtx();
+  if (!c) return '';
+  const { it, f, h, hs } = c;
+  const pu = !!(hs && hs.picked_up);
+  const strokesMode = strokesModeFor(ev);
+  const shotsN = strokesMode && it.hcp != null ? holeAllowance(it.hcp, f.si) : 0;
+  const info = strokesMode ? `Par ${f.par} · Index ${f.si ?? '–'} · ${shotsN ? shotsN + ' shot' + (shotsN > 1 ? 's' : '') : 'no shot'} · ${!hs ? 'not entered' : pu ? 'Picked up' : hs.points + ' pts'}` : (!hs ? 'not entered' : pu ? 'Picked up' : hs.points + ' pts');
+  const control = strokesMode
+    ? `<div class="stp"><button onclick="finBump(-1)" aria-label="One less">−</button><div class="v">${pu ? '–' : (hs ? hs.strokes : f.par)}</div><button onclick="finBump(1)" aria-label="One more">+</button></div>`
+    : `<div class="fin-pts">${[0,1,2,3,4,5].map(n => `<button class="${hs && !pu && hs.points === n ? 'sel' : ''}" onclick="finSetPts(${n})">${n}</button>`).join('')}</div>`;
+  return `<div class="fin-sheet-bg" onclick="if(event.target===this)closeFinEdit()"><div class="fin-sheet" role="dialog" aria-label="Correct score">
+    <h4>${escapeHtml(it.name)} · Hole ${h}</h4><p>${info}</p>${control}
+    <div class="two"><button class="pu" onclick="finPickUp()">${pu ? 'Undo pick up' : 'Pick up (blob)'}</button><button class="ok" onclick="closeFinEdit()">Done</button></div></div></div>`;
+}
+function finAfterEdit(c){ finaliseAgreed.delete(c.it.key); finEdited.add(c.it.key + '-' + c.h); }
+async function finBump(d){
+  const c = finEditCtx(); if (!c) return;
+  const base = c.hs && !c.hs.picked_up && c.hs.strokes != null ? c.hs.strokes : c.f.par;
+  finAfterEdit(c);
+  await setStrokeScore(c.it.sc.id, c.h, Math.max(1, base + d), c.f.par, c.f.si, c.it.hcp);
+}
+async function finSetPts(n){
+  const c = finEditCtx(); if (!c) return;
+  finAfterEdit(c);
+  await setHoleScore(c.it.sc.id, c.h, n);
+}
+async function finPickUp(){
+  const c = finEditCtx(); if (!c) return;
+  finAfterEdit(c);
+  await sxPickUp(c.it.sc.id, c.h, c.f.par, c.f.si, c.it.hcp);
 }
 
 function renderFocusEntry(){
@@ -8005,7 +8253,7 @@ function renderFocusEntry(){
     <div class="focus-nav">
       <button ${currentHole<=1?'disabled':''} onclick="changeHole(${currentHole-1})">← Hole ${currentHole-1}</button>
       ${currentHole>=holes
-        ? `<button class="next finish" onclick="finishRound()">Finish round ✓</button>`
+        ? `<button class="next finish" onclick="finishRound()">Review scorecard ✓</button>`
         : `<button class="next" onclick="changeHole(${currentHole+1})">Hole ${currentHole+1} →</button>`}
     </div>`;
 }
